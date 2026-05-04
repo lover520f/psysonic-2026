@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { usePlayerStore } from '../store/playerStore';
+import { usePlayerStore, getPlaybackProgressSnapshot, subscribePlaybackProgress } from '../store/playerStore';
 import { useAuthStore, type SeekbarStyle } from '../store/authStore';
-import { IS_LINUX } from '../utils/platform';
 function fmt(s: number): string {
   if (!s || isNaN(s)) return '0:00';
   return `${Math.floor(s / 60)}:${Math.floor(s % 60).toString().padStart(2, '0')}`;
@@ -18,7 +17,7 @@ const FLAT_WAVE_NORM = 0.06;
 const WAVE_MORPH_MS = 1000;
 const STATIC_REDRAW_MIN_MS = 90;
 const STATIC_REDRAW_FORCE_MS = 220;
-const SHADOW_SCALE = IS_LINUX ? 0.35 : 1;
+const INTERPOLATION_PAINT_MIN_MS = 80;
 
 // ── animation state ───────────────────────────────────────────────────────────
 
@@ -101,7 +100,7 @@ function setupCanvas(
 }
 
 function setShadowBlur(ctx: CanvasRenderingContext2D, blur: number) {
-  ctx.shadowBlur = Math.max(0, blur * SHADOW_SCALE);
+  ctx.shadowBlur = Math.max(0, blur);
 }
 
 // ── waveform heights ──────────────────────────────────────────────────────────
@@ -188,31 +187,13 @@ function waveformBarThickness(logicalH: number, norm: number): number {
   return Math.max(1, safeNorm * logicalH);
 }
 
-type WaveformGeometryCache = {
-  w: number;
-  h: number;
-  heightsRef: Float32Array;
-  path: Path2D;
-};
+function quantizeProgressByBars(progress: number): number {
+  const clamped = Math.max(0, Math.min(1, progress));
+  return Math.max(0, Math.min(1, Math.floor(clamped * BAR_COUNT) / BAR_COUNT));
+}
 
-const waveformGeometryByCanvas = new WeakMap<HTMLCanvasElement, WaveformGeometryCache>();
-
-function getWaveformPath(canvas: HTMLCanvasElement, w: number, h: number, heights: Float32Array): Path2D {
-  const cached = waveformGeometryByCanvas.get(canvas);
-  if (cached && cached.w === w && cached.h === h && cached.heightsRef === heights) {
-    return cached.path;
-  }
-  const path = new Path2D();
-  const x1Of = (i: number) => (i / BAR_COUNT) * w;
-  const x2Of = (i: number) => ((i + 1) / BAR_COUNT) * w;
-  for (let i = 0; i < BAR_COUNT; i++) {
-    const bh = waveformBarThickness(h, heights[i]);
-    const x = x1Of(i);
-    const barW = Math.max(1, x2Of(i) - x);
-    path.rect(x, (h - bh) / 2, barW, bh);
-  }
-  waveformGeometryByCanvas.set(canvas, { w, h, heightsRef: heights, path });
-  return path;
+function isBarQuantizedSeekStyle(style: SeekbarStyle): boolean {
+  return style === 'truewave' || style === 'pseudowave';
 }
 
 function drawWaveform(
@@ -225,6 +206,8 @@ function drawWaveform(
   if (!r) return;
   const { ctx, w, h } = r;
   const { played, buffered: buffCol, unplayed } = getColors();
+  const pNorm = Math.max(0, Math.min(1, progress));
+  const bNorm = Math.max(pNorm, Math.min(1, buffered));
 
   if (!heights) {
     // No waveform data yet: flat rail like `drawLineDot`, but do not return early
@@ -245,12 +228,12 @@ function drawWaveform(
       ctx.fillStyle = played;
       ctx.shadowColor = played;
       setShadowBlur(ctx, 5);
-      ctx.fillRect(0, cy - lh / 2, Math.min(1, progress) * w, lh);
+      ctx.fillRect(0, cy - lh / 2, pNorm * w, lh);
       setShadowBlur(ctx, 0);
     }
     ctx.globalAlpha = 1;
     if (w > 0) {
-      const dx = Math.max(dotR, Math.min(w - dotR, Math.min(1, progress) * w));
+      const dx = Math.max(dotR, Math.min(w - dotR, pNorm * w));
       ctx.shadowColor = played;
       setShadowBlur(ctx, 7);
       ctx.beginPath();
@@ -262,36 +245,36 @@ function drawWaveform(
     ctx.globalAlpha = 1;
     return;
   }
-
-  const path = getWaveformPath(canvas, w, h, heights);
-  const p = Math.max(0, Math.min(1, progress));
-  const b = Math.max(p, Math.min(1, buffered));
-  const px = p * w;
-  const bx = b * w;
+  const x1Of = (i: number) => (i / BAR_COUNT) * w;
+  const x2Of = (i: number) => ((i + 1) / BAR_COUNT) * w;
   ctx.globalAlpha = 0.28;
   ctx.fillStyle = unplayed;
-  ctx.fill(path);
-
-  if (bx > 0) {
-    ctx.save();
-    ctx.beginPath();
-    ctx.rect(0, 0, bx, h);
-    ctx.clip();
-    ctx.globalAlpha = 0.45;
-    ctx.fillStyle = buffCol;
-    ctx.fill(path);
-    ctx.restore();
+  for (let i = 0; i < BAR_COUNT; i++) {
+    if (i / BAR_COUNT < bNorm) continue;
+    const bh = waveformBarThickness(h, heights[i]);
+    const x = x1Of(i);
+    ctx.fillRect(x, (h - bh) / 2, x2Of(i) - x, bh);
   }
 
-  if (px > 0) {
-    ctx.save();
-    ctx.beginPath();
-    ctx.rect(0, 0, px, h);
-    ctx.clip();
+  ctx.globalAlpha = 0.45;
+  ctx.fillStyle = buffCol;
+  for (let i = 0; i < BAR_COUNT; i++) {
+    const frac = i / BAR_COUNT;
+    if (frac < pNorm || frac >= bNorm) continue;
+    const bh = waveformBarThickness(h, heights[i]);
+    const x = x1Of(i);
+    ctx.fillRect(x, (h - bh) / 2, x2Of(i) - x, bh);
+  }
+
+  if (pNorm > 0) {
     ctx.globalAlpha = 1;
     ctx.fillStyle = played;
-    ctx.fill(path);
-    ctx.restore();
+    for (let i = 0; i < BAR_COUNT; i++) {
+      if (i / BAR_COUNT >= pNorm) break;
+      const bh = waveformBarThickness(h, heights[i]);
+      const x = x1Of(i);
+      ctx.fillRect(x, (h - bh) / 2, x2Of(i) - x, bh);
+    }
   }
   ctx.globalAlpha = 1;
 }
@@ -889,7 +872,7 @@ export function SeekbarPreview({
       }
     };
     const tick = () => {
-      if (document.hidden || window.__psyHidden || window.__psyBlurred) {
+      if (document.hidden || window.__psyHidden) {
         pollId = window.setTimeout(() => {
           pollId = null;
           tick();
@@ -965,8 +948,10 @@ export default function WaveformSeek({ trackId }: Props) {
   const WHEEL_SEEK_DEBOUNCE_MS = 350;
   const canvasRef    = useRef<HTMLCanvasElement>(null);
   const heightsRef   = useRef<Float32Array | null>(null);
-  const progressRef  = useRef(usePlayerStore.getState().progress);
-  const bufferedRef  = useRef(usePlayerStore.getState().buffered);
+  const progressRef  = useRef(getPlaybackProgressSnapshot().progress);
+  const bufferedRef  = useRef(getPlaybackProgressSnapshot().buffered);
+  const visualProgressRef = useRef(progressRef.current);
+  const visualTargetProgressRef = useRef(progressRef.current);
   const isDragging   = useRef(false);
   const animStateRef = useRef<AnimState>(makeAnimState());
   const lastStaticDrawAtRef = useRef(0);
@@ -976,6 +961,7 @@ export default function WaveformSeek({ trackId }: Props) {
   const [hoverPct, setHoverPct] = useState<number | null>(null);
 
   const seek         = usePlayerStore(s => s.seek);
+  const isPlaying    = usePlayerStore(s => s.isPlaying);
   const waveformBins = usePlayerStore(s => s.waveformBins);
   const duration     = usePlayerStore(s => s.currentTrack?.duration ?? 0);
   const seekbarStyle = useAuthStore(s => s.seekbarStyle);
@@ -1072,7 +1058,7 @@ export default function WaveformSeek({ trackId }: Props) {
   // Imperative subscription — no React re-renders from progress changes.
   // Static styles draw here; animated styles only update refs.
   useEffect(() => {
-    return usePlayerStore.subscribe((state, prev) => {
+    return subscribePlaybackProgress((state, prev) => {
       if (state.progress === prev.progress && state.buffered === prev.buffered) return;
       // While user drags, keep the local preview stable. External progress ticks
       // during streaming/recovery would otherwise fight the cursor and flicker.
@@ -1094,6 +1080,13 @@ export default function WaveformSeek({ trackId }: Props) {
       }
       progressRef.current = state.progress;
       bufferedRef.current = state.buffered;
+      progressAnchorRef.current = {
+        progress: state.progress,
+        atMs: performance.now(),
+      };
+      visualTargetProgressRef.current = isBarQuantizedSeekStyle(styleRef.current)
+        ? quantizeProgressByBars(state.progress)
+        : state.progress;
       // Static styles always redraw on progress; animated styles let the rAF
       // loop drive paints. In `static` animation mode we skip the rAF loop
       // entirely, so animated styles also need to repaint here on every tick.
@@ -1119,7 +1112,7 @@ export default function WaveformSeek({ trackId }: Props) {
           lastStaticDrawProgressRef.current = state.progress;
           lastStaticDrawBufferedRef.current = state.buffered;
         }
-        drawSeekbar(canvas, styleRef.current, heightsRef.current, state.progress, state.buffered);
+        drawSeekbar(canvas, styleRef.current, heightsRef.current, visualProgressRef.current, state.buffered);
       }
     });
   }, []);
@@ -1169,7 +1162,7 @@ export default function WaveformSeek({ trackId }: Props) {
       }
     };
     const tick = () => {
-      if (document.hidden || window.__psyHidden || window.__psyBlurred) {
+      if (document.hidden || window.__psyHidden) {
         pollId = window.setTimeout(() => {
           pollId = null;
           tick();
@@ -1192,6 +1185,66 @@ export default function WaveformSeek({ trackId }: Props) {
     tick();
     return () => stop();
   }, [seekbarStyle, animationMode]);
+
+  // Smoothly advance progress between sparse transport ticks.
+  useEffect(() => {
+    if (!isPlaying || duration <= 0 || !isFinite(duration)) return;
+    let rafId: number | null = null;
+    let lastPaintAt = 0;
+    const tick = (now: number) => {
+      if (document.hidden || window.__psyHidden) {
+        rafId = requestAnimationFrame(tick);
+        return;
+      }
+      if (isDragging.current) {
+        rafId = requestAnimationFrame(tick);
+        return;
+      }
+      const wheelPreviewFraction = wheelPreviewFractionRef.current;
+      if (wheelPreviewFraction != null && Date.now() < wheelPreviewUntilRef.current) {
+        rafId = requestAnimationFrame(tick);
+        return;
+      }
+      if (pendingCommittedSeekRef.current) {
+        rafId = requestAnimationFrame(tick);
+        return;
+      }
+      const anchor = progressAnchorRef.current;
+      const elapsedSec = Math.max(0, (now - anchor.atMs) / 1000);
+      const predicted = Math.max(0, Math.min(1, anchor.progress + elapsedSec / duration));
+      const nextTargetProgress = isBarQuantizedSeekStyle(styleRef.current)
+        ? quantizeProgressByBars(predicted)
+        : predicted;
+      if (Math.abs(nextTargetProgress - visualTargetProgressRef.current) > 0.000001) {
+        visualTargetProgressRef.current = nextTargetProgress;
+      }
+      const currentVisual = visualProgressRef.current;
+      const targetVisual = visualTargetProgressRef.current;
+      const delta = targetVisual - currentVisual;
+      if (Math.abs(delta) > 0.000001) {
+        const smoothing = isBarQuantizedSeekStyle(styleRef.current) ? 0.22 : 0.28;
+        const nextVisualProgress = Math.abs(delta) < 0.002
+          ? targetVisual
+          : currentVisual + delta * smoothing;
+        visualProgressRef.current = nextVisualProgress;
+        progressRef.current = nextVisualProgress;
+        const needsDirectDraw =
+          !ANIMATED_STYLES.has(styleRef.current) || animationModeRef.current === 'static';
+        if (needsDirectDraw && now - lastPaintAt >= INTERPOLATION_PAINT_MIN_MS) {
+          const canvas = canvasRef.current;
+          if (canvas) {
+            drawSeekbar(canvas, styleRef.current, heightsRef.current, nextVisualProgress, bufferedRef.current, animStateRef.current);
+            lastPaintAt = now;
+          }
+        }
+      }
+      rafId = requestAnimationFrame(tick);
+    };
+    rafId = requestAnimationFrame(tick);
+    return () => {
+      if (rafId != null) cancelAnimationFrame(rafId);
+    };
+  }, [duration, isPlaying]);
 
   // Resize observer.
   useEffect(() => {
@@ -1222,6 +1275,10 @@ export default function WaveformSeek({ trackId }: Props) {
   seekRef.current = seek;
   const pendingSeekRef = useRef<number | null>(null);
   const pendingCommittedSeekRef = useRef<{ fraction: number; setAtMs: number } | null>(null);
+  const progressAnchorRef = useRef<{ progress: number; atMs: number }>({
+    progress: progressRef.current,
+    atMs: performance.now(),
+  });
   const wheelSeekTimerRef = useRef<number | null>(null);
   const queuedWheelSeekFractionRef = useRef<number | null>(null);
   const wheelPreviewFractionRef = useRef<number | null>(null);
@@ -1240,6 +1297,12 @@ export default function WaveformSeek({ trackId }: Props) {
   // responsiveness; the actual seek is committed on mouseup.
   const previewFraction = (fraction: number) => {
     progressRef.current = fraction;
+    visualProgressRef.current = fraction;
+    visualTargetProgressRef.current = fraction;
+    progressAnchorRef.current = {
+      progress: fraction,
+      atMs: performance.now(),
+    };
     pendingSeekRef.current = fraction;
     const canvas = canvasRef.current;
     if (canvas && !ANIMATED_STYLES.has(styleRef.current)) {
@@ -1277,7 +1340,7 @@ export default function WaveformSeek({ trackId }: Props) {
   }, []);
 
   return (
-    <div className="waveform-seek-host">
+    <div style={{ position: 'relative', width: '100%' }}>
       {hoverPct !== null && duration > 0 && (
         <span
           className="player-volume-pct"
@@ -1288,8 +1351,7 @@ export default function WaveformSeek({ trackId }: Props) {
       )}
       <canvas
         ref={canvasRef}
-        className="waveform-seek-canvas"
-        style={{ cursor: trackId ? 'pointer' : 'default' }}
+        style={{ width: '100%', height: '24px', cursor: trackId ? 'pointer' : 'default', display: 'block' }}
         onWheel={e => {
           if (!trackIdRef.current || duration <= 0 || isDragging.current) return;
           e.preventDefault();
@@ -1305,6 +1367,12 @@ export default function WaveformSeek({ trackId }: Props) {
 
           // Preventive UI update: move visual playhead immediately on every wheel event.
           progressRef.current = nextFraction;
+          visualProgressRef.current = nextFraction;
+          visualTargetProgressRef.current = nextFraction;
+          progressAnchorRef.current = {
+            progress: nextFraction,
+            atMs: performance.now(),
+          };
           wheelPreviewFractionRef.current = nextFraction;
           wheelPreviewUntilRef.current = now + WHEEL_SEEK_DEBOUNCE_MS;
           const canvas = canvasRef.current;

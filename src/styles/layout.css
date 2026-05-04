@@ -1613,23 +1613,6 @@ html[data-platform="windows"] .player-bar.floating {
 .player-waveform-wrap {
   flex: 1;
   min-width: 0;
-  contain: paint;
-  isolation: isolate;
-}
-
-.waveform-seek-host {
-  position: relative;
-  width: 100%;
-  contain: layout paint;
-  isolation: isolate;
-}
-
-.waveform-seek-canvas {
-  width: 100%;
-  height: 24px;
-  display: block;
-  transform: translateZ(0);
-  backface-visibility: hidden;
 }
 
 .player-time {

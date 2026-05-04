@@ -1,6 +1,6 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { useShallow } from 'zustand/react/shallow';
-import { usePlayerStore } from '../store/playerStore';
+import { usePlayerStore, getPlaybackProgressSnapshot, subscribePlaybackProgress } from '../store/playerStore';
 import type { LrcLine } from '../api/lrclib';
 import { useLyrics, type WordLyricsLine } from '../hooks/useLyrics';
 import { useAuthStore } from '../store/authStore';
@@ -126,8 +126,8 @@ export default function LyricsPane({ currentTrack }: Props) {
       prevActive.current = { line: lineIdx, word: wordIdx };
     };
 
-    apply(usePlayerStore.getState().currentTime);
-    return usePlayerStore.subscribe(s => apply(s.currentTime));
+    apply(getPlaybackProgressSnapshot().currentTime);
+    return subscribePlaybackProgress(s => apply(s.currentTime));
   }, [useWords, hasSynced, wordLines, syncedLines, scrollToLine]);
 
   if (!currentTrack) {

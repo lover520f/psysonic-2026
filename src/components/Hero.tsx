@@ -69,6 +69,7 @@ export default function Hero({ albums: albumsProp }: HeroProps = {}) {
   const [activeIdx, setActiveIdx] = useState(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const windowHidden = useWindowVisibility();
+  const [windowBlurred, setWindowBlurred] = useState<boolean>(() => Boolean(window.__psyBlurred));
   const heroRef = useRef<HTMLDivElement | null>(null);
   const heroScrollRootRef = useRef<HTMLElement | null>(null);
   const visibilityRafRef = useRef<number | null>(null);
@@ -142,6 +143,19 @@ export default function Hero({ albums: albumsProp }: HeroProps = {}) {
   }, [updateHeroVisibility]);
 
   useEffect(() => {
+    const updateBlurState = () => {
+      setWindowBlurred(Boolean(window.__psyBlurred));
+    };
+    window.addEventListener('focus', updateBlurState);
+    window.addEventListener('blur', updateBlurState);
+    updateBlurState();
+    return () => {
+      window.removeEventListener('focus', updateBlurState);
+      window.removeEventListener('blur', updateBlurState);
+    };
+  }, []);
+
+  useEffect(() => {
     if (heroInView || windowHidden) return;
     // Recovery guard: if a scroll/RAF event was missed while hero was outside
     // viewport, keep checking briefly so autoplay/background resume immediately
@@ -177,27 +191,27 @@ export default function Hero({ albums: albumsProp }: HeroProps = {}) {
   const startTimer = useCallback((len: number) => {
     if (timerRef.current) clearInterval(timerRef.current);
     timerRef.current = null;
-    if (len <= 1 || windowHidden || !heroInViewRef.current || !computeHeroVisibleNow()) return;
+    if (len <= 1 || windowHidden || windowBlurred || !heroInViewRef.current || !computeHeroVisibleNow()) return;
     timerRef.current = setInterval(() => {
       const visibleNow = computeHeroVisibleNow();
       if (!visibleNow && heroInViewRef.current) setHeroInView(false);
-      if (document.hidden || window.__psyHidden || !heroInViewRef.current || !visibleNow) {
+      if (document.hidden || window.__psyHidden || window.__psyBlurred || !heroInViewRef.current || !visibleNow) {
         if (timerRef.current) clearInterval(timerRef.current);
         timerRef.current = null;
         return;
       }
       setActiveIdx(prev => (prev + 1) % len);
     }, INTERVAL_MS);
-  }, [windowHidden, computeHeroVisibleNow]);
+  }, [windowHidden, windowBlurred, computeHeroVisibleNow]);
 
   useEffect(() => {
     // Hard-stop timer immediately when hero leaves viewport.
-    if (heroInView) return;
+    if (heroInView && !windowBlurred) return;
     if (timerRef.current) {
       clearInterval(timerRef.current);
       timerRef.current = null;
     }
-  }, [heroInView]);
+  }, [heroInView, windowBlurred]);
 
   useEffect(() => {
     startTimer(albums.length);

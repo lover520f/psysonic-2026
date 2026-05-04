@@ -1189,7 +1189,7 @@ export default function Sidebar({
                 <span>Set runtime logging mode to Off</span>
               </label>
             </details>
-            <details className="sidebar-perf-modal__phase" open>
+            <details className="sidebar-perf-modal__phase">
               <summary className="sidebar-perf-modal__phase-title">Phase 2 — Mainstage (Center Content)</summary>
               <label className="sidebar-perf-modal__item">
                 <input
@@ -1358,6 +1358,73 @@ export default function Sidebar({
                   <span>Disable Albums card grid (`AlbumCard` list)</span>
                 </label>
               </details>
+            </details>
+            <details className="sidebar-perf-modal__phase" open>
+              <summary className="sidebar-perf-modal__phase-title">Phase 3 — Active diagnostics (quick access)</summary>
+              <label className="sidebar-perf-modal__item">
+                <input
+                  type="checkbox"
+                  checked={perfFlags.disablePlayerProgressUi}
+                  onChange={e => setPerfProbeFlag('disablePlayerProgressUi', e.target.checked)}
+                />
+                <span>Disable player live progress UI updates (time + seek/progress bindings)</span>
+              </label>
+              <label className="sidebar-perf-modal__item">
+                <input
+                  type="checkbox"
+                  checked={perfFlags.disableWaveformCanvas}
+                  onChange={e => setPerfProbeFlag('disableWaveformCanvas', e.target.checked)}
+                />
+                <span>Disable only PlayerBar waveform (`WaveformSeek`)</span>
+              </label>
+              <label className="sidebar-perf-modal__item">
+                <input
+                  type="checkbox"
+                  checked={perfFlags.disableHomeRailArtwork}
+                  onChange={e => setPerfProbeFlag('disableHomeRailArtwork', e.target.checked)}
+                />
+                <span>Disable artwork inside Home rows/rails only</span>
+              </label>
+              <label className="sidebar-perf-modal__item">
+                <input
+                  type="checkbox"
+                  checked={perfFlags.disableMainstageRailArtwork}
+                  onChange={e => setPerfProbeFlag('disableMainstageRailArtwork', e.target.checked)}
+                />
+                <span>Disable artwork inside Home rows/rails</span>
+              </label>
+              <label className="sidebar-perf-modal__item">
+                <input
+                  type="checkbox"
+                  checked={perfFlags.disableMainstageRails}
+                  onChange={e => setPerfProbeFlag('disableMainstageRails', e.target.checked)}
+                />
+                <span>Disable Home rows/rails (`AlbumRow` + `SongRail`)</span>
+              </label>
+              <label className="sidebar-perf-modal__item">
+                <input
+                  type="checkbox"
+                  checked={perfFlags.disableMainstageHeroBackdrop}
+                  onChange={e => setPerfProbeFlag('disableMainstageHeroBackdrop', e.target.checked)}
+                />
+                <span>Disable Hero backdrop/crossfade only</span>
+              </label>
+              <label className="sidebar-perf-modal__item">
+                <input
+                  type="checkbox"
+                  checked={perfFlags.disableHomeArtworkFx}
+                  onChange={e => setPerfProbeFlag('disableHomeArtworkFx', e.target.checked)}
+                />
+                <span>Keep artwork, disable Home card visual effects (hover/overlay/shadows)</span>
+              </label>
+              <label className="sidebar-perf-modal__item">
+                <input
+                  type="checkbox"
+                  checked={perfFlags.disableHomeArtworkClip}
+                  onChange={e => setPerfProbeFlag('disableHomeArtworkClip', e.target.checked)}
+                />
+                <span>Diagnostic: flatten Home artwork clipping (no rounded corners/masks)</span>
+              </label>
             </details>
             <div className="sidebar-perf-modal__actions">
               <button type="button" className="btn btn-ghost" onClick={() => resetPerfProbeFlags()}>

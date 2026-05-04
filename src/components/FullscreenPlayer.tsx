@@ -4,7 +4,7 @@ import {
   ChevronDown, Repeat, Repeat1, Square, Music, Heart, MicVocal,
   Moon, Sunrise,
 } from 'lucide-react';
-import { usePlayerStore } from '../store/playerStore';
+import { usePlayerStore, getPlaybackProgressSnapshot, subscribePlaybackProgress } from '../store/playerStore';
 import { buildCoverArtUrl, coverArtCacheKey, getArtistInfo, star, unstar } from '../api/subsonic';
 import { useCachedUrl } from './CachedImage';
 import { getCachedBlob } from '../utils/imageCache';
@@ -88,8 +88,8 @@ const FsLyricsApple = memo(function FsLyricsApple({ currentTrack }: { currentTra
         setActiveIdx(idx);
       }
     };
-    apply(usePlayerStore.getState().currentTime);
-    return usePlayerStore.subscribe(s => apply(s.currentTime));
+    apply(getPlaybackProgressSnapshot().currentTime);
+    return subscribePlaybackProgress(s => apply(s.currentTime));
   }, [hasSynced, currentTrack?.id]);
 
   // Ease-scroll active line to ~35% from the top of the container.
@@ -129,8 +129,8 @@ const FsLyricsApple = memo(function FsLyricsApple({ currentTrack }: { currentTra
       }
       prevWord.current = { line: li, word: wi };
     };
-    apply(usePlayerStore.getState().currentTime);
-    return usePlayerStore.subscribe(s => apply(s.currentTime));
+    apply(getPlaybackProgressSnapshot().currentTime);
+    return subscribePlaybackProgress(s => apply(s.currentTime));
   }, [useWords, wordLines]);
 
   const handleUserScroll = useCallback(() => {
@@ -275,8 +275,8 @@ const FsLyricsRail = memo(function FsLyricsRail({ currentTrack }: { currentTrack
       }
       prevWord.current = { line: li, word: wi };
     };
-    apply(usePlayerStore.getState().currentTime);
-    return usePlayerStore.subscribe(s => apply(s.currentTime));
+    apply(getPlaybackProgressSnapshot().currentTime);
+    return subscribePlaybackProgress(s => apply(s.currentTime));
   }, [useWords, wordLines]);
 
   if (!currentTrack || loading || !hasSynced) return null;
@@ -457,14 +457,14 @@ const FsSeekbar = memo(function FsSeekbar({ duration }: { duration: number }) {
   }, [seek]);
 
   useEffect(() => {
-    const s = usePlayerStore.getState();
+    const s = getPlaybackProgressSnapshot();
     const pct = s.progress * 100;
     if (timeRef.current)   timeRef.current.textContent  = formatTime(s.currentTime);
     if (playedRef.current) playedRef.current.style.width = `${pct}%`;
     if (bufRef.current)    bufRef.current.style.width    = `${Math.max(pct, s.buffered * 100)}%`;
     if (inputRef.current)  inputRef.current.value        = String(s.progress);
 
-    return usePlayerStore.subscribe(state => {
+    return subscribePlaybackProgress(state => {
       if (isDraggingRef.current) return;
       const p = state.progress * 100;
       if (timeRef.current)   timeRef.current.textContent  = formatTime(state.currentTime);

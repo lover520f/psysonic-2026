@@ -90,6 +90,7 @@ import i18n from './i18n';
 import { switchActiveServer } from './utils/switchActiveServer';
 import {
   usePlayerStore,
+  getPlaybackProgressSnapshot,
   initAudioListeners,
   songToTrack,
   shuffleArray,
@@ -1081,9 +1082,10 @@ function TauriEventBridge() {
       {
         const u = await listen<number>('media:seek-relative', e => {
           const s = usePlayerStore.getState();
+          const p = getPlaybackProgressSnapshot();
           const dur = s.currentTrack?.duration;
           if (!dur) return;
-          s.seek(Math.max(0, s.currentTime + e.payload) / dur);
+          s.seek(Math.max(0, p.currentTime + e.payload) / dur);
         });
         if (cancelled) { u(); return; }
         unlisten.push(u);
@@ -1182,7 +1184,7 @@ function TauriEventBridge() {
         queue_index: s.queueIndex,
         queue_length: s.queue.length,
         is_playing: s.isPlaying,
-        current_time: s.currentTime,
+        current_time: getPlaybackProgressSnapshot().currentTime,
         volume: s.volume,
         repeat_mode: s.repeatMode,
         current_track_user_rating: currentTrackUserRating,

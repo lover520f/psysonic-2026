@@ -6,7 +6,7 @@ import {
   PictureInPicture2, ArrowLeftRight, Moon, Sunrise, Ellipsis,
 } from 'lucide-react';
 import { invoke } from '@tauri-apps/api/core';
-import { usePlayerStore } from '../store/playerStore';
+import { usePlayerStore, getPlaybackProgressSnapshot, subscribePlaybackProgress } from '../store/playerStore';
 import { useShallow } from 'zustand/react/shallow';
 import { useAuthStore } from '../store/authStore';
 import { useThemeStore } from '../store/themeStore';
@@ -41,9 +41,9 @@ const PlaybackTime = memo(function PlaybackTime({ className }: { className?: str
   const spanRef = useRef<HTMLSpanElement>(null);
   useEffect(() => {
     if (spanRef.current) {
-      spanRef.current.textContent = formatTime(usePlayerStore.getState().currentTime);
+      spanRef.current.textContent = formatTime(getPlaybackProgressSnapshot().currentTime);
     }
-    return usePlayerStore.subscribe(state => {
+    return subscribePlaybackProgress(state => {
       if (spanRef.current) spanRef.current.textContent = formatTime(state.currentTime);
     });
   }, []);
@@ -56,12 +56,12 @@ const RemainingTime = memo(function RemainingTime({ duration, className }: { dur
   useEffect(() => {
     const updateRemaining = () => {
       if (spanRef.current) {
-        const remaining = Math.max(0, duration - usePlayerStore.getState().currentTime);
+        const remaining = Math.max(0, duration - getPlaybackProgressSnapshot().currentTime);
         spanRef.current.textContent = `-${formatTime(remaining)}`;
       }
     };
     updateRemaining();
-    return usePlayerStore.subscribe(updateRemaining);
+    return subscribePlaybackProgress(updateRemaining);
   }, [duration]);
   return <span className={className} ref={spanRef} />;
 });

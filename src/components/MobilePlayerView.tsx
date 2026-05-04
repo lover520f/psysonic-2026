@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo, useRef, useEffect, CSSProperties } from 'react';
+import React, { useState, useCallback, useMemo, useRef, useEffect, useSyncExternalStore, CSSProperties } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
@@ -6,7 +6,7 @@ import {
   Shuffle, Repeat, Repeat1, Heart, Music, MicVocal, ListMusic, X,
   Moon, Sunrise,
 } from 'lucide-react';
-import { usePlayerStore, Track } from '../store/playerStore';
+import { usePlayerStore, getPlaybackProgressSnapshot, subscribePlaybackProgress, Track } from '../store/playerStore';
 import { buildCoverArtUrl, coverArtCacheKey, star, unstar } from '../api/subsonic';
 import { useCachedUrl } from './CachedImage';
 import LyricsPane from './LyricsPane';
@@ -164,8 +164,13 @@ export default function MobilePlayerView() {
 
   const currentTrack = usePlayerStore(s => s.currentTrack);
   const isPlaying    = usePlayerStore(s => s.isPlaying);
-  const progress     = usePlayerStore(s => s.progress);
-  const currentTime  = usePlayerStore(s => s.currentTime);
+  const playbackProgress = useSyncExternalStore(
+    onStoreChange => subscribePlaybackProgress(() => onStoreChange()),
+    getPlaybackProgressSnapshot,
+    getPlaybackProgressSnapshot,
+  );
+  const progress = playbackProgress.progress;
+  const currentTime = playbackProgress.currentTime;
   const togglePlay   = usePlayerStore(s => s.togglePlay);
   const { delayModalOpen, setDelayModalOpen, playPauseBind } = usePlaybackDelayPress(togglePlay);
   const transportAnchorRef = useRef<HTMLDivElement>(null);

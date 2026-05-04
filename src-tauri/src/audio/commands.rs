@@ -963,12 +963,19 @@ fn spawn_progress_task(
         0.0
     }
 
+    // Keep near-end detection at 100 ms, but throttle progress IPC to webview.
+    const PROGRESS_EMIT_MIN_MS: u64 = 1500;
+    const PROGRESS_EMIT_MIN_DELTA_SECS: f64 = 0.9;
+
     tokio::spawn(async move {
         let mut near_end_ticks: u32 = 0;
         // Local done-flag reference; swapped on gapless transition.
         let mut current_done = initial_done;
         // Local sample counter; swapped to chained source's counter on transition.
         let mut samples_played = samples_played;
+        let mut last_progress_emit_at = Instant::now() - Duration::from_millis(PROGRESS_EMIT_MIN_MS);
+        let mut last_progress_emit_pos = -1.0f64;
+        let mut last_progress_emit_paused = false;
 
         loop {
             // 100 ms tick keeps near-end detection timely for crossfade/gapless
@@ -1070,7 +1077,20 @@ fn spawn_progress_task(
             };
             let pos = (pos_raw - progress_latency).max(0.0);
 
-            app.emit("audio:progress", ProgressPayload { current_time: pos, duration: dur }).ok();
+            let now = Instant::now();
+            let should_emit_progress = if is_paused != last_progress_emit_paused {
+                true
+            } else if now.duration_since(last_progress_emit_at) >= Duration::from_millis(PROGRESS_EMIT_MIN_MS) {
+                true
+            } else {
+                (pos - last_progress_emit_pos).abs() >= PROGRESS_EMIT_MIN_DELTA_SECS
+            };
+            if should_emit_progress {
+                app.emit("audio:progress", ProgressPayload { current_time: pos, duration: dur }).ok();
+                last_progress_emit_at = now;
+                last_progress_emit_pos = pos;
+                last_progress_emit_paused = is_paused;
+            }
 
             if is_paused {
                 continue;
