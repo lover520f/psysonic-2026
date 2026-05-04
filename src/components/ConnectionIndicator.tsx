@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useRef, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { Check, ChevronDown } from 'lucide-react';
@@ -21,14 +22,37 @@ export default function ConnectionIndicator({ status, isLan, serverName }: Props
   const activeServerId = useAuthStore(s => s.activeServerId);
   const [menuOpen, setMenuOpen] = useState(false);
   const [switchingId, setSwitchingId] = useState<string | null>(null);
+  const [menuFixed, setMenuFixed] = useState({ top: 0, right: 0 });
   const hostRef = useRef<HTMLDivElement>(null);
+  const menuPanelRef = useRef<HTMLDivElement>(null);
 
   const multi = servers.length > 1;
+
+  const updateMenuPosition = useCallback(() => {
+    const el = hostRef.current;
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    setMenuFixed({ top: r.bottom + 6, right: window.innerWidth - r.right });
+  }, []);
+
+  useLayoutEffect(() => {
+    if (!menuOpen) return;
+    updateMenuPosition();
+    const onWin = () => updateMenuPosition();
+    window.addEventListener('resize', onWin);
+    window.addEventListener('scroll', onWin, true);
+    return () => {
+      window.removeEventListener('resize', onWin);
+      window.removeEventListener('scroll', onWin, true);
+    };
+  }, [menuOpen, updateMenuPosition]);
 
   useEffect(() => {
     if (!menuOpen) return;
     const onDown = (e: MouseEvent) => {
-      if (hostRef.current?.contains(e.target as Node)) return;
+      const t = e.target as Node;
+      if (hostRef.current?.contains(t)) return;
+      if (menuPanelRef.current?.contains(t)) return;
       setMenuOpen(false);
     };
     const onKey = (e: KeyboardEvent) => {
@@ -103,55 +127,74 @@ export default function ConnectionIndicator({ status, isLan, serverName }: Props
           </span>
         </div>
       </div>
-      {multi && menuOpen && (
-        <div
-          className="nav-library-dropdown-panel connection-indicator-dropdown-panel"
-          role="menu"
-          aria-label={t('connection.switchServerTitle')}
-        >
+      {multi &&
+        menuOpen &&
+        typeof document !== 'undefined' &&
+        createPortal(
           <div
+            ref={menuPanelRef}
+            className="nav-library-dropdown-panel connection-indicator-dropdown-panel"
+            role="menu"
+            aria-label={t('connection.switchServerTitle')}
             style={{
-              fontSize: 10,
-              fontWeight: 600,
-              letterSpacing: '0.08em',
-              textTransform: 'uppercase',
-              color: 'var(--text-muted)',
-              padding: '6px 10px 4px',
+              position: 'fixed',
+              top: menuFixed.top,
+              right: menuFixed.right,
+              minWidth: 220,
+              maxWidth: 'min(320px, 85vw)',
+              zIndex: 10050,
             }}
           >
-            {t('connection.switchServerTitle')}
-          </div>
-          {servers.map(srv => {
-            const active = srv.id === activeServerId;
-            const busy = switchingId !== null;
-            const labelText = serverListDisplayLabel(srv, servers);
-            return (
-              <button
-                key={srv.id}
-                type="button"
-                role="menuitem"
-                className={`nav-library-dropdown-item${active ? ' nav-library-dropdown-item--selected' : ''}`}
-                disabled={busy}
-                onClick={() => onPickServer(srv)}
-              >
-                <span className="nav-library-dropdown-item-label">{labelText}</span>
-                {switchingId === srv.id ? (
-                  <div className="spinner" style={{ width: 14, height: 14, flexShrink: 0 }} aria-hidden />
-                ) : active ? (
-                  <Check size={16} className="nav-library-dropdown-check" aria-hidden />
-                ) : (
-                  <span className="nav-library-dropdown-check-spacer" aria-hidden />
-                )}
-              </button>
-            );
-          })}
-          <div style={{ borderTop: '1px solid color-mix(in srgb, var(--text-muted) 15%, transparent)', marginTop: 2, paddingTop: 2 }} />
-          <button type="button" className="nav-library-dropdown-item" onClick={goServerSettings}>
-            <span className="nav-library-dropdown-item-label">{t('connection.manageServers')}</span>
-            <span className="nav-library-dropdown-check-spacer" aria-hidden />
-          </button>
-        </div>
-      )}
+            <div
+              style={{
+                fontSize: 10,
+                fontWeight: 600,
+                letterSpacing: '0.08em',
+                textTransform: 'uppercase',
+                color: 'var(--text-muted)',
+                padding: '6px 10px 4px',
+              }}
+            >
+              {t('connection.switchServerTitle')}
+            </div>
+            {servers.map(srv => {
+              const active = srv.id === activeServerId;
+              const busy = switchingId !== null;
+              const labelText = serverListDisplayLabel(srv, servers);
+              return (
+                <button
+                  key={srv.id}
+                  type="button"
+                  role="menuitem"
+                  className={`nav-library-dropdown-item${active ? ' nav-library-dropdown-item--selected' : ''}`}
+                  disabled={busy}
+                  onClick={() => onPickServer(srv)}
+                >
+                  <span className="nav-library-dropdown-item-label">{labelText}</span>
+                  {switchingId === srv.id ? (
+                    <div className="spinner" style={{ width: 14, height: 14, flexShrink: 0 }} aria-hidden />
+                  ) : active ? (
+                    <Check size={16} className="nav-library-dropdown-check" aria-hidden />
+                  ) : (
+                    <span className="nav-library-dropdown-check-spacer" aria-hidden />
+                  )}
+                </button>
+              );
+            })}
+            <div
+              style={{
+                borderTop: '1px solid color-mix(in srgb, var(--text-muted) 15%, transparent)',
+                marginTop: 2,
+                paddingTop: 2,
+              }}
+            />
+            <button type="button" className="nav-library-dropdown-item" onClick={goServerSettings}>
+              <span className="nav-library-dropdown-item-label">{t('connection.manageServers')}</span>
+              <span className="nav-library-dropdown-check-spacer" aria-hidden />
+            </button>
+          </div>,
+          document.body
+        )}
     </div>
   );
 }

@@ -6019,6 +6019,7 @@ html.no-compositing .fs-seekbar-played {
   flex-shrink: 0;
 }
 
+/* Server switch menu is portaled to body (ConnectionIndicator); rules kept for any inline-less use. */
 .connection-indicator-dropdown-panel {
   position: absolute;
   top: calc(100% + 6px);
