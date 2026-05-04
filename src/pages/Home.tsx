@@ -10,25 +10,20 @@ import { useHomeStore } from '../store/homeStore';
 import { useAuthStore } from '../store/authStore';
 import { filterAlbumsByMixRatings, getMixMinRatingsConfigFromAuth } from '../utils/mixRatingFilter';
 import { usePerfProbeFlags } from '../utils/perfFlags';
-import { IS_LINUX } from '../utils/platform';
 
 /** Match Random Albums overshoot when mix filter uses album/artist axes so hero + discover row can still fill. */
 const HOME_RANDOM_FETCH = 100;
 const HOME_HERO_COUNT = 8;
 const HOME_DISCOVER_SLICE = 20;
 const HOME_DISCOVER_SONGS_SIZE = 18;
-const HOME_ALBUM_ROW_ARTWORK_SIZE = 160;
-const HOME_SONG_RAIL_ARTWORK_SIZE = 128;
-const HOME_DIRECT_IMAGE_SRC = true;
+const HOME_ALBUM_ROW_ARTWORK_SIZE = 300;
+const HOME_SONG_RAIL_ARTWORK_SIZE = 200;
+const HOME_DIRECT_IMAGE_SRC = false;
 const HOME_ARTWORK_WINDOWING = true;
 const HOME_ALBUM_ROW_INITIAL_ARTWORK_BUDGET = 3;
 const HOME_SONG_RAIL_INITIAL_ARTWORK_BUDGET = 4;
 // Keep artwork enabled across Home rows in normal mode.
 const HOME_ARTWORK_VISIBLE_ROW_BUDGET_WHEN_ENABLED = 8;
-// Permanent mitigation: strip expensive card FX on Home while keeping artwork visible.
-const HOME_FORCE_LITE_ARTWORK_FX = true;
-// Linux/WebKitGTK: flattened artwork clipping avoids expensive compositor paths.
-const HOME_FORCE_FLAT_ARTWORK_CLIP = IS_LINUX;
 
 export default function Home() {
   const perfFlags = usePerfProbeFlags();
@@ -172,8 +167,8 @@ export default function Home() {
     mostPlayed.length > 0 &&
     reserveArtworkRow();
 
-  const homeLiteArtworkFx = HOME_FORCE_LITE_ARTWORK_FX || perfFlags.disableHomeArtworkFx;
-  const homeFlatArtworkClip = HOME_FORCE_FLAT_ARTWORK_CLIP || perfFlags.disableHomeArtworkClip;
+  const homeLiteArtworkFx = perfFlags.disableHomeArtworkFx;
+  const homeFlatArtworkClip = perfFlags.disableHomeArtworkClip;
   return (
     <div className={`animate-fade-in${homeLiteArtworkFx ? ' home-lite-artwork' : ''}${homeFlatArtworkClip ? ' home-flat-artwork-clip' : ''}`}>
       {!perfFlags.disableMainstageHero && isVisible('hero') && <Hero albums={heroAlbums} />}

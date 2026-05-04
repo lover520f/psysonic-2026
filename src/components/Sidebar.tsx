@@ -1097,7 +1097,15 @@ export default function Sidebar({
                   checked={perfFlags.disableWaveformCanvas}
                   onChange={e => setPerfProbeFlag('disableWaveformCanvas', e.target.checked)}
                 />
-                <span>Disable waveform seekbar canvas</span>
+                <span>Disable only PlayerBar waveform (`WaveformSeek`)</span>
+              </label>
+              <label className="sidebar-perf-modal__item">
+                <input
+                  type="checkbox"
+                  checked={perfFlags.disablePlayerProgressUi}
+                  onChange={e => setPerfProbeFlag('disablePlayerProgressUi', e.target.checked)}
+                />
+                <span>Disable player live progress UI updates (time + seek/progress bindings)</span>
               </label>
               <label className="sidebar-perf-modal__item">
                 <input

@@ -2,6 +2,7 @@ import { useSyncExternalStore } from 'react';
 
 export type PerfProbeFlags = {
   disableWaveformCanvas: boolean;
+  disablePlayerProgressUi: boolean;
   disableMarqueeScroll: boolean;
   disableBackdropBlur: boolean;
   disableCssAnimations: boolean;
@@ -29,6 +30,7 @@ const STORAGE_KEY = 'psysonic_perf_probe_flags_v1';
 
 const DEFAULT_FLAGS: PerfProbeFlags = {
   disableWaveformCanvas: false,
+  disablePlayerProgressUi: false,
   disableMarqueeScroll: false,
   disableBackdropBlur: false,
   disableCssAnimations: false,
@@ -69,6 +71,7 @@ function applyFlagsToDom(next: PerfProbeFlags): void {
   if (typeof document === 'undefined') return;
   const root = document.documentElement;
   root.dataset.perfDisableWaveform = next.disableWaveformCanvas ? 'true' : 'false';
+  root.dataset.perfDisablePlayerProgressUi = next.disablePlayerProgressUi ? 'true' : 'false';
   root.dataset.perfDisableMarquee = next.disableMarqueeScroll ? 'true' : 'false';
   root.dataset.perfDisableBlur = next.disableBackdropBlur ? 'true' : 'false';
   root.dataset.perfDisableAnimations = next.disableCssAnimations ? 'true' : 'false';

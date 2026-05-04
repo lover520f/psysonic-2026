@@ -22,6 +22,7 @@ import {
   getMixMinRatingsConfigFromAuth,
   passesMixMinRatings,
 } from '../utils/mixRatingFilter';
+import { getPerfProbeFlags } from '../utils/perfFlags';
 
 const QUEUE_VISIBILITY_STORAGE_KEY = 'psysonic_queue_visible';
 
@@ -1200,6 +1201,31 @@ function handleAudioPlaying(_duration: number) {
 
 function handleAudioProgress(current_time: number, duration: number) {
   bumpUiPerfCounter('audioProgressEvents');
+  const perfFlags = getPerfProbeFlags();
+  if (perfFlags.disablePlayerProgressUi) {
+    const store = usePlayerStore.getState();
+    const track = store.currentTrack;
+    if (!track) return;
+    const dur = duration > 0 ? duration : track.duration;
+    if (dur <= 0) return;
+    const progress = current_time / dur;
+    // Keep server resume/scrobble side-effects alive while UI updates are intentionally frozen.
+    if (store.isPlaying && !store.currentRadio) {
+      const now = Date.now();
+      if (now - lastQueueHeartbeatAt >= 15_000) {
+        void flushQueueSyncToServer(store.queue, track, current_time);
+      }
+    }
+    if (progress >= 0.5 && !store.scrobbled) {
+      usePlayerStore.setState({ scrobbled: true });
+      scrobbleSong(track.id, Date.now());
+      const { scrobblingEnabled, lastfmSessionKey } = useAuthStore.getState();
+      if (scrobblingEnabled && lastfmSessionKey) {
+        lastfmScrobble(track, Date.now(), lastfmSessionKey);
+      }
+    }
+    return;
+  }
   // While a seek is pending, the store already holds the optimistic target
   // position.  Accepting stale progress from the Rust engine would briefly
   // snap the waveform back to the old position before the seek completes.

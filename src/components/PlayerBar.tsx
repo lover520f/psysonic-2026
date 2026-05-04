@@ -26,6 +26,7 @@ import PlaybackDelayModal from './PlaybackDelayModal';
 import PlaybackScheduleBadge from './PlaybackScheduleBadge';
 import { usePlaybackScheduleRemaining } from '../utils/playbackScheduleFormat';
 import { usePreviewStore } from '../store/previewStore';
+import { usePerfProbeFlags } from '../utils/perfFlags';
 
 function formatTime(seconds: number): string {
   if (!seconds || isNaN(seconds)) return '0:00';
@@ -117,6 +118,7 @@ export default function PlayerBar() {
   const [utilityMenuStyle, setUtilityMenuStyle] = useState<React.CSSProperties>({});
   const volumeWheelMenuTimerRef = useRef<number | null>(null);
   const [suppressOverflowTooltip, setSuppressOverflowTooltip] = useState(false);
+  const perfFlags = usePerfProbeFlags();
 
   useEffect(() => {
     if (!floatingPlayerBar) return;
@@ -530,7 +532,9 @@ export default function PlayerBar() {
           <>
             <PlaybackTime className="player-time" />
             <div className="player-waveform-wrap">
-              <WaveformSeek trackId={currentTrack?.id} />
+              {perfFlags.disableWaveformCanvas
+                ? <div className="radio-progress-bar" aria-hidden />
+                : <WaveformSeek trackId={currentTrack?.id} />}
             </div>
             <span
               className="player-time player-time-toggle"
