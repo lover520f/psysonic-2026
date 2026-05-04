@@ -124,17 +124,33 @@ export default function Hero({ albums: albumsProp }: HeroProps = {}) {
       });
     };
     const onResize = () => updateHeroVisibility();
+    const onFocusLike = () => updateHeroVisibility();
     root?.addEventListener('scroll', onScroll, { passive: true });
     window.addEventListener('resize', onResize);
+    window.addEventListener('focus', onFocusLike);
+    document.addEventListener('visibilitychange', onFocusLike);
     return () => {
       root?.removeEventListener('scroll', onScroll);
       window.removeEventListener('resize', onResize);
+      window.removeEventListener('focus', onFocusLike);
+      document.removeEventListener('visibilitychange', onFocusLike);
       if (visibilityRafRef.current != null) {
         window.cancelAnimationFrame(visibilityRafRef.current);
         visibilityRafRef.current = null;
       }
     };
   }, [updateHeroVisibility]);
+
+  useEffect(() => {
+    if (heroInView || windowHidden) return;
+    // Recovery guard: if a scroll/RAF event was missed while hero was outside
+    // viewport, keep checking briefly so autoplay/background resume immediately
+    // after returning into view.
+    const id = window.setInterval(() => {
+      updateHeroVisibility();
+    }, 220);
+    return () => window.clearInterval(id);
+  }, [heroInView, windowHidden, updateHeroVisibility]);
 
   useEffect(() => {
     if (albumsProp?.length) { setAlbums(albumsProp); return; }
