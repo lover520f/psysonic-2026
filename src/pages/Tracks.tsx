@@ -15,6 +15,7 @@ import SongRail from '../components/SongRail';
 import VirtualSongList from '../components/VirtualSongList';
 import { playSongNow } from '../utils/playSong';
 import { ndListSongs, ndInvalidateSongsCache } from '../api/navidromeBrowse';
+import { usePerfProbeFlags } from '../utils/perfFlags';
 
 const RANDOM_RAIL_SIZE = 18;
 /** Over-fetch buffer so the client-side `userRating > 0` filter still leaves
@@ -27,6 +28,7 @@ const RATED_RAIL_DISPLAY = 30;
 const RATED_RAIL_CACHE_MS = 60_000;
 
 export default function Tracks() {
+  const perfFlags = usePerfProbeFlags();
   const { t } = useTranslation();
   const navigate = useNavigate();
   const activeServerId = useAuthStore(s => s.activeServerId);
@@ -97,14 +99,16 @@ export default function Tracks() {
 
   return (
     <div className="content-body animate-fade-in tracks-page">
-      <header className="tracks-header">
-        <div className="tracks-header-text">
-          <h1 className="page-title">{t('tracks.title')}</h1>
-          <p className="tracks-subtitle">{t('tracks.subtitle')}</p>
-        </div>
-      </header>
+      {!perfFlags.disableMainstageStickyHeader && (
+        <header className="tracks-header">
+          <div className="tracks-header-text">
+            <h1 className="page-title">{t('tracks.title')}</h1>
+            <p className="tracks-subtitle">{t('tracks.subtitle')}</p>
+          </div>
+        </header>
+      )}
 
-      {hero && (
+      {!perfFlags.disableMainstageHero && hero && (
         <section className="tracks-hero">
           <div className="tracks-hero-cover">
             {heroCoverUrl ? (
@@ -168,7 +172,7 @@ export default function Tracks() {
         </section>
       )}
 
-      {ratedSupported && (ratedLoading || rated.length > 0) && (
+      {!perfFlags.disableMainstageRails && ratedSupported && (ratedLoading || rated.length > 0) && (
         <SongRail
           title={t('tracks.railHighlyRated')}
           songs={rated}
@@ -177,17 +181,21 @@ export default function Tracks() {
         />
       )}
 
-      <SongRail
-        title={t('tracks.railRandom')}
-        songs={railSongs}
-        loading={randomLoading}
-        onReroll={rerollRandom}
-      />
+      {!perfFlags.disableMainstageRails && (
+        <SongRail
+          title={t('tracks.railRandom')}
+          songs={railSongs}
+          loading={randomLoading}
+          onReroll={rerollRandom}
+        />
+      )}
 
-      <VirtualSongList
-        title={t('tracks.browseTitle')}
-        emptyBrowseText={t('tracks.browseUnsupported')}
-      />
+      {!perfFlags.disableMainstageVirtualLists && (
+        <VirtualSongList
+          title={t('tracks.browseTitle')}
+          emptyBrowseText={t('tracks.browseUnsupported')}
+        />
+      )}
     </div>
   );
 }

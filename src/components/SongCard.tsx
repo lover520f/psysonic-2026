@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+import React, { memo, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Play, ListPlus, Star } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -11,14 +11,25 @@ import { useOrbitSongRowBehavior } from '../hooks/useOrbitSongRowBehavior';
 
 interface SongCardProps {
   song: SubsonicSong;
+  disableArtwork?: boolean;
+  artworkSize?: number;
+  directImageSrc?: boolean;
 }
 
-function SongCard({ song }: SongCardProps) {
+function SongCard({ song, disableArtwork = false, artworkSize = 200, directImageSrc = false }: SongCardProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const openContextMenu = usePlayerStore(s => s.openContextMenu);
   const enqueue = usePlayerStore(s => s.enqueue);
-  const coverUrl = song.coverArt ? buildCoverArtUrl(song.coverArt, 200) : '';
+  // buildCoverArtUrl emits a salted URL; memoize to avoid churn on rerenders.
+  const coverUrl = useMemo(
+    () => (song.coverArt ? buildCoverArtUrl(song.coverArt, artworkSize) : ''),
+    [song.coverArt, artworkSize],
+  );
+  const coverCacheKey = useMemo(
+    () => (song.coverArt ? coverArtCacheKey(song.coverArt, artworkSize) : ''),
+    [song.coverArt, artworkSize],
+  );
   const psyDrag = useDragDrop();
   const { orbitActive, addTrackToOrbit } = useOrbitSongRowBehavior();
 
@@ -74,13 +85,24 @@ function SongCard({ song }: SongCardProps) {
       }}
     >
       <div className="song-card-cover">
-        {coverUrl ? (
-          <CachedImage
-            src={coverUrl}
-            cacheKey={coverArtCacheKey(song.coverArt!, 200)}
-            alt={`${song.album} Cover`}
-            loading="lazy"
-          />
+        {!disableArtwork && coverUrl ? (
+          directImageSrc ? (
+            <img
+              src={coverUrl}
+              alt={`${song.album} Cover`}
+              loading="lazy"
+              decoding="async"
+              fetchPriority="low"
+            />
+          ) : (
+            <CachedImage
+              src={coverUrl}
+              cacheKey={coverCacheKey}
+              alt={`${song.album} Cover`}
+              loading="lazy"
+              decoding="async"
+            />
+          )
         ) : (
           <div className="song-card-cover-placeholder">
             <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">

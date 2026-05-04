@@ -107,6 +107,7 @@ import { DEFAULT_IN_APP_BINDINGS, canRunShortcutActionInMiniWindow, executeCliPl
 import { matchInAppShortcutAction } from './shortcuts/runtime';
 import ZipDownloadOverlay from './components/ZipDownloadOverlay';
 import PasteClipboardHandler from './components/PasteClipboardHandler';
+import { usePerfProbeFlags } from './utils/perfFlags';
 
 const SIDEBAR_COLLAPSED_STORAGE_KEY = 'psysonic_sidebar_collapsed';
 
@@ -233,6 +234,7 @@ function AppShell() {
   const offlineAlbums = useOfflineStore(s => s.albums);
   const hasOfflineContent = Object.values(offlineAlbums).some(a => a.serverId === serverId);
   const floatingPlayerBar = useThemeStore(s => s.floatingPlayerBar);
+  const perfFlags = usePerfProbeFlags();
 
   // Mini player → main: route requests dispatched as `psy:navigate`
   // CustomEvents from the bridge land here so React Router can take over.
@@ -657,37 +659,41 @@ function AppShell() {
             railInset="panel"
           >
             <Suspense fallback={null}>
-              <Routes>
-                <Route path="/" element={<Home />} />
-                <Route path="/albums" element={<Albums />} />
-                <Route path="/tracks" element={<Tracks />} />
-                <Route path="/random" element={<RandomLanding />} />
-                <Route path="/random/albums" element={<RandomAlbums />} />
-                <Route path="/album/:id" element={<AlbumDetail />} />
-                <Route path="/artists" element={<Artists />} />
-                <Route path="/artist/:id" element={<ArtistDetail />} />
-                <Route path="/new-releases" element={<NewReleases />} />
-                <Route path="/favorites" element={<Favorites />} />
-                <Route path="/random/mix" element={<RandomMix />} />
-                <Route path="/lucky-mix" element={<LuckyMixPage />} />
-                <Route path="/label/:name" element={<LabelAlbums />} />
-                <Route path="/search" element={<SearchResults />} />
-                <Route path="/search/advanced" element={<AdvancedSearch />} />
-                <Route path="/statistics" element={<Statistics />} />
-                <Route path="/most-played" element={<MostPlayed />} />
-                <Route path="/now-playing" element={isMobile ? <MobilePlayerView /> : <NowPlayingPage />} />
-                <Route path="/settings" element={<Settings />} />
-                <Route path="/whats-new" element={<WhatsNew />} />
-                <Route path="/help" element={<Help />} />
-                <Route path="/offline" element={<OfflineLibrary />} />
-                <Route path="/genres" element={<Genres />} />
-                <Route path="/genres/:name" element={<GenreDetail />} />
-                <Route path="/playlists" element={<Playlists />} />
-                <Route path="/playlists/:id" element={<PlaylistDetail />} />
-                <Route path="/radio" element={<InternetRadio />} />
-                <Route path="/folders" element={<FolderBrowser />} />
-                <Route path="/device-sync" element={<DeviceSync />} />
-              </Routes>
+              {perfFlags.disableMainRouteContentMount ? (
+                <div style={{ minHeight: '60vh' }} />
+              ) : (
+                <Routes>
+                  <Route path="/" element={<Home />} />
+                  <Route path="/albums" element={<Albums />} />
+                  <Route path="/tracks" element={<Tracks />} />
+                  <Route path="/random" element={<RandomLanding />} />
+                  <Route path="/random/albums" element={<RandomAlbums />} />
+                  <Route path="/album/:id" element={<AlbumDetail />} />
+                  <Route path="/artists" element={<Artists />} />
+                  <Route path="/artist/:id" element={<ArtistDetail />} />
+                  <Route path="/new-releases" element={<NewReleases />} />
+                  <Route path="/favorites" element={<Favorites />} />
+                  <Route path="/random/mix" element={<RandomMix />} />
+                  <Route path="/lucky-mix" element={<LuckyMixPage />} />
+                  <Route path="/label/:name" element={<LabelAlbums />} />
+                  <Route path="/search" element={<SearchResults />} />
+                  <Route path="/search/advanced" element={<AdvancedSearch />} />
+                  <Route path="/statistics" element={<Statistics />} />
+                  <Route path="/most-played" element={<MostPlayed />} />
+                  <Route path="/now-playing" element={isMobile ? <MobilePlayerView /> : <NowPlayingPage />} />
+                  <Route path="/settings" element={<Settings />} />
+                  <Route path="/whats-new" element={<WhatsNew />} />
+                  <Route path="/help" element={<Help />} />
+                  <Route path="/offline" element={<OfflineLibrary />} />
+                  <Route path="/genres" element={<Genres />} />
+                  <Route path="/genres/:name" element={<GenreDetail />} />
+                  <Route path="/playlists" element={<Playlists />} />
+                  <Route path="/playlists/:id" element={<PlaylistDetail />} />
+                  <Route path="/radio" element={<InternetRadio />} />
+                  <Route path="/folders" element={<FolderBrowser />} />
+                  <Route path="/device-sync" element={<DeviceSync />} />
+                </Routes>
+              )}
             </Suspense>
           </OverlayScrollArea>
         </div>
@@ -738,7 +744,7 @@ function AppShell() {
           {isQueueVisible ? <PanelRightClose size={14} /> : <PanelRight size={14} />}
         </button>
       )}
-      {!isMobile && <QueuePanel />}
+      {!isMobile && !perfFlags.disableQueuePanelMount && <QueuePanel />}
       {isMobile && !isMobilePlayer && <BottomNav />}
       {!isMobilePlayer && <PlayerBar />}
       {isFullscreenOpen && (
@@ -750,7 +756,7 @@ function AppShell() {
       <GlobalConfirmModal />
       <OrbitAccountPicker />
       <OrbitHelpModal />
-      <TooltipPortal />
+      {!perfFlags.disableTooltipPortal && <TooltipPortal />}
       <AppUpdater />
     </div>
   );
@@ -1152,6 +1158,11 @@ function TauriEventBridge() {
   // `psysonic --info`: JSON snapshot under XDG_RUNTIME_DIR (Rust writes atomically).
   useEffect(() => {
     let tid: ReturnType<typeof setTimeout> | undefined;
+    let lastPublishAt = 0;
+    let lastStableKey = '';
+    let lastPlaying = false;
+    const SNAPSHOT_PLAYING_HEARTBEAT_MS = 4000;
+    const SNAPSHOT_IDLE_HEARTBEAT_MS = 15000;
     const publish = () => {
       const s = usePlayerStore.getState();
       const auth = useAuthStore.getState();
@@ -1183,11 +1194,32 @@ function TauriEventBridge() {
           folders: auth.musicFolders.map(f => ({ id: f.id, name: f.name })),
         },
       };
+      const stableKey = JSON.stringify({
+        trackId: s.currentTrack?.id ?? null,
+        radioId: s.currentRadio?.id ?? null,
+        queueIndex: s.queueIndex,
+        queueLength: s.queue.length,
+        isPlaying: s.isPlaying,
+        volume: Math.round(s.volume * 100),
+        repeatMode: s.repeatMode,
+        serverId: sid ?? null,
+        selected,
+        currentTrackUserRating,
+        currentTrackStarred,
+      });
+      const now = Date.now();
+      const heartbeatMs = s.isPlaying ? SNAPSHOT_PLAYING_HEARTBEAT_MS : SNAPSHOT_IDLE_HEARTBEAT_MS;
+      const stableChanged = stableKey !== lastStableKey;
+      const playingEdge = s.isPlaying !== lastPlaying;
+      if (!stableChanged && !playingEdge && now - lastPublishAt < heartbeatMs) return;
+      lastStableKey = stableKey;
+      lastPlaying = s.isPlaying;
+      lastPublishAt = now;
       invoke('cli_publish_player_snapshot', { snapshot }).catch(() => {});
     };
     publish();
     const schedule = () => {
-      if (tid !== undefined) clearTimeout(tid);
+      if (tid !== undefined) return;
       tid = setTimeout(() => {
         tid = undefined;
         publish();
@@ -1210,6 +1242,7 @@ export default function App() {
   const effectiveTheme = useThemeScheduler();
   const font = useFontStore(s => s.font);
   const [exportPickerOpen, setExportPickerOpen] = useState(false);
+  const perfFlags = usePerfProbeFlags();
 
   // Mini Player window: detected via Tauri window label. Rendered without
   // router / sidebar / full audio listeners — it just listens for state + sends
@@ -1293,7 +1326,7 @@ export default function App() {
       <DragDropProvider>
         <MiniPlayer />
         <GlobalConfirmModal />
-        <TooltipPortal />
+        {!perfFlags.disableTooltipPortal && <TooltipPortal />}
       </DragDropProvider>
     );
   }

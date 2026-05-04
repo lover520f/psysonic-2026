@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+import React, { memo, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Play, ListPlus, HardDriveDownload, Check } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -18,9 +18,22 @@ interface AlbumCardProps {
   onToggleSelect?: (id: string) => void;
   showRating?: boolean;
   selectedAlbums?: SubsonicAlbum[];
+  disableArtwork?: boolean;
+  artworkSize?: number;
+  directImageSrc?: boolean;
 }
 
-function AlbumCard({ album, selected, selectionMode, onToggleSelect, showRating = false, selectedAlbums = [] }: AlbumCardProps) {
+function AlbumCard({
+  album,
+  selected,
+  selectionMode,
+  onToggleSelect,
+  showRating = false,
+  selectedAlbums = [],
+  disableArtwork = false,
+  artworkSize = 300,
+  directImageSrc = false,
+}: AlbumCardProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const openContextMenu = usePlayerStore(s => s.openContextMenu);
@@ -31,7 +44,15 @@ function AlbumCard({ album, selected, selectionMode, onToggleSelect, showRating 
     if (!meta || meta.trackIds.length === 0) return false;
     return meta.trackIds.every(tid => !!s.tracks[`${serverId}:${tid}`]);
   });
-  const coverUrl = album.coverArt ? buildCoverArtUrl(album.coverArt, 300) : '';
+  // buildCoverArtUrl emits a salted URL; memoize to avoid churn on rerenders.
+  const coverUrl = useMemo(
+    () => (album.coverArt ? buildCoverArtUrl(album.coverArt, artworkSize) : ''),
+    [album.coverArt, artworkSize],
+  );
+  const coverCacheKey = useMemo(
+    () => (album.coverArt ? coverArtCacheKey(album.coverArt, artworkSize) : ''),
+    [album.coverArt, artworkSize],
+  );
   const psyDrag = useDragDrop();
   const isNewAlbum = isAlbumRecentlyAdded(album.created);
 
@@ -73,8 +94,24 @@ function AlbumCard({ album, selected, selectionMode, onToggleSelect, showRating 
       }}
     >
       <div className="album-card-cover">
-        {coverUrl ? (
-          <CachedImage src={coverUrl} cacheKey={coverArtCacheKey(album.coverArt!, 300)} alt={`${album.name} Cover`} loading="lazy" />
+        {!disableArtwork && coverUrl ? (
+          directImageSrc ? (
+            <img
+              src={coverUrl}
+              alt={`${album.name} Cover`}
+              loading="lazy"
+              decoding="async"
+              fetchPriority="low"
+            />
+          ) : (
+            <CachedImage
+              src={coverUrl}
+              cacheKey={coverCacheKey}
+              alt={`${album.name} Cover`}
+              loading="lazy"
+              decoding="async"
+            />
+          )
         ) : (
           <div className="album-card-cover-placeholder">
             <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">

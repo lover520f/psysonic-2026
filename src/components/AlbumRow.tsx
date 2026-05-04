@@ -4,6 +4,7 @@ import AlbumCard from './AlbumCard';
 import { ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { usePerfProbeFlags } from '../utils/perfFlags';
 
 interface Props {
   title: string;
@@ -15,23 +16,65 @@ interface Props {
   showRating?: boolean;
   /** Optional content rendered in the row header, left of the scroll-nav. */
   headerExtra?: React.ReactNode;
+  disableArtwork?: boolean;
+  disableInteractivity?: boolean;
+  artworkSize?: number;
+  directImageSrc?: boolean;
+  windowArtworkByViewport?: boolean;
+  initialArtworkBudget?: number;
 }
 
-export default function AlbumRow({ title, titleLink, albums, moreLink, moreText, onLoadMore, showRating, headerExtra }: Props) {
+export default function AlbumRow({
+  title,
+  titleLink,
+  albums,
+  moreLink,
+  moreText,
+  onLoadMore,
+  showRating,
+  headerExtra,
+  disableArtwork = false,
+  disableInteractivity = false,
+  artworkSize,
+  directImageSrc = false,
+  windowArtworkByViewport = false,
+  initialArtworkBudget = 8,
+}: Props) {
+  const perfFlags = usePerfProbeFlags();
+  const artworkDisabled = perfFlags.disableMainstageRailArtwork || disableArtwork;
+  const interactivityDisabled = perfFlags.disableMainstageRailInteractivity || disableInteractivity;
   const { t } = useTranslation();
   const scrollRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const [showLeft, setShowLeft] = useState(false);
   const [showRight, setShowRight] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [artworkBudget, setArtworkBudget] = useState(initialArtworkBudget);
 
   const loadingRef = useRef(false);
 
+  const recomputeArtworkBudget = () => {
+    if (!windowArtworkByViewport) return;
+    const el = scrollRef.current;
+    if (!el) return;
+    const { scrollLeft, clientWidth } = el;
+    const firstCard = el.querySelector<HTMLElement>('.album-card, .artist-card');
+    const cardW = firstCard?.clientWidth || firstCard?.getBoundingClientRect().width || 170;
+    const gridStyles = window.getComputedStyle(el);
+    const gap = Number.parseFloat(gridStyles.columnGap || gridStyles.gap || '16') || 16;
+    const step = Math.max(1, cardW + gap);
+    const visibleCount = Math.ceil((scrollLeft + clientWidth) / step);
+    const nextBudget = Math.max(initialArtworkBudget, visibleCount + 4);
+    setArtworkBudget(prev => (nextBudget > prev ? nextBudget : prev));
+  };
+
   const handleScroll = () => {
+    if (interactivityDisabled) return;
     if (!scrollRef.current) return;
     const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
     setShowLeft(scrollLeft > 0);
     setShowRight(scrollLeft < scrollWidth - clientWidth - 5);
+    recomputeArtworkBudget();
 
     // Auto-load trigger
     if (onLoadMore && !loadingRef.current && scrollLeft > 0 && scrollLeft + clientWidth >= scrollWidth - 300) {
@@ -49,10 +92,27 @@ export default function AlbumRow({ title, titleLink, albums, moreLink, moreText,
   };
 
   useEffect(() => {
+    if (interactivityDisabled) return;
     handleScroll();
+    const raf = window.requestAnimationFrame(() => {
+      // One post-layout pass ensures we account for final grid/card geometry.
+      recomputeArtworkBudget();
+    });
     window.addEventListener('resize', handleScroll);
-    return () => window.removeEventListener('resize', handleScroll);
-  }, [albums]);
+    const ro = new ResizeObserver(() => {
+      recomputeArtworkBudget();
+    });
+    if (scrollRef.current) ro.observe(scrollRef.current);
+    return () => {
+      window.cancelAnimationFrame(raf);
+      window.removeEventListener('resize', handleScroll);
+      ro.disconnect();
+    };
+  }, [albums, interactivityDisabled, windowArtworkByViewport, initialArtworkBudget]);
+
+  useEffect(() => {
+    setArtworkBudget(initialArtworkBudget);
+  }, [initialArtworkBudget, albums.length]);
 
   const scroll = (dir: 'left' | 'right') => {
     if (!scrollRef.current) return;
@@ -74,26 +134,42 @@ export default function AlbumRow({ title, titleLink, albums, moreLink, moreText,
         )}
         <div className="album-row-nav">
           {headerExtra}
-          <button
-            className={`nav-btn ${!showLeft ? 'disabled' : ''}`}
-            onClick={() => scroll('left')}
-            disabled={!showLeft}
-          >
-            <ChevronLeft size={20} />
-          </button>
-          <button
-            className={`nav-btn ${!showRight ? 'disabled' : ''}`}
-            onClick={() => scroll('right')}
-            disabled={!showRight}
-          >
-            <ChevronRight size={20} />
-          </button>
+          {!interactivityDisabled && (
+            <>
+              <button
+                className={`nav-btn ${!showLeft ? 'disabled' : ''}`}
+                onClick={() => scroll('left')}
+                disabled={!showLeft}
+              >
+                <ChevronLeft size={20} />
+              </button>
+              <button
+                className={`nav-btn ${!showRight ? 'disabled' : ''}`}
+                onClick={() => scroll('right')}
+                disabled={!showRight}
+              >
+                <ChevronRight size={20} />
+              </button>
+            </>
+          )}
         </div>
       </div>
       
       <div className="album-grid-wrapper">
-        <div className="album-grid" ref={scrollRef} onScroll={handleScroll}>
-          {albums.map(a => <AlbumCard key={a.id} album={a} showRating={showRating} />)}
+        <div className="album-grid" ref={scrollRef} onScroll={interactivityDisabled ? undefined : handleScroll}>
+          {albums.map((a, idx) => (
+            <AlbumCard
+              key={a.id}
+              album={a}
+              showRating={showRating}
+              disableArtwork={
+                artworkDisabled ||
+                (windowArtworkByViewport && idx >= artworkBudget)
+              }
+              artworkSize={artworkSize}
+              directImageSrc={directImageSrc}
+            />
+          ))}
           {loadingMore && (
             <div className="album-card-more" style={{ cursor: 'default' }}>
               <div style={{ padding: '1rem', background: 'var(--bg-app)', borderRadius: '50%' }}>

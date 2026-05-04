@@ -11,6 +11,7 @@ import { useWindowVisibility } from '../hooks/useWindowVisibility';
 import { useAuthStore } from '../store/authStore';
 import { useThemeStore } from '../store/themeStore';
 import { filterAlbumsByMixRatings, getMixMinRatingsConfigFromAuth } from '../utils/mixRatingFilter';
+import { usePerfProbeFlags } from '../utils/perfFlags';
 
 const INTERVAL_MS = 10000;
 const HERO_ALBUM_COUNT = 8;
@@ -55,6 +56,7 @@ interface HeroProps {
 }
 
 export default function Hero({ albums: albumsProp }: HeroProps = {}) {
+  const perfFlags = usePerfProbeFlags();
   const { t } = useTranslation();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
@@ -150,8 +152,8 @@ export default function Hero({ albums: albumsProp }: HeroProps = {}) {
       onClick={() => navigate(`/album/${album.id}`)}
       style={{ cursor: 'pointer' }}
     >
-      {enableCoverArtBackground && <HeroBg url={stableBgUrl.current} />}
-      {enableCoverArtBackground && <div className="hero-overlay" aria-hidden="true" />}
+      {enableCoverArtBackground && !perfFlags.disableMainstageHeroBackdrop && <HeroBg url={stableBgUrl.current} />}
+      {enableCoverArtBackground && !perfFlags.disableMainstageHeroBackdrop && <div className="hero-overlay" aria-hidden="true" />}
 
       {/* key causes re-mount → animate-fade-in triggers on each album change */}
       <div className="hero-content animate-fade-in" key={album.id}>

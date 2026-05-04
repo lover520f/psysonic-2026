@@ -1,5 +1,6 @@
 import React, { useState, useRef, useLayoutEffect, useEffect, useCallback, useMemo } from 'react';
 import { createPortal } from 'react-dom';
+import { invoke } from '@tauri-apps/api/core';
 import { usePlayerStore } from '../store/playerStore';
 import { useOfflineStore } from '../store/offlineStore';
 import { useOfflineJobStore } from '../store/offlineJobStore';
@@ -28,6 +29,7 @@ import {
   type SidebarNavDropTarget,
 } from '../utils/sidebarNavReorder';
 import { useLuckyMixAvailable } from '../hooks/useLuckyMixAvailable';
+import { resetPerfProbeFlags, setPerfProbeFlag, usePerfProbeFlags } from '../utils/perfFlags';
 
 const SIDEBAR_NAV_LONG_PRESS_MS = 1000;
 const SIDEBAR_NAV_LONG_PRESS_MOVE_CANCEL_PX = 10;
@@ -81,6 +83,12 @@ export default function Sidebar({
   const musicFolders = useAuthStore(s => s.musicFolders);
   const musicLibraryFilterByServer = useAuthStore(s => s.musicLibraryFilterByServer);
   const setMusicLibraryFilter = useAuthStore(s => s.setMusicLibraryFilter);
+  const hotCacheEnabled = useAuthStore(s => s.hotCacheEnabled);
+  const setHotCacheEnabled = useAuthStore(s => s.setHotCacheEnabled);
+  const normalizationEngine = useAuthStore(s => s.normalizationEngine);
+  const setNormalizationEngine = useAuthStore(s => s.setNormalizationEngine);
+  const loggingMode = useAuthStore(s => s.loggingMode);
+  const setLoggingMode = useAuthStore(s => s.setLoggingMode);
   const hasOfflineContent = Object.values(offlineAlbums).some(a => a.serverId === serverId);
   const sidebarItems = useSidebarStore(s => s.items);
   const setSidebarItems = useSidebarStore(s => s.setItems);
@@ -151,6 +159,10 @@ export default function Sidebar({
   const newReleasesRefreshSeqRef = useRef(0);
   const newReleasesPageEnteredAtRef = useRef<number | null>(null);
   const newReleasesResetTimerRef = useRef<number | null>(null);
+  const [perfProbeOpen, setPerfProbeOpen] = useState(false);
+  const perfFlags = usePerfProbeFlags();
+  const [perfCpu, setPerfCpu] = useState<{ app: number; webkit: number; supported: boolean } | null>(null);
+  const [perfDiagRates, setPerfDiagRates] = useState<{ progress: number; waveform: number; home: number } | null>(null);
 
   const newReleasesSeenStorageKey = useMemo(
     () => `${NEW_RELEASES_UNREAD_STORAGE_PREFIX}:${serverId || 'no-server'}:${filterId || 'all'}`,
@@ -572,15 +584,106 @@ export default function Sidebar({
     };
   }, [location.pathname, refreshNewReleasesUnread]);
 
+  useEffect(() => {
+    if (!perfProbeOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setPerfProbeOpen(false);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [perfProbeOpen]);
+
+  useEffect(() => {
+    if (!perfProbeOpen) return;
+    type Snapshot = {
+      supported: boolean;
+      total_jiffies: number;
+      app_jiffies: number;
+      webkit_jiffies: number;
+      logical_cpus: number;
+    };
+    let cancelled = false;
+    let prev: Snapshot | null = null;
+    let prevCounters: { progress: number; waveform: number; home: number } | null = null;
+    let prevCountersAt = 0;
+    let timer: number | null = null;
+    const poll = async () => {
+      try {
+        const snap = await invoke<Snapshot>('performance_cpu_snapshot');
+        if (cancelled) return;
+        if (!snap.supported) {
+          setPerfCpu({ app: 0, webkit: 0, supported: false });
+          return;
+        }
+        if (prev) {
+          const totalDelta = snap.total_jiffies - prev.total_jiffies;
+          const appDelta = snap.app_jiffies - prev.app_jiffies;
+          const webkitDelta = snap.webkit_jiffies - prev.webkit_jiffies;
+          if (totalDelta > 0) {
+            const cpuScale = Math.max(1, snap.logical_cpus || 1) * 100;
+            const appPct = Math.max(0, Math.min(1000, (appDelta / totalDelta) * cpuScale));
+            const webkitPct = Math.max(0, Math.min(1000, (webkitDelta / totalDelta) * cpuScale));
+            setPerfCpu({
+              app: Number.isFinite(appPct) ? appPct : 0,
+              webkit: Number.isFinite(webkitPct) ? webkitPct : 0,
+              supported: true,
+            });
+          }
+        }
+        const now = Date.now();
+        const root = globalThis as unknown as { __psyPerfCounters?: Record<string, number> };
+        const counters = root.__psyPerfCounters ?? {};
+        const nextCounters = {
+          progress: counters.audioProgressEvents ?? 0,
+          waveform: counters.waveformDraws ?? 0,
+          home: counters.homeCommits ?? 0,
+        };
+        if (prevCounters && prevCountersAt > 0) {
+          const dt = Math.max(0.25, (now - prevCountersAt) / 1000);
+          setPerfDiagRates({
+            progress: (nextCounters.progress - prevCounters.progress) / dt,
+            waveform: (nextCounters.waveform - prevCounters.waveform) / dt,
+            home: (nextCounters.home - prevCounters.home) / dt,
+          });
+        }
+        prevCounters = nextCounters;
+        prevCountersAt = now;
+        prev = snap;
+      } catch {
+        if (!cancelled) setPerfCpu({ app: 0, webkit: 0, supported: false });
+      } finally {
+        if (!cancelled) timer = window.setTimeout(poll, 2000);
+      }
+    };
+    void poll();
+    return () => {
+      cancelled = true;
+      if (timer != null) window.clearTimeout(timer);
+    };
+  }, [perfProbeOpen]);
+
+  useEffect(() => {
+    if (!perfProbeOpen) {
+      setPerfCpu(null);
+      setPerfDiagRates(null);
+    }
+  }, [perfProbeOpen]);
+
   return (
     <>
     <aside className={`sidebar animate-slide-in ${isCollapsed ? 'collapsed' : ''}`}>
-      <div className="sidebar-brand">
+      <button
+        type="button"
+        className="sidebar-brand sidebar-brand--button"
+        onClick={() => setPerfProbeOpen(true)}
+        data-tooltip="Performance probe"
+        data-tooltip-pos="right"
+      >
         {isCollapsed
           ? <PSmallLogo style={{ height: '32px', width: 'auto' }} />
           : <PsysonicLogo style={{ height: '28px', width: 'auto' }} />
         }
-      </div>
+      </button>
 
       <button
         className="collapse-btn"
@@ -950,6 +1053,313 @@ export default function Sidebar({
           aria-hidden
         >
           <Trash2 size={22} strokeWidth={2.25} />
+        </div>,
+        document.body,
+      )}
+    {perfProbeOpen &&
+      createPortal(
+        <div className="modal-overlay modal-overlay--perf-probe" onClick={() => setPerfProbeOpen(false)} role="dialog" aria-modal="true">
+          <div
+            className="modal-content sidebar-perf-modal"
+            onClick={e => e.stopPropagation()}
+            style={{ maxWidth: 560 }}
+          >
+            <button className="modal-close" onClick={() => setPerfProbeOpen(false)}><X size={18} /></button>
+            <h3 className="modal-title">Performance Probe</h3>
+            <p className="sidebar-perf-modal__hint">
+              Temporary runtime switches to estimate UI effect cost.
+            </p>
+            <div className="sidebar-perf-modal__cpu">
+              <div className="sidebar-perf-modal__cpu-title">Live CPU (approx)</div>
+              {perfCpu == null ? (
+                <div className="sidebar-perf-modal__cpu-row">Collecting samples…</div>
+              ) : perfCpu.supported ? (
+                <>
+                  <div className="sidebar-perf-modal__cpu-row">psysonic: {perfCpu.app.toFixed(1)}%</div>
+                  <div className="sidebar-perf-modal__cpu-row">WebKitWebProcess: {perfCpu.webkit.toFixed(1)}%</div>
+                  {perfDiagRates && (
+                    <>
+                      <div className="sidebar-perf-modal__cpu-row">audio:progress rate: {perfDiagRates.progress.toFixed(1)}/s</div>
+                      <div className="sidebar-perf-modal__cpu-row">waveform draws rate: {perfDiagRates.waveform.toFixed(1)}/s</div>
+                      <div className="sidebar-perf-modal__cpu-row">Home commits rate: {perfDiagRates.home.toFixed(1)}/s</div>
+                    </>
+                  )}
+                </>
+              ) : (
+                <div className="sidebar-perf-modal__cpu-row">Unavailable on this platform/build.</div>
+              )}
+            </div>
+            <details className="sidebar-perf-modal__phase">
+              <summary className="sidebar-perf-modal__phase-title">Phase 1 — Global / Shell / Network</summary>
+              <label className="sidebar-perf-modal__item">
+                <input
+                  type="checkbox"
+                  checked={perfFlags.disableWaveformCanvas}
+                  onChange={e => setPerfProbeFlag('disableWaveformCanvas', e.target.checked)}
+                />
+                <span>Disable waveform seekbar canvas</span>
+              </label>
+              <label className="sidebar-perf-modal__item">
+                <input
+                  type="checkbox"
+                  checked={perfFlags.disableMarqueeScroll}
+                  onChange={e => setPerfProbeFlag('disableMarqueeScroll', e.target.checked)}
+                />
+                <span>Disable marquee text scrolling</span>
+              </label>
+              <label className="sidebar-perf-modal__item">
+                <input
+                  type="checkbox"
+                  checked={perfFlags.disableBackdropBlur}
+                  onChange={e => setPerfProbeFlag('disableBackdropBlur', e.target.checked)}
+                />
+                <span>Disable backdrop blur effects</span>
+              </label>
+              <label className="sidebar-perf-modal__item">
+                <input
+                  type="checkbox"
+                  checked={perfFlags.disableCssAnimations}
+                  onChange={e => setPerfProbeFlag('disableCssAnimations', e.target.checked)}
+                />
+                <span>Disable CSS animations and transitions</span>
+              </label>
+              <label className="sidebar-perf-modal__item">
+                <input
+                  type="checkbox"
+                  checked={perfFlags.disableOverlayScrollbars}
+                  onChange={e => setPerfProbeFlag('disableOverlayScrollbars', e.target.checked)}
+                />
+                <span>Disable overlay scrollbar engine (JS + rail)</span>
+              </label>
+              <label className="sidebar-perf-modal__item">
+                <input
+                  type="checkbox"
+                  checked={perfFlags.disableTooltipPortal}
+                  onChange={e => setPerfProbeFlag('disableTooltipPortal', e.target.checked)}
+                />
+                <span>Disable global tooltip portal/listeners</span>
+              </label>
+              <label className="sidebar-perf-modal__item">
+                <input
+                  type="checkbox"
+                  checked={perfFlags.disableQueuePanelMount}
+                  onChange={e => setPerfProbeFlag('disableQueuePanelMount', e.target.checked)}
+                />
+                <span>Disable QueuePanel mount (desktop right column)</span>
+              </label>
+              <label className="sidebar-perf-modal__item">
+                <input
+                  type="checkbox"
+                  checked={perfFlags.disableBackgroundPolling}
+                  onChange={e => setPerfProbeFlag('disableBackgroundPolling', e.target.checked)}
+                />
+                <span>Disable background polling (connection + radio metadata)</span>
+              </label>
+              <div className="sidebar-perf-modal__subhead">Engine/network toggles</div>
+              <label className="sidebar-perf-modal__item">
+                <input
+                  type="checkbox"
+                  checked={!hotCacheEnabled}
+                  onChange={e => setHotCacheEnabled(!e.target.checked)}
+                />
+                <span>Disable hot-cache prefetch downloads</span>
+              </label>
+              <label className="sidebar-perf-modal__item">
+                <input
+                  type="checkbox"
+                  checked={normalizationEngine === 'off'}
+                  onChange={e => setNormalizationEngine(e.target.checked ? 'off' : 'loudness')}
+                />
+                <span>Disable normalization engine (set to Off)</span>
+              </label>
+              <label className="sidebar-perf-modal__item">
+                <input
+                  type="checkbox"
+                  checked={loggingMode === 'off'}
+                  onChange={e => setLoggingMode(e.target.checked ? 'off' : 'normal')}
+                />
+                <span>Set runtime logging mode to Off</span>
+              </label>
+            </details>
+            <details className="sidebar-perf-modal__phase" open>
+              <summary className="sidebar-perf-modal__phase-title">Phase 2 — Mainstage (Center Content)</summary>
+              <label className="sidebar-perf-modal__item">
+                <input
+                  type="checkbox"
+                  checked={perfFlags.disableMainRouteContentMount}
+                  onChange={e => setPerfProbeFlag('disableMainRouteContentMount', e.target.checked)}
+                />
+                <span>Disable central route content mount</span>
+              </label>
+              <details className="sidebar-perf-modal__phase sidebar-perf-modal__phase--nested" open>
+                <summary className="sidebar-perf-modal__phase-title">Shared mainstage layers (multiple pages)</summary>
+                <label className="sidebar-perf-modal__item">
+                  <input
+                    type="checkbox"
+                    checked={perfFlags.disableMainstageStickyHeader}
+                    onChange={e => setPerfProbeFlag('disableMainstageStickyHeader', e.target.checked)}
+                  />
+                  <span>Disable sticky headers (Tracks + Albums)</span>
+                </label>
+              </details>
+
+              <details className="sidebar-perf-modal__phase sidebar-perf-modal__phase--nested" open>
+                <summary className="sidebar-perf-modal__phase-title">Home (`/`)</summary>
+                <label className="sidebar-perf-modal__item">
+                  <input
+                    type="checkbox"
+                    checked={perfFlags.disableMainstageHero}
+                    onChange={e => setPerfProbeFlag('disableMainstageHero', e.target.checked)}
+                  />
+                  <span>Disable Home hero block</span>
+                </label>
+                <label className="sidebar-perf-modal__item">
+                  <input
+                    type="checkbox"
+                    checked={perfFlags.disableMainstageHeroBackdrop}
+                    onChange={e => setPerfProbeFlag('disableMainstageHeroBackdrop', e.target.checked)}
+                  />
+                  <span>Disable Hero backdrop/crossfade only</span>
+                </label>
+                <label className="sidebar-perf-modal__item">
+                  <input
+                    type="checkbox"
+                    checked={perfFlags.disableMainstageRails}
+                    onChange={e => setPerfProbeFlag('disableMainstageRails', e.target.checked)}
+                  />
+                  <span>Disable Home rows/rails (`AlbumRow` + `SongRail`)</span>
+                </label>
+                <label className="sidebar-perf-modal__item">
+                  <input
+                    type="checkbox"
+                    checked={perfFlags.disableHomeAlbumRows}
+                    onChange={e => setPerfProbeFlag('disableHomeAlbumRows', e.target.checked)}
+                  />
+                  <span>Disable Home `AlbumRow` sections only</span>
+                </label>
+                <label className="sidebar-perf-modal__item">
+                  <input
+                    type="checkbox"
+                    checked={perfFlags.disableHomeSongRails}
+                    onChange={e => setPerfProbeFlag('disableHomeSongRails', e.target.checked)}
+                  />
+                  <span>Disable Home `SongRail` sections only</span>
+                </label>
+                <label className="sidebar-perf-modal__item">
+                  <input
+                    type="checkbox"
+                    checked={perfFlags.disableMainstageRailArtwork}
+                    onChange={e => setPerfProbeFlag('disableMainstageRailArtwork', e.target.checked)}
+                  />
+                  <span>Disable artwork inside Home rows/rails</span>
+                </label>
+                <label className="sidebar-perf-modal__item">
+                  <input
+                    type="checkbox"
+                    checked={perfFlags.disableHomeRailArtwork}
+                    onChange={e => setPerfProbeFlag('disableHomeRailArtwork', e.target.checked)}
+                  />
+                  <span>Disable artwork inside Home rows/rails only</span>
+                </label>
+                <label className="sidebar-perf-modal__item">
+                  <input
+                    type="checkbox"
+                    checked={perfFlags.disableHomeArtworkFx}
+                    onChange={e => setPerfProbeFlag('disableHomeArtworkFx', e.target.checked)}
+                  />
+                  <span>Keep artwork, disable Home card visual effects (hover/overlay/shadows)</span>
+                </label>
+                <label className="sidebar-perf-modal__item">
+                  <input
+                    type="checkbox"
+                    checked={perfFlags.disableHomeArtworkClip}
+                    onChange={e => setPerfProbeFlag('disableHomeArtworkClip', e.target.checked)}
+                  />
+                  <span>Diagnostic: flatten Home artwork clipping (no rounded corners/masks)</span>
+                </label>
+                <label className="sidebar-perf-modal__item">
+                  <input
+                    type="checkbox"
+                    checked={perfFlags.disableMainstageRailInteractivity}
+                    onChange={e => setPerfProbeFlag('disableMainstageRailInteractivity', e.target.checked)}
+                  />
+                  <span>Disable Home rail scroll/nav handlers</span>
+                </label>
+                <label className="sidebar-perf-modal__item">
+                  <input
+                    type="checkbox"
+                    checked={perfFlags.disableMainstageGridCards}
+                    onChange={e => setPerfProbeFlag('disableMainstageGridCards', e.target.checked)}
+                  />
+                  <span>Disable Home discover artists chip-grid</span>
+                </label>
+              </details>
+
+              <details className="sidebar-perf-modal__phase sidebar-perf-modal__phase--nested" open>
+                <summary className="sidebar-perf-modal__phase-title">Tracks (`/tracks`)</summary>
+                <label className="sidebar-perf-modal__item">
+                  <input
+                    type="checkbox"
+                    checked={perfFlags.disableMainstageHero}
+                    onChange={e => setPerfProbeFlag('disableMainstageHero', e.target.checked)}
+                  />
+                  <span>Disable Tracks hero block</span>
+                </label>
+                <label className="sidebar-perf-modal__item">
+                  <input
+                    type="checkbox"
+                    checked={perfFlags.disableMainstageRails}
+                    onChange={e => setPerfProbeFlag('disableMainstageRails', e.target.checked)}
+                  />
+                  <span>Disable Tracks rails (Highly Rated + Random)</span>
+                </label>
+                <label className="sidebar-perf-modal__item">
+                  <input
+                    type="checkbox"
+                    checked={perfFlags.disableMainstageRailArtwork}
+                    onChange={e => setPerfProbeFlag('disableMainstageRailArtwork', e.target.checked)}
+                  />
+                  <span>Disable artwork inside Tracks rails</span>
+                </label>
+                <label className="sidebar-perf-modal__item">
+                  <input
+                    type="checkbox"
+                    checked={perfFlags.disableMainstageRailInteractivity}
+                    onChange={e => setPerfProbeFlag('disableMainstageRailInteractivity', e.target.checked)}
+                  />
+                  <span>Disable Tracks rail scroll/nav handlers</span>
+                </label>
+                <label className="sidebar-perf-modal__item">
+                  <input
+                    type="checkbox"
+                    checked={perfFlags.disableMainstageVirtualLists}
+                    onChange={e => setPerfProbeFlag('disableMainstageVirtualLists', e.target.checked)}
+                  />
+                  <span>Disable Tracks virtual browse list (`VirtualSongList`)</span>
+                </label>
+              </details>
+
+              <details className="sidebar-perf-modal__phase sidebar-perf-modal__phase--nested" open>
+                <summary className="sidebar-perf-modal__phase-title">Albums (`/albums`)</summary>
+                <label className="sidebar-perf-modal__item">
+                  <input
+                    type="checkbox"
+                    checked={perfFlags.disableMainstageGridCards}
+                    onChange={e => setPerfProbeFlag('disableMainstageGridCards', e.target.checked)}
+                  />
+                  <span>Disable Albums card grid (`AlbumCard` list)</span>
+                </label>
+              </details>
+            </details>
+            <div className="sidebar-perf-modal__actions">
+              <button type="button" className="btn btn-ghost" onClick={() => resetPerfProbeFlags()}>
+                Reset
+              </button>
+              <button type="button" className="btn btn-primary" onClick={() => setPerfProbeOpen(false)}>
+                Close
+              </button>
+            </div>
+          </div>
         </div>,
         document.body,
       )}

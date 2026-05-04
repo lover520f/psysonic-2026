@@ -2,6 +2,7 @@ import React, { useRef, useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react';
 import { SubsonicSong } from '../api/subsonic';
 import SongCard from './SongCard';
+import { usePerfProbeFlags } from '../utils/perfFlags';
 
 interface Props {
   title: string;
@@ -12,25 +13,81 @@ interface Props {
   loading?: boolean;
   /** Empty-state copy when songs is empty AND not loading. */
   emptyText?: string;
+  disableArtwork?: boolean;
+  disableInteractivity?: boolean;
+  artworkSize?: number;
+  directImageSrc?: boolean;
+  windowArtworkByViewport?: boolean;
+  initialArtworkBudget?: number;
 }
 
-export default function SongRail({ title, songs, onReroll, loading, emptyText }: Props) {
+export default function SongRail({
+  title,
+  songs,
+  onReroll,
+  loading,
+  emptyText,
+  disableArtwork = false,
+  disableInteractivity = false,
+  artworkSize,
+  directImageSrc = false,
+  windowArtworkByViewport = false,
+  initialArtworkBudget = 10,
+}: Props) {
+  const perfFlags = usePerfProbeFlags();
+  const artworkDisabled = perfFlags.disableMainstageRailArtwork || disableArtwork;
+  const interactivityDisabled = perfFlags.disableMainstageRailInteractivity || disableInteractivity;
   const scrollRef = useRef<HTMLDivElement>(null);
   const [showLeft, setShowLeft] = useState(false);
   const [showRight, setShowRight] = useState(true);
+  const [artworkBudget, setArtworkBudget] = useState(initialArtworkBudget);
+
+  const recomputeArtworkBudget = () => {
+    if (!windowArtworkByViewport) return;
+    const el = scrollRef.current;
+    if (!el) return;
+    const { scrollLeft, clientWidth } = el;
+    const firstCard = el.querySelector<HTMLElement>('.song-card');
+    const cardW = firstCard?.clientWidth || firstCard?.getBoundingClientRect().width || 140;
+    const gridStyles = window.getComputedStyle(el);
+    const gap = Number.parseFloat(gridStyles.columnGap || gridStyles.gap || '12') || 12;
+    const step = Math.max(1, cardW + gap);
+    const visibleCount = Math.ceil((scrollLeft + clientWidth) / step);
+    const nextBudget = Math.max(initialArtworkBudget, visibleCount + 4);
+    setArtworkBudget(prev => (nextBudget > prev ? nextBudget : prev));
+  };
 
   const handleScroll = () => {
+    if (interactivityDisabled) return;
     if (!scrollRef.current) return;
     const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
     setShowLeft(scrollLeft > 0);
     setShowRight(scrollLeft < scrollWidth - clientWidth - 5);
+    recomputeArtworkBudget();
   };
 
   useEffect(() => {
+    if (interactivityDisabled) return;
     handleScroll();
+    const raf = window.requestAnimationFrame(() => {
+      // One post-layout pass ensures we account for final grid/card geometry.
+      recomputeArtworkBudget();
+    });
     window.addEventListener('resize', handleScroll);
-    return () => window.removeEventListener('resize', handleScroll);
-  }, [songs]);
+    const ro = new ResizeObserver(() => {
+      recomputeArtworkBudget();
+    });
+    if (scrollRef.current) ro.observe(scrollRef.current);
+    return () => {
+      window.cancelAnimationFrame(raf);
+      window.removeEventListener('resize', handleScroll);
+      ro.disconnect();
+    };
+  }, [songs, interactivityDisabled, windowArtworkByViewport, initialArtworkBudget]);
+
+  useEffect(() => {
+    setArtworkBudget(initialArtworkBudget);
+  }, [initialArtworkBudget, songs.length]);
 
   const scroll = (dir: 'left' | 'right') => {
     if (!scrollRef.current) return;
@@ -58,20 +115,24 @@ export default function SongRail({ title, songs, onReroll, loading, emptyText }:
               <RefreshCw size={16} className={loading ? 'is-spinning' : ''} />
             </button>
           )}
-          <button
-            className={`nav-btn ${!showLeft ? 'disabled' : ''}`}
-            onClick={() => scroll('left')}
-            disabled={!showLeft}
-          >
-            <ChevronLeft size={20} />
-          </button>
-          <button
-            className={`nav-btn ${!showRight ? 'disabled' : ''}`}
-            onClick={() => scroll('right')}
-            disabled={!showRight}
-          >
-            <ChevronRight size={20} />
-          </button>
+          {!interactivityDisabled && (
+            <>
+              <button
+                className={`nav-btn ${!showLeft ? 'disabled' : ''}`}
+                onClick={() => scroll('left')}
+                disabled={!showLeft}
+              >
+                <ChevronLeft size={20} />
+              </button>
+              <button
+                className={`nav-btn ${!showRight ? 'disabled' : ''}`}
+                onClick={() => scroll('right')}
+                disabled={!showRight}
+              >
+                <ChevronRight size={20} />
+              </button>
+            </>
+          )}
         </div>
       </div>
 
@@ -79,9 +140,18 @@ export default function SongRail({ title, songs, onReroll, loading, emptyText }:
         {songs.length === 0 && emptyText ? (
           <p className="song-row-empty">{emptyText}</p>
         ) : (
-          <div className="song-grid" ref={scrollRef} onScroll={handleScroll}>
-            {songs.map(s => (
-              <SongCard key={s.id} song={s} />
+          <div className="song-grid" ref={scrollRef} onScroll={interactivityDisabled ? undefined : handleScroll}>
+            {songs.map((s, idx) => (
+              <SongCard
+                key={s.id}
+                song={s}
+                disableArtwork={
+                  artworkDisabled ||
+                  (windowArtworkByViewport && idx >= artworkBudget)
+                }
+                artworkSize={artworkSize}
+                directImageSrc={directImageSrc}
+              />
             ))}
           </div>
         )}

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import type { InternetRadioStation } from '../api/subsonic';
+import { usePerfProbeFlags } from '../utils/perfFlags';
 import {
   guessAzuraCastApiUrl,
   normaliseAzuraCastHomepageUrl,
@@ -88,6 +89,7 @@ const ICY_POLL_MS       = 30_000;
 const EMPTY_METADATA: RadioMetadata = { source: 'none', history: [] };
 
 export function useRadioMetadata(station: InternetRadioStation | null): RadioMetadata {
+  const perfFlags = usePerfProbeFlags();
   const [metadata, setMetadata] = useState<RadioMetadata>(EMPTY_METADATA);
 
   // Keep elapsed in sync while AzuraCast is active: advance 1 s/tick while playing.
@@ -124,6 +126,12 @@ export function useRadioMetadata(station: InternetRadioStation | null): RadioMet
   }
 
   useEffect(() => {
+    if (perfFlags.disableBackgroundPolling) {
+      setMetadata(EMPTY_METADATA);
+      azuraCastUrlRef.current = null;
+      stopElapsedTick();
+      return;
+    }
     if (!station) {
       setMetadata(EMPTY_METADATA);
       azuraCastUrlRef.current = null;
@@ -202,7 +210,7 @@ export function useRadioMetadata(station: InternetRadioStation | null): RadioMet
       stopElapsedTick();
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [station?.id, station?.streamUrl, station?.homepageUrl]);
+  }, [station?.id, station?.streamUrl, station?.homepageUrl, perfFlags.disableBackgroundPolling]);
 
   return metadata;
 }

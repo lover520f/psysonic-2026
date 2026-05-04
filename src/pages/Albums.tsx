@@ -15,6 +15,7 @@ import { join } from '@tauri-apps/api/path';
 import { showToast } from '../utils/toast';
 import { useZipDownloadStore } from '../store/zipDownloadStore';
 import { CheckSquare2, Download, HardDriveDownload, ListMusic, Disc3, ListPlus } from 'lucide-react';
+import { usePerfProbeFlags } from '../utils/perfFlags';
 
 type SortType = 'alphabeticalByName' | 'alphabeticalByArtist';
 type CompFilter = 'all' | 'only' | 'hide';
@@ -32,6 +33,7 @@ async function fetchByGenres(genres: string[]): Promise<SubsonicAlbum[]> {
 }
 
 export default function Albums() {
+  const perfFlags = usePerfProbeFlags();
   const { t } = useTranslation();
   const musicLibraryFilterVersion = useAuthStore(s => s.musicLibraryFilterVersion);
   const auth = useAuthStore();
@@ -218,80 +220,82 @@ export default function Albums() {
 
   return (
     <div className="content-body animate-fade-in">
-      <div className="page-sticky-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
-        <h1 className="page-title" style={{ marginBottom: 0 }}>
-          {selectionMode && selectedIds.size > 0
-            ? t('albums.selectionCount', { count: selectedIds.size })
-            : t('albums.title')}
-        </h1>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-          {selectionMode && selectedIds.size > 0 ? (
-            <>
-              <button className="btn btn-surface albums-selection-action-btn" onClick={handleEnqueueSelected}>
-                <ListPlus size={15} />
-                {t('albums.enqueueSelected', { count: selectedIds.size })}
-              </button>
-              <button className="btn btn-surface albums-selection-action-btn" onClick={handleAddOffline}>
-                <HardDriveDownload size={15} />
-                {t('albums.addOffline')}
-              </button>
-              <button className="btn btn-surface albums-selection-action-btn" onClick={handleDownloadZips}>
-                <Download size={15} />
-                {t('albums.downloadZips')}
-              </button>
-            </>
-          ) : (
-            <>
-              {!yearActive && (
-                <SortDropdown
-                  value={sort}
-                  options={sortOptions}
-                  onChange={setSort}
+      {!perfFlags.disableMainstageStickyHeader && (
+        <div className="page-sticky-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
+          <h1 className="page-title" style={{ marginBottom: 0 }}>
+            {selectionMode && selectedIds.size > 0
+              ? t('albums.selectionCount', { count: selectedIds.size })
+              : t('albums.title')}
+          </h1>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+            {selectionMode && selectedIds.size > 0 ? (
+              <>
+                <button className="btn btn-surface albums-selection-action-btn" onClick={handleEnqueueSelected}>
+                  <ListPlus size={15} />
+                  {t('albums.enqueueSelected', { count: selectedIds.size })}
+                </button>
+                <button className="btn btn-surface albums-selection-action-btn" onClick={handleAddOffline}>
+                  <HardDriveDownload size={15} />
+                  {t('albums.addOffline')}
+                </button>
+                <button className="btn btn-surface albums-selection-action-btn" onClick={handleDownloadZips}>
+                  <Download size={15} />
+                  {t('albums.downloadZips')}
+                </button>
+              </>
+            ) : (
+              <>
+                {!yearActive && (
+                  <SortDropdown
+                    value={sort}
+                    options={sortOptions}
+                    onChange={setSort}
+                  />
+                )}
+
+                <YearFilterButton
+                  from={yearFrom}
+                  to={yearTo}
+                  onChange={(from, to) => { setYearFrom(from); setYearTo(to); }}
                 />
-              )}
 
-              <YearFilterButton
-                from={yearFrom}
-                to={yearTo}
-                onChange={(from, to) => { setYearFrom(from); setYearTo(to); }}
-              />
+                <GenreFilterBar selected={selectedGenres} onSelectionChange={setSelectedGenres} />
 
-              <GenreFilterBar selected={selectedGenres} onSelectionChange={setSelectedGenres} />
+                <button
+                  className={`btn btn-surface${compFilter !== 'all' ? ' btn-sort-active' : ''}`}
+                  onClick={cycleCompFilter}
+                  data-tooltip={
+                    compFilter === 'all' ? t('albums.compilationTooltipAll')
+                    : compFilter === 'only' ? t('albums.compilationTooltipOnly')
+                    : t('albums.compilationTooltipHide')
+                  }
+                  data-tooltip-pos="bottom"
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: '0.4rem',
+                    ...(compFilter !== 'all' ? { background: 'var(--accent)', color: 'var(--ctp-crust)' } : {}),
+                  }}
+                >
+                  <Disc3 size={14} />
+                  {compFilter === 'all' ? t('albums.compilationLabel')
+                    : compFilter === 'only' ? t('albums.compilationOnly')
+                    : t('albums.compilationHide')}
+                </button>
+              </>
+            )}
 
-              <button
-                className={`btn btn-surface${compFilter !== 'all' ? ' btn-sort-active' : ''}`}
-                onClick={cycleCompFilter}
-                data-tooltip={
-                  compFilter === 'all' ? t('albums.compilationTooltipAll')
-                  : compFilter === 'only' ? t('albums.compilationTooltipOnly')
-                  : t('albums.compilationTooltipHide')
-                }
-                data-tooltip-pos="bottom"
-                style={{
-                  display: 'flex', alignItems: 'center', gap: '0.4rem',
-                  ...(compFilter !== 'all' ? { background: 'var(--accent)', color: 'var(--ctp-crust)' } : {}),
-                }}
-              >
-                <Disc3 size={14} />
-                {compFilter === 'all' ? t('albums.compilationLabel')
-                  : compFilter === 'only' ? t('albums.compilationOnly')
-                  : t('albums.compilationHide')}
-              </button>
-            </>
-          )}
-
-          <button
-            className={`btn btn-surface${selectionMode ? ' btn-sort-active' : ''}`}
-            onClick={toggleSelectionMode}
-            data-tooltip={selectionMode ? t('albums.cancelSelect') : t('albums.startSelect')}
-            data-tooltip-pos="bottom"
-            style={selectionMode ? { background: 'var(--accent)', color: 'var(--ctp-crust)' } : {}}
-          >
-            <CheckSquare2 size={15} />
-            {selectionMode ? t('albums.cancelSelect') : t('albums.select')}
-          </button>
+            <button
+              className={`btn btn-surface${selectionMode ? ' btn-sort-active' : ''}`}
+              onClick={toggleSelectionMode}
+              data-tooltip={selectionMode ? t('albums.cancelSelect') : t('albums.startSelect')}
+              data-tooltip-pos="bottom"
+              style={selectionMode ? { background: 'var(--accent)', color: 'var(--ctp-crust)' } : {}}
+            >
+              <CheckSquare2 size={15} />
+              {selectionMode ? t('albums.cancelSelect') : t('albums.select')}
+            </button>
+          </div>
         </div>
-      </div>
+      )}
 
       {loading && albums.length === 0 ? (
         <div style={{ display: 'flex', justifyContent: 'center', padding: '3rem' }}>
@@ -299,18 +303,20 @@ export default function Albums() {
         </div>
       ) : (
         <>
-          <div className="album-grid-wrap">
-            {visibleAlbums.map(a => (
-              <AlbumCard
-                key={a.id}
-                album={a}
-                selectionMode={selectionMode}
-                selected={selectedIds.has(a.id)}
-                onToggleSelect={toggleSelect}
-                selectedAlbums={selectedAlbums}
-              />
-            ))}
-          </div>
+          {!perfFlags.disableMainstageGridCards && (
+            <div className="album-grid-wrap">
+              {visibleAlbums.map(a => (
+                <AlbumCard
+                  key={a.id}
+                  album={a}
+                  selectionMode={selectionMode}
+                  selected={selectedIds.has(a.id)}
+                  onToggleSelect={toggleSelect}
+                  selectedAlbums={selectedAlbums}
+                />
+              ))}
+            </div>
+          )}
           {!genreFiltered && (
             <div ref={observerTarget} style={{ height: '20px', margin: '2rem 0', display: 'flex', justifyContent: 'center' }}>
               {loading && hasMore && <div className="spinner" style={{ width: 20, height: 20 }} />}

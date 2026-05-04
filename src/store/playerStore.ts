@@ -619,6 +619,15 @@ let seekFallbackVisualTarget: { trackId: string; seconds: number; setAtMs: numbe
 const SEEK_FALLBACK_VISUAL_GUARD_MS = 1600;
 const SEEK_FALLBACK_RETRY_INTERVAL_MS = 180;
 const SEEK_FALLBACK_RETRY_MAX_MS = 6000;
+const UI_PROGRESS_UPDATE_MIN_MS = 500;
+const UI_PROGRESS_UPDATE_MIN_DELTA_SEC = 0.25;
+let lastUiProgressUpdateAt = 0;
+
+function bumpUiPerfCounter(key: 'audioProgressEvents'): void {
+  const root = globalThis as unknown as { __psyPerfCounters?: Record<string, number> };
+  const counters = root.__psyPerfCounters ?? (root.__psyPerfCounters = Object.create(null) as Record<string, number>);
+  counters[key] = (counters[key] ?? 0) + 1;
+}
 
 /** Deferred pause / resume — cleared on stop, new track, manual pause/resume. */
 let scheduledPauseTimer: number | null = null;
@@ -1185,10 +1194,12 @@ export function flushPlayQueuePosition(): Promise<void> {
 
 function handleAudioPlaying(_duration: number) {
   setDeferHotCachePrefetch(false);
+  lastUiProgressUpdateAt = 0;
   usePlayerStore.setState({ isPlaying: true });
 }
 
 function handleAudioProgress(current_time: number, duration: number) {
+  bumpUiPerfCounter('audioProgressEvents');
   // While a seek is pending, the store already holds the optimistic target
   // position.  Accepting stale progress from the Rust engine would briefly
   // snap the waveform back to the old position before the seek completes.
@@ -1209,6 +1220,10 @@ function handleAudioProgress(current_time: number, duration: number) {
   const store = usePlayerStore.getState();
   const track = store.currentTrack;
   if (!track) return;
+  // Some backends can emit stale progress ticks shortly after pause/stop.
+  // Ignoring them avoids reactivating UI redraw loops while transport is idle.
+  const transportActive = store.isPlaying || store.currentRadio != null;
+  if (!transportActive && !seekFallbackVisualTarget) return;
   if (seekFallbackVisualTarget && seekFallbackVisualTarget.trackId !== track.id) {
     seekFallbackVisualTarget = null;
   }
@@ -1230,6 +1245,20 @@ function handleAudioProgress(current_time: number, duration: number) {
   const dur = duration > 0 ? duration : track.duration;
   if (dur <= 0) return;
   const progress = displayTime / dur;
+  const nowMs = Date.now();
+  const timeDelta = Math.abs(store.currentTime - displayTime);
+  if (
+    !seekFallbackVisualTarget &&
+    nowMs - lastUiProgressUpdateAt < UI_PROGRESS_UPDATE_MIN_MS &&
+    timeDelta < UI_PROGRESS_UPDATE_MIN_DELTA_SEC
+  ) {
+    return;
+  }
+  lastUiProgressUpdateAt = nowMs;
+  const unchanged =
+    Math.abs(store.currentTime - displayTime) < 0.02 &&
+    Math.abs(store.progress - progress) < 0.0005;
+  if (unchanged) return;
   usePlayerStore.setState({ currentTime: displayTime, progress, buffered: 0 });
 
   // Heartbeat: push current position to the server every 15 s while
@@ -1786,10 +1815,11 @@ export function initAudioListeners(): () => void {
       return;
     }
 
-    // Keep position in sync while playing — update every ~500 ms so Plasma
+    // Keep position in sync while playing — update at a coarse cadence so UI
+    // updates do not amplify IPC churn on Linux/WebKit.
     // always shows the correct time without interpolation gaps.
     // Radio streams have no meaningful position, so skip for radio.
-    if (!currentRadio && isPlaying && Date.now() - lastMprisPositionUpdate >= 500) {
+    if (!currentRadio && isPlaying && Date.now() - lastMprisPositionUpdate >= 1500) {
       lastMprisPositionUpdate = Date.now();
       invoke('mpris_set_playback', {
         playing: true,

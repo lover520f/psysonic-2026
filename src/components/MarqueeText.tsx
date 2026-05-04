@@ -1,5 +1,6 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { useAuthStore } from '../store/authStore';
+import { usePerfProbeFlags } from '../utils/perfFlags';
 
 interface Props {
   text: string;
@@ -13,6 +14,7 @@ export default function MarqueeText({ text, className, style, onClick }: Props) 
   const textRef = useRef<HTMLSpanElement>(null);
   const [scrollAmount, setScrollAmount] = useState(0);
   const animationMode = useAuthStore(s => s.animationMode);
+  const perfFlags = usePerfProbeFlags();
 
   const measure = useCallback(() => {
     const container = containerRef.current;
@@ -34,7 +36,7 @@ export default function MarqueeText({ text, className, style, onClick }: Props) 
 
   // In `static` animation mode the marquee never scrolls — overflowing text
   // is truncated with an ellipsis (handled by CSS via data-anim-mode).
-  const shouldScroll = scrollAmount > 0 && animationMode !== 'static';
+  const shouldScroll = scrollAmount > 0 && animationMode !== 'static' && !perfFlags.disableMarqueeScroll;
 
   return (
     <div

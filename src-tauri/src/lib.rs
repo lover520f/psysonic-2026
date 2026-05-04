@@ -849,6 +849,7 @@ pub fn run() {
             set_logging_mode,
             export_runtime_logs,
             frontend_debug_log,
+            performance_cpu_snapshot,
             set_subsonic_wire_user_agent,
             no_compositing_mode,
             is_tiling_wm_cmd,

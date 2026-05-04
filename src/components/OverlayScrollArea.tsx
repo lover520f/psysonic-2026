@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { computeOverlayScrollbarThumbMeta } from '../utils/overlayScrollbarMetrics';
 import { bindOverlayScrollbarThumbDrag } from '../utils/overlayScrollbarThumb';
+import { usePerfProbeFlags } from '../utils/perfFlags';
 
 export type OverlayScrollRailInset = 'none' | 'mini' | 'panel';
 
@@ -56,6 +57,7 @@ export default function OverlayScrollArea({
   viewportOnWheel,
   viewportOnTouchMove,
 }: OverlayScrollAreaProps) {
+  const perfFlags = usePerfProbeFlags();
   const wrapRef = useRef<HTMLDivElement | null>(null);
   const viewportRef = useRef<HTMLDivElement | null>(null);
   const [meta, setMeta] = useState({ thumbH: 0, thumbT: 0, visible: false });
@@ -72,6 +74,7 @@ export default function OverlayScrollArea({
   const measureKey = JSON.stringify(measureDeps ?? []);
 
   useLayoutEffect(() => {
+    if (perfFlags.disableOverlayScrollbars) return;
     if (!meta.visible) return;
     const vp = viewportRef.current;
     const wrap = wrapRef.current;
@@ -89,9 +92,10 @@ export default function OverlayScrollArea({
       }
       return next;
     });
-  }, [meta.visible]);
+  }, [meta.visible, perfFlags.disableOverlayScrollbars]);
 
   useEffect(() => {
+    if (perfFlags.disableOverlayScrollbars) return;
     recompute();
     const wrap = wrapRef.current;
     const onWinResize = () => recompute();
@@ -105,7 +109,7 @@ export default function OverlayScrollArea({
       window.removeEventListener('resize', onWinResize);
       ro?.disconnect();
     };
-  }, [recompute, measureKey]);
+  }, [recompute, measureKey, perfFlags.disableOverlayScrollbars]);
 
   const setViewportNode = (el: HTMLDivElement | null) => {
     viewportRef.current = el;
@@ -134,13 +138,13 @@ export default function OverlayScrollArea({
         id={viewportId}
         ref={setViewportNode}
         className={viewportClass}
-        onScroll={recompute}
+        onScroll={perfFlags.disableOverlayScrollbars ? undefined : recompute}
         onWheel={viewportOnWheel}
         onTouchMove={viewportOnTouchMove}
       >
         {children}
       </div>
-      {meta.visible && (
+      {!perfFlags.disableOverlayScrollbars && meta.visible && (
         <div className="overlay-scroll__rail" aria-hidden>
           <div
             className="overlay-scroll__thumb"

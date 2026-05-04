@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useAuthStore } from '../store/authStore';
 import { pingWithCredentials, scheduleInstantMixProbeForServer } from '../api/subsonic';
 import { serverListDisplayLabel } from '../utils/serverDisplayName';
+import { usePerfProbeFlags } from '../utils/perfFlags';
 
 export type ConnectionStatus = 'connected' | 'disconnected' | 'checking';
 
@@ -22,6 +23,7 @@ export function isLanUrl(url: string): boolean {
 }
 
 export function useConnectionStatus() {
+  const perfFlags = usePerfProbeFlags();
   const [status, setStatus] = useState<ConnectionStatus>('checking');
   const [isRetrying, setIsRetrying] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -61,6 +63,14 @@ export function useConnectionStatus() {
   }, [check]);
 
   useEffect(() => {
+    if (perfFlags.disableBackgroundPolling) {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+      setStatus('connected');
+      return;
+    }
     check();
     intervalRef.current = setInterval(check, 120_000);
 
@@ -75,7 +85,7 @@ export function useConnectionStatus() {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
     };
-  }, [check]);
+  }, [check, perfFlags.disableBackgroundPolling]);
 
   const server = useAuthStore(s => s.getActiveServer());
   const servers = useAuthStore(s => s.servers);
