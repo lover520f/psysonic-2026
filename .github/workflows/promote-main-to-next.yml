@@ -3,6 +3,11 @@ name: Promote main to next
 on:
   workflow_dispatch:
     inputs:
+      source_branch:
+        description: "Source branch to promote into next (default main)"
+        required: false
+        default: main
+        type: string
       source_only:
         description: "Create/refresh tagged release only (skip platform builds and verify-nix)"
         required: false
@@ -13,7 +18,7 @@ jobs:
   validate-main:
     uses: ./.github/workflows/validate-main-green-ci.yml
     with:
-      branch: main
+      branch: ${{ inputs.source_branch }}
       required_contexts: ci-ok|ci-main / ci-ok
 
   promote:
@@ -22,6 +27,8 @@ jobs:
     permissions:
       contents: write
       actions: write
+    env:
+      SOURCE_BRANCH: ${{ inputs.source_branch }}
     steps:
       - uses: actions/checkout@v5
         with:
@@ -31,12 +38,12 @@ jobs:
         uses: actions/setup-node@v5
         with:
           node-version: lts/*
-      - name: fast-forward next to main
+      - name: fast-forward next to source branch tip
         run: |
           set -euo pipefail
-          git fetch origin main next
-          # Reset channel branch to main snapshot, then create a fresh RC bump commit.
-          git reset --hard origin/main
+          git fetch origin "$SOURCE_BRANCH" next
+          # Reset channel branch to source snapshot, then create a fresh RC bump commit.
+          git reset --hard "origin/$SOURCE_BRANCH"
       - name: bump package version to next RC
         run: |
           set -euo pipefail
