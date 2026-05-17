@@ -436,12 +436,27 @@ impl FormatReader for IsoMp4Reader {
                             end
                         };
                         mss.seek(SeekFrom::Start(resume_at))?;
-                        iter = AtomIterator::new_root(mss, total_len);
-                    } else if end < file_len.saturating_sub(8) {
-                        // Fast-start: skip a bounded mdat without linear read.
+                        // `AtomIterator::new_root` treats `len` as bytes available **from the
+                        // current reader position**, not the absolute file length. Passing
+                        // `total_len` here makes the iterator think the file is `total_len`
+                        // bytes long after the seek, so reading the last atom's trailer
+                        // (e.g. a tail `moov`) succeeds, but the next `iter.next()` then keeps
+                        // reading past EOF and returns `end of stream`. Pass the **remaining**
+                        // length instead so the iterator stops cleanly when the last atom ends.
+                        let remaining = total_len.map(|tl| tl.saturating_sub(resume_at));
+                        iter = AtomIterator::new_root(mss, remaining);
+                    } else if moov.is_some() {
+                        // `moov` was already parsed (fast-start layout). Skip the `mdat` body
+                        // without linear-reading it (holes in RangedHttpSource). Never seek to
+                        // `file_len` — that is one byte past the last valid offset and makes the
+                        // next atom read return end-of-stream on in-memory sources.
+                        if end >= file_len.saturating_sub(8) {
+                            break;
+                        }
                         let mut mss = iter.into_inner();
                         mss.seek(SeekFrom::Start(end))?;
-                        iter = AtomIterator::new_root(mss, total_len);
+                        let remaining = total_len.map(|tl| tl.saturating_sub(end));
+                        iter = AtomIterator::new_root(mss, remaining);
                     }
                 }
                 AtomType::Meta => {
