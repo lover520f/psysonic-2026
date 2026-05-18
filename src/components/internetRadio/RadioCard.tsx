@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Cast, Globe, Heart, Trash2, X } from 'lucide-react';
+import { Cast, Globe, Heart, Square, Trash2, X } from 'lucide-react';
 import { open } from '@tauri-apps/plugin-shell';
 import { buildCoverArtUrl, coverArtCacheKey } from '../../api/subsonicStreamUrl';
 import type { InternetRadioStation } from '../../api/subsonicTypes';
@@ -104,8 +104,13 @@ export default function RadioCard({
         )}
 
         <div className="album-card-play-overlay">
-          <button className="album-card-details-btn" onClick={onPlay}>
-            {isActive && isPlaying ? <X size={15} /> : <Cast size={14} />}
+          <button
+            className="album-card-details-btn"
+            onClick={onPlay}
+            data-tooltip={isActive && isPlaying ? t('radio.stopStation') : t('radio.playStation')}
+            data-tooltip-pos="bottom"
+          >
+            {isActive && isPlaying ? <Square size={13} fill="currentColor" /> : <Cast size={14} />}
           </button>
         </div>
 
