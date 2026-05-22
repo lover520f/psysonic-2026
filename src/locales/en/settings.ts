@@ -264,6 +264,7 @@ export const settings = {
   libraryIndexFullResync: 'Full resync',
   libraryIndexDeltaSync: 'Delta sync',
   libraryIndexExcludeServer: 'Exclude from sync',
+  libraryIndexExcludingServer: 'Excluding…',
   libraryIndexExcludedTitle: 'Excluded from sync',
   libraryIndexIncludeServer: 'Include again',
   libraryIndexStatus: 'Status',

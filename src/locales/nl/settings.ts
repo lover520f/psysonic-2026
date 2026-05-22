@@ -257,6 +257,7 @@ export const settings = {
   libraryIndexFullResync: 'Volledige resync',
   libraryIndexDeltaSync: 'Delta-sync',
   libraryIndexExcludeServer: 'Uitsluiten van synchronisatie',
+  libraryIndexExcludingServer: 'Uitsluiten…',
   libraryIndexExcludedTitle: 'Uitgesloten van synchronisatie',
   libraryIndexIncludeServer: 'Weer opnemen',
   libraryIndexStatus: 'Status',

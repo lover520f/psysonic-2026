@@ -261,6 +261,7 @@ export const settings = {
   libraryIndexFullResync: 'Vollständige Neusynchronisation',
   libraryIndexDeltaSync: 'Delta-Synchronisation',
   libraryIndexExcludeServer: 'Von Synchronisation ausschließen',
+  libraryIndexExcludingServer: 'Wird ausgeschlossen…',
   libraryIndexExcludedTitle: 'Von Synchronisation ausgeschlossen',
   libraryIndexIncludeServer: 'Wieder einschließen',
   libraryIndexStatus: 'Status',

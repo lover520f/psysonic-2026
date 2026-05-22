@@ -18,6 +18,7 @@ interface LibraryIndexServerRowProps {
   connection: LibraryServerConnection;
   progressLabel: string | null;
   busy: boolean;
+  excluding: boolean;
   actionsDisabled: boolean;
   onFullSync: () => void;
   onDeltaSync: () => void;
@@ -33,6 +34,7 @@ export default function LibraryIndexServerRow({
   connection,
   progressLabel,
   busy,
+  excluding,
   actionsDisabled,
   onFullSync,
   onDeltaSync,
@@ -133,11 +135,14 @@ export default function LibraryIndexServerRow({
           type="button"
           className="btn btn-ghost"
           style={{ fontSize: 12, padding: '4px 10px', color: 'var(--text-muted)' }}
-          disabled={actionsDisabled}
+          disabled={actionsDisabled || excluding}
+          aria-busy={excluding}
           onClick={onExclude}
         >
           <Ban size={13} />
-          {t('settings.libraryIndexExcludeServer')}
+          {excluding
+            ? t('settings.libraryIndexExcludingServer')
+            : t('settings.libraryIndexExcludeServer')}
         </button>
       </div>
     </div>

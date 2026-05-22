@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { flushSync } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { DatabaseZap } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
@@ -18,7 +19,7 @@ import {
   bootstrapIndexedServer,
   type BindServerResult,
 } from '../../utils/library/librarySession';
-import { enqueueLibrarySync } from '../../utils/library/librarySyncQueue';
+import { enqueueLibrarySync, waitForLibrarySyncIdle } from '../../utils/library/librarySyncQueue';
 import { syncIngestDisplayCount } from '../../utils/library/libraryReady';
 import { serverListDisplayLabel } from '../../utils/server/serverDisplayName';
 import LibraryIndexServerRow, { type LibraryServerConnection } from './LibraryIndexServerRow';
@@ -58,6 +59,7 @@ export default function LibraryIndexSection() {
   const [connectionByServer, setConnectionByServer] = useState<Record<string, LibraryServerConnection>>({});
   const [progressByServer, setProgressByServer] = useState<Record<string, string | null>>({});
   const [busyServerId, setBusyServerId] = useState<string | null>(null);
+  const [excludingServerId, setExcludingServerId] = useState<string | null>(null);
   const [bootstrapping, setBootstrapping] = useState(false);
 
   const pollTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -130,6 +132,7 @@ export default function LibraryIndexSection() {
       setConnectionByServer({});
       setProgressByServer({});
       setBusyServerId(null);
+      setExcludingServerId(null);
       return;
     }
     void runBootstrap();
@@ -263,8 +266,21 @@ export default function LibraryIndexSection() {
   };
 
   const handleExcludeServer = async (serverId: string) => {
-    setBootstrapping(true);
+    if (excludingServerId) return;
+    flushSync(() => setExcludingServerId(serverId));
     try {
+      const syncing =
+        busyServerId === serverId ||
+        statusByServer[serverId]?.syncPhase === 'initial_sync' ||
+        statusByServer[serverId]?.syncPhase === 'probing';
+      if (syncing) {
+        try {
+          await librarySyncCancel();
+          await waitForLibrarySyncIdle(serverId);
+        } catch {
+          /* best-effort — proceed with unbind */
+        }
+      }
       await librarySyncClearSession(serverId);
       setServerSyncExcluded(serverId, true);
       setStatusByServer(prev => {
@@ -277,10 +293,18 @@ export default function LibraryIndexSection() {
         delete next[serverId];
         return next;
       });
+      setProgressByServer(prev => {
+        const next = { ...prev };
+        delete next[serverId];
+        return next;
+      });
+      if (busyServerId === serverId) {
+        setBusyServerId(null);
+      }
     } catch (e) {
       showToast(t('settings.libraryIndexBindError', { error: String(e) }), 5000, 'error');
     } finally {
-      setBootstrapping(false);
+      setExcludingServerId(null);
     }
   };
 
@@ -292,7 +316,7 @@ export default function LibraryIndexSection() {
     }
   };
 
-  const globalBusy = bootstrapping || busyServerId != null;
+  const globalBusy = bootstrapping || busyServerId != null || excludingServerId != null;
 
   return (
     <SettingsSubSection
@@ -349,7 +373,10 @@ export default function LibraryIndexSection() {
                     connection={connectionByServer[srv.id] ?? 'unknown'}
                     progressLabel={progressByServer[srv.id] ?? null}
                     busy={busyServerId === srv.id}
-                    actionsDisabled={globalBusy && busyServerId !== srv.id}
+                    excluding={excludingServerId === srv.id}
+                    actionsDisabled={
+                      (globalBusy && busyServerId !== srv.id) || excludingServerId != null
+                    }
                     onFullSync={() => void runServerAction(srv.id, 'full')}
                     onDeltaSync={() => void runServerAction(srv.id, 'delta')}
                     onVerify={() => void runServerAction(srv.id, 'verify')}
@@ -376,7 +403,7 @@ export default function LibraryIndexSection() {
                         type="button"
                         className="btn btn-surface"
                         style={{ fontSize: 12, padding: '4px 10px' }}
-                        disabled={bootstrapping}
+                        disabled={bootstrapping || excludingServerId != null}
                         onClick={() => void handleIncludeServer(srv.id)}
                       >
                         {t('settings.libraryIndexIncludeServer')}

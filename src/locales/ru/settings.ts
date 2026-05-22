@@ -269,6 +269,7 @@ export const settings = {
   libraryIndexFullResync: 'Полная пересинхронизация',
   libraryIndexDeltaSync: 'Быстрая дельта',
   libraryIndexExcludeServer: 'Исключить из синхронизации',
+  libraryIndexExcludingServer: 'Отключается…',
   libraryIndexExcludedTitle: 'Исключены из синхронизации',
   libraryIndexIncludeServer: 'Включить снова',
   libraryIndexStatus: 'Статус',

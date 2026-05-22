@@ -256,6 +256,7 @@ export const settings = {
   libraryIndexFullResync: '完全重新同步',
   libraryIndexDeltaSync: '增量同步',
   libraryIndexExcludeServer: '排除同步',
+  libraryIndexExcludingServer: '正在排除…',
   libraryIndexExcludedTitle: '已排除同步',
   libraryIndexIncludeServer: '重新纳入',
   libraryIndexStatus: '状态',
