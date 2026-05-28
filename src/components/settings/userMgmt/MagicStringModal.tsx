@@ -7,8 +7,10 @@ import { showToast } from '../../../utils/ui/toast';
 import {
   copyTextToClipboard,
   encodeServerMagicString,
+  magicPayloadAddressFields,
 } from '../../../utils/server/serverMagicString';
 import { shortHostFromServerUrl } from '../../../utils/server/serverDisplayName';
+import { useAuthStore } from '../../../store/authStore';
 
 interface Props {
   user: NdUser;
@@ -63,8 +65,12 @@ export function MagicStringModal({
         return;
       }
       setSubmitting(false);
+      const addressFields = magicPayloadAddressFields(
+        serverUrl,
+        useAuthStore.getState().servers,
+      );
       const str = encodeServerMagicString({
-        url: serverUrl,
+        ...addressFields,
         username: user.userName,
         password: password.trim(),
         name: shortHostFromServerUrl(serverUrl),

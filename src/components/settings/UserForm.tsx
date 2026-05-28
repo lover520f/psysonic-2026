@@ -6,8 +6,10 @@ import { showToast } from '../../utils/ui/toast';
 import {
   copyTextToClipboard,
   encodeServerMagicString,
+  magicPayloadAddressFields,
 } from '../../utils/server/serverMagicString';
 import { shortHostFromServerUrl } from '../../utils/server/serverDisplayName';
+import { useAuthStore } from '../../store/authStore';
 
 export interface UserFormState {
   userName: string;
@@ -104,8 +106,12 @@ export function UserForm({
     } finally {
       setMagicGenBusy(false);
     }
+    const addressFields = magicPayloadAddressFields(
+      shareServerUrl.trim(),
+      useAuthStore.getState().servers,
+    );
     const str = encodeServerMagicString({
-      url: shareServerUrl.trim(),
+      ...addressFields,
       username: form.userName.trim(),
       password: form.password,
       name: shortHostFromServerUrl(shareServerUrl),

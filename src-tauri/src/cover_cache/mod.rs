@@ -705,6 +705,128 @@ pub async fn cover_cache_clear_server(
     Ok(())
 }
 
+/// Rename a server's cover-cache bucket on disk after the user edits the
+/// primary URL (and the derived index key changes). Used by the URL-change
+/// remigration pipeline (dual-server-address spec §8.3) so cached covers
+/// stay reachable under the new key.
+///
+/// Sanitization: rejects path-separator characters and `..` components — keys
+/// flow from `serverIndexKeyFromUrl(url)` which strips schemes and trailing
+/// slashes, but defense in depth at the FS boundary is cheap.
+///
+/// Behaviour:
+/// - `old_key == new_key` → no-op success.
+/// - Old bucket missing → no-op success (nothing to migrate).
+/// - New bucket missing → simple `rename` (fastest path).
+/// - Both exist → recursive merge, **prefer existing** in destination (the
+///   newer bucket wins on collision; the surviving file count goes up, never
+///   loses data).
+///
+/// Always emits `cover:bucket-renamed` with `{oldKey, newKey}` on success so
+/// the frontend in-memory disk-src cache can invalidate stale entries.
+#[tauri::command]
+pub async fn cover_cache_rename_server_bucket(
+    app: AppHandle,
+    old_key: String,
+    new_key: String,
+) -> Result<(), String> {
+    let st = state(&app)?;
+    let guard = st.lock().await;
+    rename_bucket_inner(&guard.root, &old_key, &new_key)?;
+    drop(guard);
+    let _ = app.emit(
+        "cover:bucket-renamed",
+        serde_json::json!({ "oldKey": old_key, "newKey": new_key }),
+    );
+    Ok(())
+}
+
+/// FS-only worker for `cover_cache_rename_server_bucket`, lifted out so the
+/// command-level behaviour (sanitization + every short-circuit + the merge
+/// branch) is testable against a real `tempdir` without spinning up Tauri
+/// State. The command wrapper above adds nothing the tests need to cover
+/// except the event emit.
+fn rename_bucket_inner(root: &std::path::Path, old_key: &str, new_key: &str) -> Result<(), String> {
+    if old_key.is_empty() || new_key.is_empty() {
+        return Err("cover_cache_rename_server_bucket: empty key".into());
+    }
+    if !is_safe_index_key(old_key) || !is_safe_index_key(new_key) {
+        return Err("cover_cache_rename_server_bucket: key contains path separator".into());
+    }
+    if old_key == new_key {
+        return Ok(());
+    }
+
+    let old_dir = root.join(old_key);
+    let new_dir = root.join(new_key);
+
+    if !old_dir.is_dir() {
+        return Ok(());
+    }
+
+    if !new_dir.exists() {
+        std::fs::rename(&old_dir, &new_dir).map_err(|e| e.to_string())?;
+    } else {
+        merge_cover_bucket(&old_dir, &new_dir)?;
+        let _ = std::fs::remove_dir_all(&old_dir);
+    }
+    Ok(())
+}
+
+fn is_safe_index_key(key: &str) -> bool {
+    // Real index keys are `host[:port][/sub/path]` shape — forward slashes
+    // are legitimate path components (Navidrome behind a reverse-proxy
+    // subpath, etc.). Everything below is defense-in-depth at the FS
+    // boundary; real keys come out of `serverIndexKeyFromUrl` and never
+    // start with a separator or carry the patterns we reject here.
+    if key.is_empty() {
+        return false;
+    }
+    // Absolute-path leaders — `root.join("/etc/...")` and `root.join("\\foo\\")`
+    // on Unix / Windows respectively REPLACE the base path with the absolute
+    // argument. Reject before that ever happens.
+    if key.starts_with('/') || key.starts_with('\\') {
+        return false;
+    }
+    // Windows drive-letter root (`C:`, `c:`). `Path::join("C:")` is also
+    // treated as absolute on Windows.
+    let bytes = key.as_bytes();
+    if bytes.len() >= 2 && bytes[1] == b':' && bytes[0].is_ascii_alphabetic() {
+        return false;
+    }
+    // Backslash anywhere — separators are forward-slash only.
+    if key.contains('\\') {
+        return false;
+    }
+    // No `..` segments anywhere — would escape the cover-cache root.
+    for segment in key.split('/') {
+        if segment == ".." {
+            return false;
+        }
+    }
+    true
+}
+
+fn merge_cover_bucket(old_dir: &std::path::Path, new_dir: &std::path::Path) -> Result<(), String> {
+    let entries = std::fs::read_dir(old_dir).map_err(|e| e.to_string())?;
+    for entry in entries {
+        let entry = entry.map_err(|e| e.to_string())?;
+        let from = entry.path();
+        let to = new_dir.join(entry.file_name());
+        if to.exists() {
+            // Prefer existing in destination — newer bucket wins.
+            continue;
+        }
+        if from.is_dir() {
+            std::fs::create_dir_all(&to).map_err(|e| e.to_string())?;
+            merge_cover_bucket(&from, &to)?;
+        } else {
+            std::fs::rename(&from, &to).map_err(|e| e.to_string())?;
+        }
+    }
+    Ok(())
+}
+
 #[tauri::command]
 pub async fn cover_cache_configure(
     app: AppHandle,
@@ -856,6 +978,9 @@ mod tests {
 
     use super::decode_image_bytes;
     use super::disk::{cover_dir, tier_path};
+    use super::{is_safe_index_key, merge_cover_bucket, rename_bucket_inner};
+    use std::fs;
+    use std::path::PathBuf;
 
     #[test]
     fn disk_layout_paths() {
@@ -873,5 +998,163 @@ mod tests {
         let decoded = decode_image_bytes(buf.get_ref()).expect("png decode");
         assert_eq!(decoded.width(), 2);
         assert_eq!(decoded.height(), 2);
+    }
+
+    #[test]
+    fn safe_index_key_accepts_real_keys() {
+        assert!(is_safe_index_key("music.example.com"));
+        assert!(is_safe_index_key("192.168.0.10:4533"));
+        assert!(is_safe_index_key("music.example.com/navidrome"));
+        assert!(is_safe_index_key("[fe80::1]:4533"));
+    }
+
+    #[test]
+    fn safe_index_key_rejects_path_traversal_and_backslashes() {
+        assert!(!is_safe_index_key("../etc"));
+        assert!(!is_safe_index_key("a/../b"));
+        assert!(!is_safe_index_key("a\\b"));
+        assert!(!is_safe_index_key("..\\evil"));
+    }
+
+    #[test]
+    fn safe_index_key_rejects_absolute_paths_and_drive_letters() {
+        // Path::join with an absolute argument replaces the base — must
+        // never accept keys that lead with a separator.
+        assert!(!is_safe_index_key("/etc/passwd"));
+        assert!(!is_safe_index_key("/"));
+        assert!(!is_safe_index_key("\\windows"));
+        // Windows drive-letter roots are also treated as absolute.
+        assert!(!is_safe_index_key("C:"));
+        assert!(!is_safe_index_key("C:/Windows"));
+        assert!(!is_safe_index_key("c:foo"));
+        // Empty key is meaningless and would join to the root itself.
+        assert!(!is_safe_index_key(""));
+    }
+
+    /// Build a unique tmpdir for the merge tests so parallel runs don't trip
+    /// on each other.
+    fn fresh_tmpdir(label: &str) -> PathBuf {
+        let mut p = std::env::temp_dir();
+        let nanos = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        p.push(format!("psysonic-cover-merge-{}-{}", label, nanos));
+        fs::create_dir_all(&p).unwrap();
+        p
+    }
+
+    #[test]
+    fn merge_bucket_moves_unique_files() {
+        let root = fresh_tmpdir("unique");
+        let old = root.join("old");
+        let new_ = root.join("new");
+        fs::create_dir_all(old.join("al-1")).unwrap();
+        fs::write(old.join("al-1").join("128.webp"), b"old-bytes").unwrap();
+        fs::create_dir_all(&new_).unwrap();
+
+        merge_cover_bucket(&old, &new_).unwrap();
+
+        assert!(new_.join("al-1").join("128.webp").exists());
+        assert_eq!(fs::read(new_.join("al-1").join("128.webp")).unwrap(), b"old-bytes");
+        let _ = fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn merge_bucket_prefers_existing_on_collision() {
+        let root = fresh_tmpdir("collision");
+        let old = root.join("old");
+        let new_ = root.join("new");
+        fs::create_dir_all(old.join("al-1")).unwrap();
+        fs::create_dir_all(new_.join("al-1")).unwrap();
+        fs::write(old.join("al-1").join("128.webp"), b"OLD").unwrap();
+        fs::write(new_.join("al-1").join("128.webp"), b"NEW").unwrap();
+
+        merge_cover_bucket(&old, &new_).unwrap();
+
+        // Existing destination wins; nothing was overwritten.
+        assert_eq!(fs::read(new_.join("al-1").join("128.webp")).unwrap(), b"NEW");
+        let _ = fs::remove_dir_all(&root);
+    }
+
+    // ── rename_bucket_inner — command-level behaviour ─────────────────────────
+
+    #[test]
+    fn rename_bucket_inner_rejects_empty_keys() {
+        let root = fresh_tmpdir("rename-empty");
+        assert!(rename_bucket_inner(&root, "", "new").is_err());
+        assert!(rename_bucket_inner(&root, "old", "").is_err());
+        let _ = fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn rename_bucket_inner_rejects_unsafe_keys() {
+        let root = fresh_tmpdir("rename-unsafe");
+        assert!(rename_bucket_inner(&root, "../escape", "new").is_err());
+        assert!(rename_bucket_inner(&root, "old", "/abs/path").is_err());
+        assert!(rename_bucket_inner(&root, "old", "C:/Windows").is_err());
+        let _ = fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn rename_bucket_inner_noop_when_old_missing() {
+        let root = fresh_tmpdir("rename-missing");
+        // No old dir exists at all — must succeed without creating new.
+        rename_bucket_inner(&root, "old", "new").unwrap();
+        assert!(!root.join("new").exists());
+        let _ = fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn rename_bucket_inner_noop_when_keys_equal() {
+        let root = fresh_tmpdir("rename-equal");
+        fs::create_dir_all(root.join("same").join("al-1")).unwrap();
+        fs::write(root.join("same").join("al-1").join("128.webp"), b"x").unwrap();
+        rename_bucket_inner(&root, "same", "same").unwrap();
+        // Still exactly where it was; nothing renamed.
+        assert!(root.join("same").join("al-1").join("128.webp").exists());
+        let _ = fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn rename_bucket_inner_simple_rename_when_new_missing() {
+        let root = fresh_tmpdir("rename-simple");
+        fs::create_dir_all(root.join("old").join("al-1")).unwrap();
+        fs::write(root.join("old").join("al-1").join("128.webp"), b"payload").unwrap();
+        rename_bucket_inner(&root, "old", "new").unwrap();
+        assert!(!root.join("old").exists());
+        assert_eq!(
+            fs::read(root.join("new").join("al-1").join("128.webp")).unwrap(),
+            b"payload",
+        );
+        let _ = fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn rename_bucket_inner_merges_when_new_exists() {
+        let root = fresh_tmpdir("rename-merge");
+        fs::create_dir_all(root.join("old").join("al-1")).unwrap();
+        fs::create_dir_all(root.join("new").join("al-2")).unwrap();
+        fs::write(root.join("old").join("al-1").join("128.webp"), b"from-old").unwrap();
+        fs::write(root.join("new").join("al-2").join("128.webp"), b"from-new").unwrap();
+        // Collision on al-2 — destination wins.
+        fs::create_dir_all(root.join("old").join("al-2")).unwrap();
+        fs::write(root.join("old").join("al-2").join("128.webp"), b"overwrite-attempt").unwrap();
+
+        rename_bucket_inner(&root, "old", "new").unwrap();
+
+        // Old bucket gone.
+        assert!(!root.join("old").exists());
+        // al-1 moved in.
+        assert_eq!(
+            fs::read(root.join("new").join("al-1").join("128.webp")).unwrap(),
+            b"from-old",
+        );
+        // al-2 destination preserved (prefer-existing).
+        assert_eq!(
+            fs::read(root.join("new").join("al-2").join("128.webp")).unwrap(),
+            b"from-new",
+        );
+        let _ = fs::remove_dir_all(&root);
     }
 }

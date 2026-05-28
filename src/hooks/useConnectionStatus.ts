@@ -1,31 +1,29 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useAuthStore } from '../store/authStore';
-import { pingWithCredentials, scheduleInstantMixProbeForServer } from '../api/subsonic';
+import { scheduleInstantMixProbeForServer } from '../api/subsonic';
 import { serverListDisplayLabel } from '../utils/server/serverDisplayName';
+import {
+  ensureConnectUrlResolved,
+  invalidateReachableEndpointCache,
+  isLanUrl,
+  type ServerEndpointKind,
+} from '../utils/server/serverEndpoint';
 import { usePerfProbeFlags } from '../utils/perf/perfFlags';
 
-export type ConnectionStatus = 'connected' | 'disconnected' | 'checking';
+// Backward-compatible re-export for call sites that still import from the hook.
+export { isLanUrl };
 
-export function isLanUrl(url: string): boolean {
-  try {
-    const hostname = new URL(url.startsWith('http') ? url : `http://${url}`).hostname;
-    return (
-      hostname === 'localhost' ||
-      hostname.endsWith('.local') ||
-      /^127\./.test(hostname) ||
-      /^10\./.test(hostname) ||
-      /^192\.168\./.test(hostname) ||
-      /^172\.(1[6-9]|2\d|3[01])\./.test(hostname)
-    );
-  } catch {
-    return false;
-  }
-}
+export type ConnectionStatus = 'connected' | 'disconnected' | 'checking';
 
 export function useConnectionStatus() {
   const perfFlags = usePerfProbeFlags();
   const [status, setStatus] = useState<ConnectionStatus>('checking');
   const [isRetrying, setIsRetrying] = useState(false);
+  // Tracks the kind of endpoint the last successful probe answered on so the
+  // badge reflects the *active* connection, not just whatever the user typed
+  // as the primary URL. A LAN-tagged primary that has fallen over to its
+  // public alternate must read as 'public', not 'local'.
+  const [activeEndpointKind, setActiveEndpointKind] = useState<ServerEndpointKind | null>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const check = useCallback(async () => {
@@ -40,24 +38,35 @@ export function useConnectionStatus() {
       return;
     }
 
-    const ping = await pingWithCredentials(server.url, server.username, server.password);
-       if (ping.ok) {
+    // Dual-address: probe LAN-first via the shared cache. On every poll the
+    // sticky entry is tried first; on failure the full sequence runs and the
+    // cache flips to whichever endpoint actually answers — so a laptop moving
+    // off WiFi smoothly transitions from LAN to public without a manual retry.
+    const probe = await ensureConnectUrlResolved(server);
+    if (probe.ok) {
       const sid = useAuthStore.getState().activeServerId;
       if (sid) {
         const identity = {
-          type: ping.type,
-          serverVersion: ping.serverVersion,
-          openSubsonic: ping.openSubsonic,
+          type: probe.ping.type,
+          serverVersion: probe.ping.serverVersion,
+          openSubsonic: probe.ping.openSubsonic,
         };
         useAuthStore.getState().setSubsonicServerIdentity(sid, identity);
-        scheduleInstantMixProbeForServer(sid, server.url, server.username, server.password, identity);
+        scheduleInstantMixProbeForServer(sid, probe.baseUrl, server.username, server.password, identity);
       }
+      setActiveEndpointKind(probe.endpoint.kind);
+    } else {
+      setActiveEndpointKind(null);
     }
-    setStatus(ping.ok ? 'connected' : 'disconnected');
+    setStatus(probe.ok ? 'connected' : 'disconnected');
   }, []);
 
   const retry = useCallback(async () => {
     setIsRetrying(true);
+    // Manual retry: drop the sticky cache so the next probe starts in the
+    // natural LAN-first order instead of revalidating whatever last worked.
+    const sid = useAuthStore.getState().activeServerId;
+    if (sid) invalidateReachableEndpointCache(sid);
     await check();
     setIsRetrying(false);
   }, [check]);
@@ -74,7 +83,13 @@ export function useConnectionStatus() {
     check();
     intervalRef.current = setInterval(check, 120_000);
 
-    const handleOnline = () => check();
+    const handleOnline = () => {
+      // Network just came back — the sticky entry is from a different network
+      // moment and may be wrong. Flush, then re-probe LAN-first.
+      const sid = useAuthStore.getState().activeServerId;
+      if (sid) invalidateReachableEndpointCache(sid);
+      check();
+    };
     const handleOffline = () => setStatus('disconnected');
 
     window.addEventListener('online', handleOnline);
@@ -98,7 +113,16 @@ export function useConnectionStatus() {
     status,
     isRetrying,
     retry,
-    isLan: server ? isLanUrl(server.url) : false,
+    // Active endpoint kind preferred; until the first probe completes we
+    // fall back to the primary url's classification so the badge has
+    // *something* to render at mount time. Once a probe has resolved,
+    // `activeEndpointKind` is the source of truth.
+    isLan:
+      activeEndpointKind !== null
+        ? activeEndpointKind === 'local'
+        : server
+        ? isLanUrl(server.url)
+        : false,
     serverName,
   };
 }
