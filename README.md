@@ -182,9 +182,9 @@ Build release:
 npm run tauri:build
 ```
 
-## Local Windows release build (maintainer)
+## Signed Windows installer (maintainer, manual)
 
-The Windows installer is **not** signed by CI — the Certum SimplySign Cloud OV cert requires interactive OTP login and only works locally on Windows. The maintainer builds and signs the Windows release locally:
+CI builds a Windows bundle on every release as a compile check, but does not sign or publish it — the Certum SimplySign Cloud OV cert requires interactive OTP login and cannot be driven from a hosted runner. The signed installer that ships in a release is therefore produced locally by the maintainer:
 
 1. Start **SimplySign Desktop** and log in (OTP via SimplySign Mobile). This makes the cloud cert available in `Cert:\CurrentUser\My`.
 2. `npm install && npm run tauri:build -- --bundles nsis`. The `--bundles nsis` flag is required — Tauri's default would also build an MSI, which rejects the `-dev` pre-release identifier. Tauri's `bundle.windows.signCommand` invokes `signtool` for the app `.exe`, every NSIS plugin DLL, and the final installer — all come out signed in one go.

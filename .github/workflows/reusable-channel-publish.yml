@@ -239,9 +239,11 @@ jobs:
             return data.id;
 
   # Windows is intentionally NOT in this matrix: the Certum SimplySign Cloud cert
-  # requires interactive OTP login via SimplySign Desktop and only works locally on
-  # Windows. The release-ready Windows installer is built and signed locally by the
-  # maintainer (see README "Local Windows release build"). This job covers macOS only.
+  # requires interactive OTP login via SimplySign Desktop and cannot be driven from a
+  # hosted runner. Signed Windows installers are produced and uploaded out-of-band by
+  # the maintainer (see README). A separate build-windows-check job below still
+  # compiles a Windows bundle each release to catch breakage early — it just does not
+  # upload anything.
   build-macos:
     if: ${{ inputs.build_platform_artifacts }}
     needs: create-release
@@ -323,6 +325,41 @@ jobs:
           npx @tauri-apps/cli signer sign "$TARBALL"
           cp "${TARBALL}.sig" "Psysonic_${ARCH}.app.tar.gz.sig"
           gh release upload "$RELEASE_TAG" "Psysonic_${ARCH}.app.tar.gz.sig" --clobber
+
+  # Compile + bundle the Windows NSIS installer on every release to catch breakage
+  # (Windows-only Rust cfg, Tauri config drift, NSIS template issues). Nothing is
+  # uploaded and signing is disabled — see comment on build-macos for why CI cannot
+  # sign Windows. The maintainer produces and uploads the signed installer locally.
+  build-windows-check:
+    if: ${{ inputs.build_platform_artifacts }}
+    needs: create-release
+    permissions:
+      contents: read
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ needs.create-release.outputs.source_commit_sha }}
+      - name: setup node
+        uses: actions/setup-node@v5
+        with:
+          node-version: lts/*
+          cache: "npm"
+      - name: install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+      - name: cache cargo
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+      - name: install npm dependencies
+        run: npm install
+      - name: tauri build (compile check only — no sign, no upload)
+        shell: bash
+        env:
+          VITE_LASTFM_API_KEY: ${{ secrets.VITE_LASTFM_API_KEY }}
+          VITE_LASTFM_API_SECRET: ${{ secrets.VITE_LASTFM_API_SECRET }}
+        run: |
+          npm run tauri:build -- --bundles nsis --config '{"bundle":{"windows":{"signCommand":null}}}'
 
   generate-manifest:
     if: ${{ inputs.build_platform_artifacts }}
