@@ -238,7 +238,11 @@ jobs:
             });
             return data.id;
 
-  build-macos-windows:
+  # Windows is intentionally NOT in this matrix: the Certum SimplySign Cloud cert
+  # requires interactive OTP login via SimplySign Desktop and only works locally on
+  # Windows. The release-ready Windows installer is built and signed locally by the
+  # maintainer (see README "Local Windows release build"). This job covers macOS only.
+  build-macos:
     if: ${{ inputs.build_platform_artifacts }}
     needs: create-release
     permissions:
@@ -251,8 +255,6 @@ jobs:
             args: "--target aarch64-apple-darwin"
           - platform: "macos-latest"
             args: "--target x86_64-apple-darwin"
-          - platform: "windows-latest"
-            args: "--bundles nsis"
     runs-on: ${{ matrix.settings.platform }}
     steps:
       - uses: actions/checkout@v5
@@ -324,7 +326,7 @@ jobs:
 
   generate-manifest:
     if: ${{ inputs.build_platform_artifacts }}
-    needs: [create-release, build-macos-windows]
+    needs: [create-release, build-macos]
     runs-on: ubuntu-24.04
     permissions:
       contents: write
