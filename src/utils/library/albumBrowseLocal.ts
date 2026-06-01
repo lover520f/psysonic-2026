@@ -1,4 +1,4 @@
-import { libraryAdvancedSearch } from '../../api/library';
+import { libraryAdvancedSearch, libraryListAlbumsByGenre } from '../../api/library';
 import type { SubsonicAlbum } from '../../api/subsonicTypes';
 import { libraryScopeForServer } from '../../api/subsonicClient';
 import { dedupeById } from '../dedupeById';
@@ -29,6 +29,24 @@ export async function runLocalAlbumBrowse(
   const starredOnly = useServerStarredIds ? undefined : (query.starredOnly || undefined);
 
   if (query.genres.length > 0) {
+    if (query.genres.length === 1) {
+      try {
+        const resp = await libraryListAlbumsByGenre({
+          serverId,
+          genre: query.genres[0],
+          libraryScope: scope,
+          sort: albumSortClauses(query.sort),
+          limit: pageSize,
+          offset,
+        });
+        if (resp.source !== 'local') return null;
+        let albums = resp.albums.map(albumToAlbum);
+        if (useServerStarredIds) albums = markServerStarredAlbums(albums);
+        return { albums, hasMore: resp.hasMore };
+      } catch {
+        return null;
+      }
+    }
     if (offset > 0) return { albums: [], hasMore: false };
     try {
       const pages = await Promise.all(

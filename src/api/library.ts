@@ -706,11 +706,69 @@ export type CatalogYearBounds = {
   maxYear: number | null;
 };
 
+export type GenreAlbumCountRow = {
+  value: string;
+  albumCount: number;
+  songCount: number;
+};
+
 export function libraryGetCatalogYearBounds(args: { serverId: string }): Promise<CatalogYearBounds> {
   const indexKey = serverIndexKeyForId(args.serverId);
   return invoke<CatalogYearBounds>('library_get_catalog_year_bounds', {
     serverId: indexKey,
   });
+}
+
+export function libraryGetGenreAlbumCounts(args: {
+  serverId: string;
+  libraryScope?: string;
+}): Promise<GenreAlbumCountRow[]> {
+  const indexKey = serverIndexKeyForId(args.serverId);
+  return invoke<GenreAlbumCountRow[]>('library_get_genre_album_counts', {
+    serverId: indexKey,
+    libraryScope: args.libraryScope,
+  });
+}
+
+export type LibraryGenreAlbumsRequest = {
+  serverId: string;
+  genre: string;
+  libraryScope?: string | null;
+  sort?: LibrarySortClause[];
+  limit?: number;
+  offset?: number;
+  includeTotal?: boolean;
+};
+
+export type LibraryGenreAlbumsResponse = {
+  albums: LibraryAlbumDto[];
+  hasMore: boolean;
+  total?: number | null;
+  source: 'local';
+};
+
+/** Paginated albums for one genre from the local track index. */
+export function libraryListAlbumsByGenre(
+  request: LibraryGenreAlbumsRequest,
+): Promise<LibraryGenreAlbumsResponse> {
+  const indexKey = serverIndexKeyForId(request.serverId);
+  return invoke<LibraryGenreAlbumsResponse>('library_list_albums_by_genre', {
+    request: {
+      serverId: indexKey,
+      genre: request.genre,
+      libraryScope: request.libraryScope ?? undefined,
+      sort: request.sort ?? [],
+      limit: request.limit ?? 50,
+      offset: request.offset ?? 0,
+      includeTotal: request.includeTotal ?? false,
+    },
+  }).then(response => ({
+    ...response,
+    albums: response.albums.map(album => ({
+      ...album,
+      serverId: mapServerIdFromIndexKey(album.serverId, request.serverId),
+    })),
+  }));
 }
 
 export type PlaySessionRecentDay = {
