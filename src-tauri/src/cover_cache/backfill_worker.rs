@@ -51,7 +51,6 @@ fn now_ms() -> u64 {
 pub struct CoverBackfillSession {
     pub server_index_key: String,
     pub library_server_id: String,
-    pub rest_base_url: String,
     pub username: String,
     pub password: String,
 }
@@ -86,6 +85,16 @@ pub struct CoverBackfillWorker {
     /// Epoch-ms of the last `sync-idle`-driven pass, to rate-limit the idle-gate
     /// disk walk against chatty syncs. 0 = never.
     last_sync_idle_ms: AtomicU64,
+    /// Live connect URL, resolved fresh per cover fetch rather than baked into
+    /// the worklist. The worklist holds URL-agnostic items; a LAN→public flip
+    /// just swaps this cell, so even the pass already in flight downloads its
+    /// remaining covers against the now-reachable endpoint.
+    base_url: std::sync::Mutex<String>,
+    /// A forced retry requested while a pass was already running (e.g. the
+    /// connect URL flipped LAN→public at boot). The in-flight pass already
+    /// adopts the new URL live, but the handful of covers it attempted against
+    /// the stale address need one more forced pass once it finishes.
+    rerun_pending: AtomicBool,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -124,6 +133,8 @@ impl CoverBackfillWorker {
             parallel: AtomicUsize::new(LIBRARY_BACKFILL_PARALLEL_DEFAULT),
             settled: Mutex::new(None),
             last_sync_idle_ms: AtomicU64::new(0),
+            base_url: std::sync::Mutex::new(String::new()),
+            rerun_pending: AtomicBool::new(false),
         }
     }
 
@@ -168,15 +179,38 @@ impl CoverBackfillWorker {
         next
     }
 
-    pub async fn set_session(&self, enabled: bool, session: Option<CoverBackfillSession>) {
+    pub async fn set_session(
+        &self,
+        enabled: bool,
+        session: Option<CoverBackfillSession>,
+        base_url: String,
+    ) {
         self.enabled.store(enabled, Ordering::Relaxed);
         *self.session.lock().await = session;
+        *self.base_url.lock().unwrap() = base_url;
         // Server switch or enable/disable invalidates any settled state: re-arm
         // so the next idle event runs a real pass for the new focus.
         *self.settled.lock().await = None;
         if !enabled {
             *self.cursor.lock().await = String::new();
         }
+    }
+
+    /// Current connect URL for backfill fetches. Read fresh per cover so a
+    /// LAN→public flip is honoured mid-pass without rebuilding the worklist.
+    pub fn base_url(&self) -> String {
+        self.base_url.lock().unwrap().clone()
+    }
+
+    /// Swap the live connect URL. Returns `true` when it actually changed, so the
+    /// caller can clear the now-stale fetch-failed backoff and kick a retry pass.
+    pub fn set_base_url(&self, url: String) -> bool {
+        let mut cell = self.base_url.lock().unwrap();
+        if *cell == url {
+            return false;
+        }
+        *cell = url;
+        true
     }
 
     pub async fn reset_cursor(&self) {
@@ -204,7 +238,10 @@ fn session_matches_server(session: &CoverBackfillSession, server_id: &str) -> bo
     server_id == session.server_index_key || server_id == session.library_server_id
 }
 
-/// Backfill runs only while this session is still the configured focus (active server).
+/// Backfill runs only while this session is still the configured focus (active
+/// server). A connect-URL flip keeps the same `server_index_key` and is picked
+/// up live via `worker.base_url()`, so it does not abort the pass — only a
+/// server switch or disable does.
 async fn session_still_focused(worker: &CoverBackfillWorker, expected: &CoverBackfillSession) -> bool {
     if !worker.enabled.load(Ordering::Relaxed) {
         return false;
@@ -267,7 +304,7 @@ async fn ensure_one(
         cache_entity_id: item.cache_entity_id,
         cover_art_id: item.fetch_cover_art_id,
         tier: LIBRARY_COVER_CANONICAL_TIER,
-        rest_base_url: session.rest_base_url,
+        rest_base_url: worker.base_url(),
         username: session.username,
         password: session.password,
         library_bulk: true,
@@ -531,13 +568,38 @@ pub async fn try_schedule_full_pass(app: &AppHandle, force: bool) -> bool {
         .compare_exchange(false, true, Ordering::SeqCst, Ordering::SeqCst)
         .is_err()
     {
+        // A pass is already running. It reads the connect URL live per cover, so
+        // any flip that landed mid-pass already applies to its remaining work.
+        // A forced retry (URL flip) still queues a rerun so the few covers the
+        // in-flight pass attempted against the stale address get re-fetched.
+        if force {
+            worker.rerun_pending.store(true, Ordering::SeqCst);
+        }
         return false;
     }
 
     let app = app.clone();
     tauri::async_runtime::spawn(async move {
-        run_full_pass(app, worker.clone(), force).await;
-        worker.pass_running.store(false, Ordering::SeqCst);
+        run_full_pass(app.clone(), worker.clone(), force).await;
+        // Drain a forced rerun queued mid-pass (always forced: it bypasses the
+        // idle gate the just-finished pass re-armed and clears the stale backoff).
+        loop {
+            worker.pass_running.store(false, Ordering::SeqCst);
+            if !worker.rerun_pending.swap(false, Ordering::SeqCst)
+                || !worker.enabled.load(Ordering::Relaxed)
+            {
+                break;
+            }
+            if worker
+                .pass_running
+                .compare_exchange(false, true, Ordering::SeqCst, Ordering::SeqCst)
+                .is_err()
+            {
+                worker.rerun_pending.store(true, Ordering::SeqCst);
+                break;
+            }
+            run_full_pass(app.clone(), worker.clone(), true).await;
+        }
     });
     true
 }
