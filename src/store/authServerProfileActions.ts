@@ -15,7 +15,9 @@ type SetState = (
  * the active id to the next available server (or null) so the rest of
  * the app doesn't end up reading stale state.
  */
-export function createServerProfileActions(set: SetState): Pick<
+type GetState = () => AuthState;
+
+export function createServerProfileActions(set: SetState, get: GetState): Pick<
   AuthState,
   | 'addServer'
   | 'updateServer'
@@ -41,6 +43,10 @@ export function createServerProfileActions(set: SetState): Pick<
     },
 
     removeServer: (id) => {
+      const inClusters = get().clusters.some(c => c.serverIds.includes(id));
+      if (inClusters) {
+        throw new Error('SERVER_IN_CLUSTER');
+      }
       // queueServerId is the canonical index key (B1); resolve the
       // canonical id back to a server UUID before comparing so a profile
       // delete still clears the matching queue binding.
@@ -70,7 +76,7 @@ export function createServerProfileActions(set: SetState): Pick<
     },
 
     setServers: (servers) => set({ servers }),
-    setActiveServer: (id) => set({ activeServerId: id, musicFolders: [] }),
+    setActiveServer: (id) => set({ activeServerId: id, activeClusterId: null, musicFolders: [] }),
     setLoggedIn: (v) => set({ isLoggedIn: v }),
     setConnecting: (v) => set({ isConnecting: v }),
     setConnectionError: (e) => set({ connectionError: e }),

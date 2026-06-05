@@ -3,6 +3,7 @@ import type {
   InstantMixProbeResult,
   SubsonicServerIdentity,
 } from '../utils/server/subsonicServerIdentity';
+import type { ServerCluster } from '../utils/serverCluster/types';
 
 export interface ServerProfile {
   id: string;
@@ -74,6 +75,9 @@ export interface AuthState {
   // Multi-server
   servers: ServerProfile[];
   activeServerId: string | null;
+  /** When set, browse/merge scope is this cluster (`activeServerId` = representative). */
+  activeClusterId: string | null;
+  clusters: ServerCluster[];
 
   // Last.fm (global)
   lastfmApiKey: string;
@@ -376,6 +380,15 @@ export interface AuthState {
   /** Pin the fixed "Now Playing" sidebar entry to the top instead of the bottom. */
   nowPlayingAtTop: boolean;
   setNowPlayingAtTop: (v: boolean) => void;
+
+  createCluster: (name: string, serverIds: string[]) => string;
+  renameCluster: (id: string, name: string) => void;
+  setClusterOrder: (id: string, serverIds: string[]) => void;
+  addServerToCluster: (id: string, serverId: string) => void;
+  removeServerFromCluster: (id: string, serverId: string) => void;
+  setClusterSyncPlayCounts: (id: string, enabled: boolean) => void;
+  deleteCluster: (id: string) => void;
+  setActiveCluster: (id: string | null) => void;
 
   logout: () => void;
 

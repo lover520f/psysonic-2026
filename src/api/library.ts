@@ -464,6 +464,81 @@ export function librarySearchCrossServer(args: {
   }));
 }
 
+export interface LibraryClusterCandidateDto {
+  serverId: string;
+  trackId: string;
+  durationSec: number;
+  priorityRank: number;
+  isWinner: boolean;
+}
+
+export interface LibraryClusterResolveResponse {
+  candidates: LibraryClusterCandidateDto[];
+  clusterKey?: string | null;
+}
+
+function mapServersOrderedToIndexKeys(serverIds: string[]): string[] {
+  return serverIds.map(serverIndexKeyForId);
+}
+
+/** Merged track list for cluster scope (ordered members = priority). */
+export function libraryClusterListTracks(args: {
+  serversOrdered: string[];
+  limit?: number;
+  offset?: number;
+}): Promise<LibraryTracksEnvelope> {
+  return invoke<LibraryTracksEnvelope>('library_cluster_list_tracks', {
+    request: {
+      serversOrdered: mapServersOrderedToIndexKeys(args.serversOrdered),
+      limit: args.limit,
+      offset: args.offset,
+    },
+  }).then(env => ({
+    ...env,
+    tracks: mapTracksServerId(env.tracks),
+  }));
+}
+
+export function libraryClusterResolveCandidates(args: {
+  serversOrdered: string[];
+  clusterKey?: string;
+  serverId?: string;
+  trackId?: string;
+}): Promise<LibraryClusterResolveResponse> {
+  return invoke<LibraryClusterResolveResponse>('library_cluster_resolve_candidates', {
+    request: {
+      serversOrdered: mapServersOrderedToIndexKeys(args.serversOrdered),
+      clusterKey: args.clusterKey,
+      serverId: args.serverId ? serverIndexKeyForId(args.serverId) : undefined,
+      trackId: args.trackId,
+    },
+  }).then(response => ({
+    ...response,
+    candidates: response.candidates.map(c => ({
+      ...c,
+      serverId: mapServerIdFromIndexKey(c.serverId),
+    })),
+  }));
+}
+
+/** Cluster-mode search — dedup by cluster_key + priority. */
+export function librarySearchCluster(args: {
+  query: string;
+  limit?: number;
+  serversOrdered: string[];
+}): Promise<LibraryCrossServerSearchResponse> {
+  return invoke<LibraryCrossServerSearchResponse>('library_search_cluster', {
+    query: args.query,
+    limit: args.limit,
+    serversOrdered: mapServersOrderedToIndexKeys(args.serversOrdered),
+  }).then(response => ({
+    ...response,
+    hits: mapTracksServerId(response.hits),
+    fuzzy: mapTracksServerId(response.fuzzy),
+    serversSearched: response.serversSearched.map(id => mapServerIdFromIndexKey(id)),
+  }));
+}
+
 export function libraryGetTrack(
   serverId: string,
   trackId: string,

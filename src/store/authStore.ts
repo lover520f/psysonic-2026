@@ -10,6 +10,7 @@ import { createMusicLibraryActions } from './authMusicLibraryActions';
 import { createPerServerCapabilityActions } from './authPerServerCapabilityActions';
 import { createPlumbingSettingsActions } from './authPlumbingActions';
 import { createServerProfileActions } from './authServerProfileActions';
+import { createClusterActions } from './authClusterActions';
 import { createSkipStarActions } from './authSkipStarActions';
 import { createTrackPreviewActions } from './authTrackPreviewActions';
 import { createUiAppearanceActions } from './authUiAppearanceActions';
@@ -31,6 +32,8 @@ export const useAuthStore = create<AuthState>()(
     (set, get) => ({
       servers: [],
       activeServerId: null,
+      activeClusterId: null,
+      clusters: [],
       lastfmApiKey: '',
       lastfmApiSecret: '',
       lastfmSessionKey: '',
@@ -130,7 +133,8 @@ export const useAuthStore = create<AuthState>()(
       connectionError: null,
       lastfmSessionError: false,
 
-      ...createServerProfileActions(set),
+      ...createServerProfileActions(set, get),
+      ...createClusterActions(set, get),
       ...createAuthLastfmActions(set),
       ...createAudioSettingsActions(set),
       ...createCacheStorageActions(set),
