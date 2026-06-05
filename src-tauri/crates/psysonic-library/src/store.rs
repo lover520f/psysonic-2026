@@ -11,7 +11,7 @@ use crate::server_cluster::{attach_cluster_database, attach_cluster_database_uri
 
 /// Current head of the embedded migrations. Bump each time a new
 /// `migrations/NNN_*.sql` is added.
-pub const LIBRARY_DB_SCHEMA_VERSION: i64 = 1;
+pub const LIBRARY_DB_SCHEMA_VERSION: i64 = 2;
 
 /// Lowest applied schema version the current code can advance from purely
 /// additively. If a DB carries a version below this, the breaking-bump hook
@@ -24,10 +24,15 @@ pub const LIBRARY_DB_SCHEMA_VERSION: i64 = 1;
 pub const LIBRARY_DB_MIN_COMPATIBLE_VERSION: i64 = 1;
 
 pub(crate) const INITIAL_SQL: &str = include_str!("../migrations/001_initial.sql");
+const MIGRATION_002_ALBUM_BROWSE_INDEX: &str =
+    include_str!("../migrations/002_album_browse_index.sql");
 
 /// Embedded migrations. Ordered ascending by `version`; the runner sorts
 /// defensively before applying so the source order can stay readable.
-const MIGRATIONS: &[(i64, &str)] = &[(1, INITIAL_SQL)];
+const MIGRATIONS: &[(i64, &str)] = &[
+    (1, INITIAL_SQL),
+    (2, MIGRATION_002_ALBUM_BROWSE_INDEX),
+];
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(crate) enum MigrationOutcome {

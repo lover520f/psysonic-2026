@@ -381,6 +381,46 @@ export function libraryLiveSearch(request: LibraryLiveSearchRequest): Promise<Li
   }));
 }
 
+export interface LibraryAlbumBrowseRequest {
+  serverId: string;
+  libraryScope?: string | null;
+  libraryScopeIds?: string[] | null;
+  restrictAlbumIds?: string[] | null;
+  sort?: LibrarySortClause[];
+  limit?: number;
+  offset?: number;
+}
+
+export interface LibraryAlbumBrowseResponse {
+  albums: LibraryAlbumDto[];
+  hasMore: boolean;
+  source: 'local';
+}
+
+/** Paginated plain All Albums from the local track index. */
+export function libraryListAlbums(
+  request: LibraryAlbumBrowseRequest,
+): Promise<LibraryAlbumBrowseResponse> {
+  const indexKey = serverIndexKeyForId(request.serverId);
+  return invoke<LibraryAlbumBrowseResponse>('library_list_albums', {
+    request: {
+      serverId: indexKey,
+      libraryScope: request.libraryScope ?? undefined,
+      libraryScopeIds: request.libraryScopeIds ?? undefined,
+      restrictAlbumIds: request.restrictAlbumIds ?? undefined,
+      sort: request.sort,
+      limit: request.limit,
+      offset: request.offset,
+    },
+  }).then(response => ({
+    ...response,
+    albums: response.albums.map(album => ({
+      ...album,
+      serverId: mapServerIdFromIndexKey(album.serverId, request.serverId),
+    })),
+  }));
+}
+
 export interface LibraryLosslessAlbumsRequest {
   serverId: string;
   libraryScope?: string | null;

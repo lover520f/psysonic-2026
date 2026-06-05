@@ -46,6 +46,13 @@ const CATALOG_CHUNK_SIZE = 200;
 /** Wait for visible-row cover ensures to drain before fetching the next SQL page (network mode). */
 const LOAD_MORE_COVER_BACKLOG_MAX = 12;
 
+/** Let the loading spinner paint before heavy browse work blocks the main thread. */
+function yieldToPaint(): Promise<void> {
+  return new Promise(resolve => {
+    requestAnimationFrame(() => resolve());
+  });
+}
+
 type AlbumBrowseMode = 'slice' | 'page';
 
 export type UseAlbumBrowseDataArgs = {
@@ -178,7 +185,7 @@ export function useAlbumBrowseData({
     : libraryScopeIdsForServer(serverId) != null;
   const narrowGenreList = yearFilterActive || losslessOnly || starredOnly || compFilterActive;
   /** When true, GenreFilterBar uses `genreCatalogOptions` instead of server `getGenres()`. */
-  const genreCatalogActive = narrowGenreList || (indexEnabled && libraryScopeActive);
+  const genreCatalogActive = narrowGenreList;
 
   const compScanExhausted = useMemo(
     () => compFilterClientOnly && !genreFiltered
@@ -301,6 +308,7 @@ export function useAlbumBrowseData({
           },
         },
       );
+      await yieldToPaint();
       applyPage(pageResult);
     } finally {
       coverTrafficEndGridPagination();
@@ -328,6 +336,14 @@ export function useAlbumBrowseData({
     setLoading(true);
 
     void (async () => {
+      await yieldToPaint();
+      if (cancelled) return;
+      const useSliceCatalog = albumBrowseUseSliceCatalog(browseQuery, libraryScopeActive);
+      if (indexEnabled && serverId && !useSliceCatalog) {
+        setBrowseMode('page');
+        if (!cancelled) await loadBrowse(browseQuery, 0, false);
+        return;
+      }
       if (indexEnabled && serverId) {
         const generation = ++loadGenerationRef.current;
         coverTrafficBeginGridPagination();
@@ -336,17 +352,11 @@ export function useAlbumBrowseData({
             serverId,
             browseQuery,
             0,
-            CATALOG_CHUNK_SIZE,
+            CLIENT_SLICE_PAGE_SIZE,
           );
           if (cancelled || generation !== loadGenerationRef.current) return;
           if (first != null) {
-            if (!albumBrowseUseSliceCatalog(browseQuery, libraryScopeActive)) {
-              setBrowseMode('page');
-              setAlbums(first.albums);
-              setHasMore(first.hasMore);
-              setLoading(false);
-              return;
-            }
+            await yieldToPaint();
             setBrowseMode('slice');
             setAlbums(first.albums);
             catalogOffsetRef.current = first.albums.length;
@@ -367,22 +377,28 @@ export function useAlbumBrowseData({
     return () => {
       cancelled = true;
     };
-  }, [browseQuery, indexEnabled, serverId, loadBrowse, musicLibraryFilterVersion]);
+  }, [browseQuery, indexEnabled, serverId, loadBrowse, musicLibraryFilterVersion, libraryScopeActive]);
 
   useEffect(() => {
     if (!genreCatalogActive) {
       setGenreCatalogOptions(null);
       return;
     }
+    // Load genre bar after the grid paints — avoids competing with the first SQL page.
+    if (loading) return;
     let cancelled = false;
-    void fetchAlbumBrowseGenreOptions(serverId, indexEnabled, browseQueryWithoutGenre).then(options => {
-      if (!cancelled) setGenreCatalogOptions(options);
-    });
+    const timer = window.setTimeout(() => {
+      void fetchAlbumBrowseGenreOptions(serverId, indexEnabled, browseQueryWithoutGenre).then(options => {
+        if (!cancelled) setGenreCatalogOptions(options);
+      });
+    }, 0);
     return () => {
       cancelled = true;
+      window.clearTimeout(timer);
     };
   }, [
     genreCatalogActive,
+    loading,
     serverId,
     indexEnabled,
     browseQueryWithoutGenre,

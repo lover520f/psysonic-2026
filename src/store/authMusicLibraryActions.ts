@@ -1,5 +1,7 @@
 import type { MusicLibraryFilter } from '../utils/musicLibraryFilter';
 import { normalizeMusicLibraryFilter } from '../utils/musicLibraryFilter';
+import { invalidateClusterAlbumBrowseScopeCache } from '../utils/serverCluster/clusterAlbumBrowseMembers';
+import { invalidateClusterMergeMemberCache } from '../utils/serverCluster/representative';
 import type { AuthState } from './authStoreTypes';
 
 type SetState = (
@@ -11,6 +13,8 @@ function bumpFilter(
   set: SetState,
   next: Record<string, MusicLibraryFilter>,
 ): void {
+  invalidateClusterMergeMemberCache();
+  invalidateClusterAlbumBrowseScopeCache();
   set(s => ({
     musicLibraryFilterByServer: next,
     musicLibraryFilterVersion: s.musicLibraryFilterVersion + 1,
@@ -70,14 +74,9 @@ export function createMusicLibraryActions(set: SetState, get: GetState): Pick<
       }
       const sid = resolveTargetServerId(get, targetServerId);
       if (!sid) return;
-      set(s => {
-        const next = { ...s.musicLibraryFilterByServer };
-        next[sid] = folderId === 'all' ? 'all' : [folderId];
-        return {
-          musicLibraryFilterByServer: next,
-          musicLibraryFilterVersion: s.musicLibraryFilterVersion + 1,
-        };
-      });
+      const next = { ...get().musicLibraryFilterByServer };
+      next[sid] = folderId === 'all' ? 'all' : [folderId];
+      bumpFilter(set, next);
     },
 
     /** Toggle one folder in a multi-select set (checkbox). */
@@ -95,6 +94,8 @@ export function createMusicLibraryActions(set: SetState, get: GetState): Pick<
         } else {
           next[sid] = [...current, folderId];
         }
+        invalidateClusterMergeMemberCache();
+        invalidateClusterAlbumBrowseScopeCache();
         return {
           musicLibraryFilterByServer: next,
           musicLibraryFilterVersion: s.musicLibraryFilterVersion + 1,

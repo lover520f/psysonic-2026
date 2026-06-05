@@ -1,14 +1,12 @@
 import { albumIdsInLibraryScope } from '../../api/subsonicLibrary';
 import type { SubsonicAlbum } from '../../api/subsonicTypes';
 import { libraryScopeIdsForServer } from '../musicLibraryFilter';
-import { resolveClusterBrowseMembers } from '../serverCluster/clusterBrowse';
-
-/** SQLite bind-parameter budget for `restrictAlbumIds` IN clauses. */
-export const SQL_ALBUM_ALLOWLIST_MAX = 900;
+import type { ClusterAlbumBrowseScopeContext } from '../serverCluster/clusterAlbumBrowseMembers';
 
 /**
- * Navidrome-scoped album ids from getAlbumList2 (per musicFolderId).
- * Cached per server + filter version — safe to call on every browse page.
+ * Navidrome-scoped album ids from getAlbumList2 — **network fallback only**
+ * (`albumBrowseNetwork`, starred network pagination). Local index browse uses
+ * SQL `libraryScopeIds` on `library_id` in the synced catalog.
  */
 export async function resolveScopedAlbumAllowlist(
   serverId: string,
@@ -28,15 +26,7 @@ export async function resolveScopedAlbumRestrictIds(
   return allowlist ? [...allowlist] : undefined;
 }
 
-export function filterAlbumsByScopedAllowlist(
-  albums: SubsonicAlbum[],
-  allowlist: Set<string> | null | undefined,
-): SubsonicAlbum[] {
-  if (!allowlist?.size) return albums;
-  return albums.filter(a => allowlist.has(a.id));
-}
-
-/** Client-side scope filter (server getAlbumList2 ids). Idempotent after SQL restrict. */
+/** Network post-filter after Subsonic `getAlbumList2` / starred REST reads. */
 export async function filterAlbumsToServerLibraryScope(
   serverId: string,
   albums: SubsonicAlbum[],
@@ -59,56 +49,27 @@ export function intersectAlbumRestrictIds(
   return primary.filter(id => allowed.has(id));
 }
 
-export function scopedSqlAlbumAllowlist(
-  allowlist: Set<string> | null | undefined,
-): string[] | undefined {
-  if (!allowlist?.size) return undefined;
-  const ids = [...allowlist];
-  return ids.length > 0 && ids.length <= SQL_ALBUM_ALLOWLIST_MAX ? ids : undefined;
+/** Cluster: drop albums from members outside the narrowed scope set (SQL handles folder ids). */
+export function filterClusterAlbumsWithScopeContext(
+  albums: SubsonicAlbum[],
+  ctx: ClusterAlbumBrowseScopeContext,
+): SubsonicAlbum[] {
+  const { scopedMembers } = ctx;
+  if (scopedMembers.length === 0) return albums;
+  return albums.filter(a => {
+    const seedServerId = a.clusterSeedServerId;
+    return seedServerId != null && scopedMembers.includes(seedServerId);
+  });
 }
 
-/** Per-server getAlbumList2 allowlists for cluster SQL `restrictAlbumIds` (≤900 ids). */
-export async function buildClusterRestrictAlbumScopes(
-  memberIds: string[],
-): Promise<Record<string, string[]> | undefined> {
-  const scopes: Record<string, string[]> = {};
-  await Promise.all(
-    memberIds.map(async sid => {
-      if (!libraryScopeIdsForServer(sid)?.length) return;
-      const allowlist = await resolveScopedAlbumAllowlist(sid);
-      const sql = scopedSqlAlbumAllowlist(allowlist);
-      if (sql?.length) scopes[sid] = sql;
-    }),
-  );
-  return Object.keys(scopes).length > 0 ? scopes : undefined;
-}
-
-/**
- * Per-member scoped album ids for merged cluster browse.
- * When any member is narrowed, albums from unscoped members are excluded.
- */
+/** @deprecated Local paths use SQL scope; kept for callers that still async-wrap. */
 export async function filterClusterAlbumsToLibraryScope(
   albums: SubsonicAlbum[],
 ): Promise<SubsonicAlbum[]> {
-  const members = await resolveClusterBrowseMembers();
-  if (!members?.length) return albums;
-
-  const scopedMembers = members.filter(sid => libraryScopeIdsForServer(sid)?.length);
-  if (scopedMembers.length === 0) return albums;
-
-  const restrictByServer = new Map<string, Set<string>>();
-  await Promise.all(
-    scopedMembers.map(async sid => {
-      const allowlist = await resolveScopedAlbumAllowlist(sid);
-      if (allowlist?.size) restrictByServer.set(sid, allowlist);
-    }),
+  const { resolveClusterAlbumBrowseScopeContext } = await import(
+    '../serverCluster/clusterAlbumBrowseMembers'
   );
-  if (restrictByServer.size === 0) return albums;
-
-  return albums.filter(a => {
-    const seedServerId = a.clusterSeedServerId;
-    if (!seedServerId || !scopedMembers.includes(seedServerId)) return false;
-    const allowed = restrictByServer.get(seedServerId);
-    return allowed?.has(a.id) ?? false;
-  });
+  const ctx = await resolveClusterAlbumBrowseScopeContext();
+  if (!ctx) return albums;
+  return filterClusterAlbumsWithScopeContext(albums, ctx);
 }

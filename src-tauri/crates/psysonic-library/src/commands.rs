@@ -499,6 +499,15 @@ pub async fn library_list_lossless_albums(
 }
 
 #[tauri::command]
+pub async fn library_list_albums(
+    runtime: State<'_, LibraryRuntime>,
+    request: crate::dto::LibraryAlbumBrowseRequest,
+) -> Result<crate::dto::LibraryAlbumBrowseResponse, String> {
+    let store = Arc::clone(&runtime.store);
+    library_spawn_blocking(move || crate::album_browse::list_albums(&store, &request)).await
+}
+
+#[tauri::command]
 pub async fn library_list_albums_by_genre(
     runtime: State<'_, LibraryRuntime>,
     request: crate::dto::LibraryGenreAlbumsRequest,

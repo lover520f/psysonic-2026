@@ -87,6 +87,6 @@ describe('clusterBrowse', () => {
     expect(clusterAlbumBrowseNeedsAdvanced({ ...plain, compFilter: 'only' })).toBe(true);
     expect(clusterAlbumBrowseNeedsAdvanced({ ...plain, genres: ['Rock'] })).toBe(true);
     vi.mocked(isClusterLibraryScopeNarrowed).mockReturnValueOnce(true);
-    expect(clusterAlbumBrowseNeedsAdvanced(plain)).toBe(true);
+    expect(clusterAlbumBrowseNeedsAdvanced(plain)).toBe(false);
   });
 });

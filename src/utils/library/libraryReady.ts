@@ -7,6 +7,9 @@
 import { libraryGetStatus, type SyncStateDto } from '../../api/library';
 import { useLibraryIndexStore } from '../../store/libraryIndexStore';
 
+const READY_CACHE_TTL_MS = 30_000;
+const readyCache = new Map<string, { ready: boolean; expiresAt: number }>();
+
 /** Spec §9.3 — shared by Live Search, Advanced Search, browse, … */
 export function libraryStatusIsReady(status: SyncStateDto): boolean {
   if (status.syncPhase === 'ready') return true;
@@ -53,12 +56,21 @@ export function librarySyncBlocksCoverWork(
   return status.syncPhase === 'initial_sync' || status.syncPhase === 'probing';
 }
 
+export function invalidateLibraryReadyCache(serverId?: string): void {
+  if (serverId) readyCache.delete(serverId);
+  else readyCache.clear();
+}
+
 export async function libraryIsReady(serverId: string | null | undefined): Promise<boolean> {
   if (!serverId) return false;
   if (!useLibraryIndexStore.getState().isIndexEnabled(serverId)) return false;
+  const hit = readyCache.get(serverId);
+  if (hit && hit.expiresAt > Date.now()) return hit.ready;
   try {
     const status = await libraryGetStatus(serverId);
-    return libraryStatusIsReady(status);
+    const ready = libraryStatusIsReady(status);
+    readyCache.set(serverId, { ready, expiresAt: Date.now() + READY_CACHE_TTL_MS });
+    return ready;
   } catch {
     return false;
   }

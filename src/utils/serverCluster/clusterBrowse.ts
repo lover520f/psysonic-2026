@@ -14,8 +14,10 @@ import type { SubsonicAlbum, SubsonicArtist, SubsonicSong } from '../../api/subs
 import { dedupeById } from '../dedupeById';
 import { albumToAlbum, artistToArtist, trackToSong } from '../library/advancedSearchLocal';
 import { albumBrowseHasServerFilters } from '../library/albumBrowseFilters';
+import { searchSingleServerAlbumBrowse } from '../library/albumBrowseExecution';
 import type { AlbumBrowsePageResult, AlbumBrowseQuery } from '../library/albumBrowseTypes';
-import { filterClusterAlbumsToLibraryScope } from '../library/albumBrowseLibraryScope';
+import { filterClusterAlbumsWithScopeContext } from '../library/albumBrowseLibraryScope';
+import { resolveClusterAlbumBrowseScopeContext } from './clusterAlbumBrowseMembers';
 import { buildClusterLibraryScopes, isClusterLibraryScopeNarrowed } from './clusterLibraryScopes';
 import { getActiveClusterId, isClusterMode } from './clusterScope';
 import { getClusterMergeMemberIds } from './representative';
@@ -32,7 +34,6 @@ export async function resolveClusterBrowseMembers(): Promise<string[] | null> {
 export function clusterAlbumBrowseNeedsAdvanced(query: AlbumBrowseQuery): boolean {
   if (albumBrowseHasServerFilters(query)) return true;
   if (query.compFilter !== 'all') return true;
-  if (isClusterLibraryScopeNarrowed()) return true;
   return false;
 }
 
@@ -44,8 +45,6 @@ export function canUseClusterAlbumBrowse(
   if (restrictAlbumIds != null) return false;
   if (albumBrowseHasServerFilters(query)) return false;
   if (query.compFilter !== 'all') return false;
-  // Merged list_tracks SQL ignores library_id on many indexes — use advanced search.
-  if (isClusterLibraryScopeNarrowed()) return false;
   return true;
 }
 
@@ -68,12 +67,30 @@ export async function clusterBrowseTracksPage(
   }
 }
 
+const plainClusterAlbumQuery = {
+  sort: 'alphabeticalByName' as const,
+  genres: [] as string[],
+  losslessOnly: false,
+  starredOnly: false,
+  compFilter: 'all' as const,
+};
+
 export async function clusterBrowseAlbumsPage(
   offset: number,
   pageSize: number,
 ): Promise<AlbumBrowsePageResult | null> {
-  const members = await resolveClusterBrowseMembers();
-  if (!members) return null;
+  const scopeCtx = await resolveClusterAlbumBrowseScopeContext();
+  if (!scopeCtx) return null;
+  const { members } = scopeCtx;
+  if (members.length === 1) {
+    const page = await searchSingleServerAlbumBrowse(
+      members[0]!,
+      plainClusterAlbumQuery,
+      offset,
+      pageSize,
+    );
+    if (page != null) return page;
+  }
   try {
     const resp = await libraryClusterListAlbums({
       serversOrdered: members,
@@ -83,7 +100,7 @@ export async function clusterBrowseAlbumsPage(
     });
     let albums = resp.albums.map(albumToAlbum);
     if (isClusterLibraryScopeNarrowed()) {
-      albums = await filterClusterAlbumsToLibraryScope(albums);
+      albums = filterClusterAlbumsWithScopeContext(albums, scopeCtx);
     }
     return {
       albums,

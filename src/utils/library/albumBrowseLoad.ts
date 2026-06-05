@@ -13,6 +13,7 @@ export {
   albumBrowseHasGenreFilter,
   albumBrowseHasServerFilters,
   albumBrowseIsPureLossless,
+  albumBrowseIsPurePlain,
   albumBrowseMultiGenreBrowse,
   albumBrowseUseSliceCatalog,
   filterAlbumsByCompilation,
@@ -30,6 +31,7 @@ import { fetchAlbumBrowseNetwork } from './albumBrowseNetwork';
 import { fetchStarredAlbumBrowse } from './albumBrowseStarredFetch';
 import { libraryGetGenreAlbumCounts } from '../../api/library';
 import { libraryScopeInvokeArgs } from '../musicLibraryFilter';
+import { resolveAlbumBrowseIndexServerId } from '../serverCluster/clusterAlbumBrowseMembers';
 import { libraryIsReady } from './libraryReady';
 import type {
   AlbumBrowseFetchCallbacks,
@@ -60,11 +62,12 @@ export async function fetchLocalAlbumCatalogChunk(
 
 /** Genres in albums matching all filters except genre (for combined-filter UI). */
 export async function fetchAlbumBrowseGenreOptions(
-  serverId: string,
+  activeServerId: string,
   indexEnabled: boolean,
   query: AlbumBrowseQuery,
 ): Promise<GenreFilterOption[]> {
   const withoutGenre: AlbumBrowseQuery = { ...query, genres: [] };
+  const serverId = resolveAlbumBrowseIndexServerId(activeServerId);
   const scopeArgs = libraryScopeInvokeArgs(serverId);
   const hasCombinedFilters =
     albumBrowseHasServerFilters(withoutGenre) || query.compFilter !== 'all';

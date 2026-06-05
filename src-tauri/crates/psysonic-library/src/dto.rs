@@ -399,6 +399,38 @@ pub struct GenreAlbumCountDto {
     pub song_count: u32,
 }
 
+/// `library_list_albums` request — paginated plain All Albums browse (local index).
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct LibraryAlbumBrowseRequest {
+    pub server_id: String,
+    #[serde(default)]
+    pub library_scope: Option<String>,
+    #[serde(default)]
+    pub library_scope_ids: Option<Vec<String>>,
+    #[serde(default)]
+    pub sort: Vec<LibrarySortClause>,
+    #[serde(default)]
+    pub restrict_album_ids: Option<Vec<String>>,
+    #[serde(default = "default_album_browse_limit")]
+    pub limit: u32,
+    #[serde(default)]
+    pub offset: u32,
+}
+
+fn default_album_browse_limit() -> u32 {
+    30
+}
+
+/// `library_list_albums` response.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct LibraryAlbumBrowseResponse {
+    pub albums: Vec<LibraryAlbumDto>,
+    pub has_more: bool,
+    pub source: String,
+}
+
 /// `library_list_albums_by_genre` request — paginated genre album browse (local index).
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "camelCase")]

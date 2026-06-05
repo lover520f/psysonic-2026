@@ -7,8 +7,11 @@ vi.mock('../../api/subsonicLibrary', () => ({
   albumIdsInLibraryScope: (...args: unknown[]) => albumIdsInLibraryScope(...args),
 }));
 
-vi.mock('../serverCluster/clusterBrowse', () => ({
-  resolveClusterBrowseMembers: vi.fn(async () => ['srv-a', 'srv-b']),
+vi.mock('../serverCluster/clusterAlbumBrowseMembers', () => ({
+  resolveClusterAlbumBrowseScopeContext: vi.fn(async () => ({
+    members: ['srv-a', 'srv-b'],
+    scopedMembers: ['srv-a'],
+  })),
 }));
 
 vi.mock('../musicLibraryFilter', () => ({
@@ -18,6 +21,7 @@ vi.mock('../musicLibraryFilter', () => ({
 import {
   filterAlbumsToServerLibraryScope,
   filterClusterAlbumsToLibraryScope,
+  filterClusterAlbumsWithScopeContext,
   intersectAlbumRestrictIds,
 } from './albumBrowseLibraryScope';
 
@@ -36,7 +40,7 @@ describe('intersectAlbumRestrictIds', () => {
 });
 
 describe('filterAlbumsToServerLibraryScope', () => {
-  it('drops albums outside scoped allowlist', async () => {
+  it('drops albums outside network scope allowlist', async () => {
     albumIdsInLibraryScope.mockResolvedValue(new Set(['keep']));
     const out = await filterAlbumsToServerLibraryScope('srv-a', [
       { id: 'keep', name: 'a', artist: 'X', artistId: 'x', songCount: 1, duration: 1 },
@@ -46,7 +50,7 @@ describe('filterAlbumsToServerLibraryScope', () => {
   });
 });
 
-describe('filterClusterAlbumsToLibraryScope', () => {
+describe('filterClusterAlbumsWithScopeContext', () => {
   const album = (id: string, clusterSeedServerId: string): SubsonicAlbum => ({
     id,
     name: id,
@@ -57,18 +61,20 @@ describe('filterClusterAlbumsToLibraryScope', () => {
     clusterSeedServerId,
   });
 
-  it('keeps only albums in scoped member allowlist', async () => {
-    albumIdsInLibraryScope.mockResolvedValue(new Set(['in-scope']));
-    const out = await filterClusterAlbumsToLibraryScope([
-      album('in-scope', 'srv-a'),
-      album('other', 'srv-a'),
-      album('any', 'srv-b'),
-    ]);
-    expect(out.map(a => a.id)).toEqual(['in-scope']);
+  const scopeCtx = {
+    members: ['srv-a', 'srv-b'],
+    scopedMembers: ['srv-a'],
+  };
+
+  it('keeps only albums from scoped cluster members', () => {
+    const out = filterClusterAlbumsWithScopeContext([
+      album('a1', 'srv-a'),
+      album('b1', 'srv-b'),
+    ], scopeCtx);
+    expect(out.map(a => a.id)).toEqual(['a1']);
   });
 
-  it('drops albums from unscoped cluster members when another member is narrowed', async () => {
-    albumIdsInLibraryScope.mockResolvedValue(new Set(['a1']));
+  it('async wrapper uses scope context', async () => {
     const out = await filterClusterAlbumsToLibraryScope([
       album('a1', 'srv-a'),
       album('b1', 'srv-b'),

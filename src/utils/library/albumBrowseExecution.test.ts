@@ -1,13 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mockAdvancedSearch = vi.fn();
+const mockListAlbums = vi.fn();
 const mockListByGenre = vi.fn();
 const mockListLossless = vi.fn();
 const mockScopeArgs = vi.fn();
-const mockScopedAllowlist = vi.fn();
 
 vi.mock('../../api/library', () => ({
   libraryAdvancedSearch: (...args: unknown[]) => mockAdvancedSearch(...args),
+  libraryListAlbums: (...args: unknown[]) => mockListAlbums(...args),
   libraryListAlbumsByGenre: (...args: unknown[]) => mockListByGenre(...args),
   libraryListLosslessAlbums: (...args: unknown[]) => mockListLossless(...args),
 }));
@@ -15,14 +16,6 @@ vi.mock('../../api/library', () => ({
 vi.mock('../musicLibraryFilter', () => ({
   libraryScopeInvokeArgs: (...args: unknown[]) => mockScopeArgs(...args),
 }));
-
-vi.mock('./albumBrowseLibraryScope', async importOriginal => {
-  const actual = await importOriginal<typeof import('./albumBrowseLibraryScope')>();
-  return {
-    ...actual,
-    resolveScopedAlbumAllowlist: (...args: unknown[]) => mockScopedAllowlist(...args),
-  };
-});
 
 import { searchSingleServerAlbumBrowse } from './albumBrowseExecution';
 
@@ -37,11 +30,24 @@ const baseQuery = {
 beforeEach(() => {
   vi.clearAllMocks();
   mockScopeArgs.mockReturnValue({ libraryScopeIds: ['lib-1'], libraryScope: 'lib-1' });
-  mockScopedAllowlist.mockResolvedValue(null);
 });
 
 describe('searchSingleServerAlbumBrowse', () => {
-  it('pure lossless uses libraryListLosslessAlbums with scope and sort', async () => {
+  it('plain browse uses libraryListAlbums fast path', async () => {
+    mockListAlbums.mockResolvedValue({
+      source: 'local',
+      albums: [{ id: 'al-1', name: 'Album', serverId: 's1' }],
+      hasMore: false,
+    });
+
+    const result = await searchSingleServerAlbumBrowse('srv-1', baseQuery, 0, 30);
+
+    expect(mockListAlbums).toHaveBeenCalled();
+    expect(mockAdvancedSearch).not.toHaveBeenCalled();
+    expect(result?.albums.map(a => a.id)).toEqual(['al-1']);
+  });
+
+  it('pure lossless uses libraryListLosslessAlbums with SQL scope only', async () => {
     mockListLossless.mockResolvedValue({
       source: 'local',
       albums: [{ id: 'flac-1', name: 'Hi-Res', serverId: 's1' }],
@@ -64,32 +70,6 @@ describe('searchSingleServerAlbumBrowse', () => {
       offset: 0,
     });
     expect(mockAdvancedSearch).not.toHaveBeenCalled();
-    expect(result?.albums.map(a => a.id)).toEqual(['flac-1']);
-  });
-
-  it('scoped lossless passes SQL allowlist and post-filters leaked albums', async () => {
-    mockScopedAllowlist.mockResolvedValue(new Set(['flac-1']));
-    mockListLossless.mockResolvedValue({
-      source: 'local',
-      albums: [
-        { id: 'flac-1', name: 'In scope', serverId: 's1' },
-        { id: 'flac-2', name: 'Out of scope', serverId: 's1' },
-      ],
-      hasMore: false,
-    });
-
-    const result = await searchSingleServerAlbumBrowse(
-      'srv-1',
-      { ...baseQuery, losslessOnly: true },
-      0,
-      30,
-    );
-
-    expect(mockListLossless).toHaveBeenCalledWith(
-      expect.objectContaining({
-        restrictAlbumIds: ['flac-1'],
-      }),
-    );
     expect(result?.albums.map(a => a.id)).toEqual(['flac-1']);
   });
 

@@ -92,29 +92,29 @@ export async function getAlbumList(
  * so similar tracks can leak from other libraries. When the user scoped to one folder, we keep a set of
  * album ids in that scope (paginated getAlbumList2) and drop songs whose albumId is not in the set.
  */
-let scopedLibraryAlbumIdCache: {
-  serverId: string;
-  folderId: string;
-  filterVersion: number;
-  ids: Set<string>;
-} | null = null;
+const scopedLibraryAlbumIdCaches = new Map<
+  string,
+  { folderId: string; filterVersion: number; ids: Set<string> }
+>();
 
-/** Union of album ids across selected music folders (network scope filter). */
+/**
+ * Union of album ids across selected music folders — **network fallback only**
+ * (Subsonic `getAlbumList2`). Local index browse filters via SQL `library_id`.
+ */
 export async function albumIdsInLibraryScope(serverId: string): Promise<Set<string> | null> {
   const { musicLibraryFilterVersion } = useAuthStore.getState();
   if (!serverId) return null;
   const filter = musicLibraryFilterForServer(serverId);
   if (filter === 'all') {
-    scopedLibraryAlbumIdCache = null;
+    scopedLibraryAlbumIdCaches.delete(serverId);
     return null;
   }
   const cacheKey = musicLibraryFilterStorageKey(serverId);
-  const hit = scopedLibraryAlbumIdCache;
+  const hit = scopedLibraryAlbumIdCaches.get(serverId);
   if (
-    hit &&
-    hit.serverId === serverId &&
-    hit.folderId === cacheKey &&
-    hit.filterVersion === musicLibraryFilterVersion
+    hit
+    && hit.folderId === cacheKey
+    && hit.filterVersion === musicLibraryFilterVersion
   ) {
     return hit.ids;
   }
@@ -136,12 +136,11 @@ export async function albumIdsInLibraryScope(serverId: string): Promise<Set<stri
       if (offset > 500_000) break;
     }
   }
-  scopedLibraryAlbumIdCache = {
-    serverId,
+  scopedLibraryAlbumIdCaches.set(serverId, {
     folderId: cacheKey,
     filterVersion: musicLibraryFilterVersion,
     ids,
-  };
+  });
   return ids;
 }
 

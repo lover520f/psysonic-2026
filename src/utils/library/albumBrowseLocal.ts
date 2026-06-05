@@ -3,7 +3,14 @@ import { dedupeById } from '../dedupeById';
 import { albumToAlbum } from './advancedSearchLocal';
 import { sharedServerFilters } from './albumBrowseFilters';
 import { searchSingleServerAlbumBrowse } from './albumBrowseExecution';
-import { filterClusterAlbumsToLibraryScope } from './albumBrowseLibraryScope';
+import {
+  filterClusterAlbumsWithScopeContext,
+} from './albumBrowseLibraryScope';
+import {
+  narrowedClusterMemberIds,
+  resolveClusterAlbumBrowseScopeContext,
+} from '../serverCluster/clusterAlbumBrowseMembers';
+import { getActiveClusterMemberIds } from '../serverCluster/clusterScope';
 import { albumSortClauses, sortSubsonicAlbums } from './albumBrowseSort';
 import { libraryIsReady } from './libraryReady';
 import type { AlbumBrowsePageResult, AlbumBrowseQuery } from './albumBrowseTypes';
@@ -36,8 +43,11 @@ async function runClusterAlbumBrowse(
   const starredOnly = useServerStarredIds ? undefined : (query.starredOnly || undefined);
   const sort = albumSortClauses(query.sort);
 
-  const finish = async (albums: SubsonicAlbum[], hasMore: boolean) => {
-    let out = await filterClusterAlbumsToLibraryScope(albums);
+  const scopeCtx = await resolveClusterAlbumBrowseScopeContext();
+  const finish = (albums: SubsonicAlbum[], hasMore: boolean) => {
+    let out = scopeCtx
+      ? filterClusterAlbumsWithScopeContext(albums, scopeCtx)
+      : albums;
     if (useServerStarredIds) out = markServerStarredAlbums(out);
     return { albums: out, hasMore };
   };
@@ -62,7 +72,7 @@ async function runClusterAlbumBrowse(
     if (pages.some(p => !p)) return { albums: [], hasMore: false };
     const merged = dedupeById(pages.flatMap(p => p!.albums.map(albumToAlbum)));
     return {
-      albums: sortSubsonicAlbums((await finish(merged, false)).albums, query.sort),
+      albums: sortSubsonicAlbums(finish(merged, false).albums, query.sort),
       hasMore: false,
     };
   }
@@ -83,7 +93,7 @@ async function runClusterAlbumBrowse(
     skipTotals: true,
   });
   if (!resp) return { albums: [], hasMore: false };
-  return await finish(resp.albums.map(albumToAlbum), resp.albums.length === pageSize);
+  return finish(resp.albums.map(albumToAlbum), resp.albums.length === pageSize);
 }
 
 
@@ -96,6 +106,18 @@ export async function runLocalAlbumBrowse(
   pageSize: number,
   restrictAlbumIds?: string[],
 ): Promise<AlbumBrowsePageResult | null> {
+  if (isClusterMode() && restrictAlbumIds == null) {
+    const narrowed = narrowedClusterMemberIds(getActiveClusterMemberIds());
+    if (narrowed.length === 1) {
+      const single = await searchSingleServerAlbumBrowse(
+        narrowed[0]!,
+        query,
+        offset,
+        pageSize,
+      );
+      if (single != null) return single;
+    }
+  }
   if (canUseClusterAlbumBrowse(query, restrictAlbumIds)) {
     const clusterPage = await clusterBrowseAlbumsPage(offset, pageSize);
     if (clusterPage) return clusterPage;

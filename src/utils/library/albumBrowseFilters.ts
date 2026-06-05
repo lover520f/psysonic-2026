@@ -3,6 +3,7 @@ import type { LibraryFilterClause } from '../../api/library';
 import { albumIsCompilation, type AlbumCompFilter } from './albumCompilation';
 import { albumYearFilterClauses, type AlbumYearBounds } from './albumYearFilter';
 import type { AlbumBrowseQuery, GenreFilterOption } from './albumBrowseTypes';
+import { isClusterMode } from '../serverCluster/clusterScope';
 
 export function albumBrowseHasGenreFilter(query: AlbumBrowseQuery): boolean {
   return query.genres.length > 0;
@@ -28,7 +29,14 @@ export function albumBrowseUseSliceCatalog(
   libraryScopeActive = false,
 ): boolean {
   if (libraryScopeActive) return false;
+  // Cluster merge SQL is too heavy for 200-album catalog chunks — use SQL pages instead.
+  if (isClusterMode()) return false;
   return !albumBrowseHasServerFilters(query);
+}
+
+/** Plain All Albums — dedicated `library_list_albums` path (no Advanced Search). */
+export function albumBrowseIsPurePlain(query: AlbumBrowseQuery): boolean {
+  return !albumBrowseHasServerFilters(query) && query.compFilter === 'all';
 }
 
 /** Lossless-only All Albums browse — dedicated `library_list_lossless_albums` path. */

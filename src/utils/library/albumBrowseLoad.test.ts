@@ -1,8 +1,13 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+
+vi.mock('../serverCluster/clusterScope', () => ({
+  isClusterMode: vi.fn(() => false),
+}));
 import type { SubsonicAlbum } from '../../api/subsonicTypes';
 import {
   albumBrowseHasGenreFilter,
   albumBrowseHasServerFilters,
+  albumBrowseIsPurePlain,
   albumBrowseIsPureLossless,
   albumBrowseMultiGenreBrowse,
   albumBrowseStarredNeedsLocalIntersect,
@@ -44,6 +49,12 @@ describe('albumBrowseLoad', () => {
     expect(albumBrowseHasGenreFilter({ ...base, genres: ['Rock'] })).toBe(true);
   });
 
+  it('detects pure plain browse', () => {
+    expect(albumBrowseIsPurePlain(base)).toBe(true);
+    expect(albumBrowseIsPurePlain({ ...base, genres: ['Rock'] })).toBe(false);
+    expect(albumBrowseIsPurePlain({ ...base, compFilter: 'only' })).toBe(false);
+  });
+
   it('detects pure lossless browse', () => {
     expect(albumBrowseIsPureLossless({ ...base, losslessOnly: true })).toBe(true);
     expect(albumBrowseIsPureLossless({ ...base, losslessOnly: true, year: { from: 1990 } })).toBe(
@@ -54,7 +65,8 @@ describe('albumBrowseLoad', () => {
     );
   });
 
-  it('slice catalog only for plain browse', () => {
+  it('slice catalog only for plain browse', async () => {
+    const { isClusterMode } = await import('../serverCluster/clusterScope');
     expect(albumBrowseUseSliceCatalog(base)).toBe(true);
     expect(albumBrowseUseSliceCatalog({ ...base, compFilter: 'only' })).toBe(true);
     expect(albumBrowseUseSliceCatalog({ ...base, genres: ['Rock'] })).toBe(false);
@@ -62,6 +74,8 @@ describe('albumBrowseLoad', () => {
     expect(albumBrowseUseSliceCatalog({ ...base, losslessOnly: true })).toBe(false);
     expect(albumBrowseUseSliceCatalog({ ...base, starredOnly: true })).toBe(false);
     expect(albumBrowseUseSliceCatalog(base, true)).toBe(false);
+    vi.mocked(isClusterMode).mockReturnValueOnce(true);
+    expect(albumBrowseUseSliceCatalog(base)).toBe(false);
   });
 
   it('multi-genre disables offset pagination', () => {
