@@ -8,6 +8,7 @@ import {
   runLocalBrowseAlbums,
   runNetworkBrowseAlbums,
 } from '../utils/library/browseTextSearch';
+import { isClusterMultiLibraryScopeBrowse } from '../utils/serverCluster/clusterLibraryScopes';
 
 /**
  * Debounced album title search with local-vs-network race when the
@@ -48,6 +49,20 @@ export function useBrowseAlbumTextSearch(
         const albums = await runNetworkBrowseAlbums(q);
         if (isStale()) return;
         setTextSearchAlbums(albums);
+        setTextSearchLoading(false);
+        return;
+      }
+
+      if (isClusterMultiLibraryScopeBrowse()) {
+        const albums = await runLocalBrowseAlbums(
+          serverId,
+          q,
+          undefined,
+          losslessOnly,
+          true,
+        );
+        if (isStale()) return;
+        setTextSearchAlbums(albums ?? []);
         setTextSearchLoading(false);
         return;
       }

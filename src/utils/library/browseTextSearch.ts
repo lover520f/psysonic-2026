@@ -266,12 +266,13 @@ export async function runLocalBrowseAlbums(
   query: string,
   limit = ALBUM_BROWSE_LIMIT,
   losslessOnly = false,
+  skipReadyCheck = false,
 ): Promise<SubsonicAlbum[] | null> {
   const page = await runLocalAdvancedSearch(
     serverId,
     albumBrowseOpts(query, losslessOnly),
     limit,
-    false,
+    skipReadyCheck,
     true,
     true,
   );

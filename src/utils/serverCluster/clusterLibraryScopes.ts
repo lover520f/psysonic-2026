@@ -28,6 +28,22 @@ export function isClusterLibraryScopeNarrowed(): boolean {
   return buildClusterLibraryScopes(getActiveClusterMemberIds()) != null;
 }
 
+/**
+ * Cluster + two or more sidebar folders selected (on one or more members).
+ * Browse album text search must use local cluster index only — network search3
+ * targets one server and wins races with empty results.
+ */
+export function isClusterMultiLibraryScopeBrowse(): boolean {
+  if (!isClusterMode()) return false;
+  let selected = 0;
+  for (const sid of getActiveClusterMemberIds()) {
+    const f = musicLibraryFilterForServer(sid);
+    if (f === 'all') continue;
+    selected += f.length;
+  }
+  return selected > 1;
+}
+
 export function isClusterAllLibrariesSelected(memberIds: string[]): boolean {
   return memberIds.every(sid => isAllLibrariesFilter(musicLibraryFilterForServer(sid)));
 }
