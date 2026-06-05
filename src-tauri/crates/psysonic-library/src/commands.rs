@@ -20,7 +20,9 @@ use crate::cover_resolve::CoverEntryDto;
 use crate::cross_server;
 use crate::dto::{
     count_local_tracks, local_tracks_max_updated_ms, track_index_nonempty, ArtifactInputDto,
-    FactInputDto, LibraryAdvancedSearchRequest, LibraryAdvancedSearchResponse,
+    FactInputDto,     LibraryAdvancedSearchRequest, LibraryAdvancedSearchResponse,
+    LibraryClusterListTracksRequest, LibraryClusterResolveRequest,
+    LibraryClusterResolveResponse,
     LibraryCrossServerSearchResponse, LibraryLiveSearchRequest, LibraryLiveSearchResponse, LibraryTrackDto,
     LibraryTracksEnvelope, OfflinePathDto, PlaySessionDayDetailDto, PlaySessionHeatmapDayDto,
     PlaySessionInputDto, PlaySessionRecentDayDto, PlaySessionYearBoundsDto, PlaySessionYearSummaryDto, PurgeReportDto, SyncJobDto, SyncStateDto,
@@ -544,6 +546,80 @@ pub async fn library_search_cross_server(
 ) -> Result<LibraryCrossServerSearchResponse, String> {
     let limit = limit.unwrap_or(100);
     cross_server::run_cross_server_search(&runtime.store, &query, limit, servers.as_deref())
+}
+
+#[tauri::command]
+pub async fn library_cluster_list_tracks(
+    runtime: State<'_, LibraryRuntime>,
+    request: LibraryClusterListTracksRequest,
+) -> Result<LibraryTracksEnvelope, String> {
+    let store = Arc::clone(&runtime.store);
+    let servers_ordered = request.servers_ordered;
+    let limit = request.limit.unwrap_or(100);
+    let offset = request.offset.unwrap_or(0);
+    library_spawn_blocking(move || {
+        crate::server_cluster::list_merged_tracks(&store, &servers_ordered, limit, offset)
+    })
+    .await
+}
+
+#[tauri::command]
+pub async fn library_cluster_resolve_candidates(
+    runtime: State<'_, LibraryRuntime>,
+    request: LibraryClusterResolveRequest,
+) -> Result<LibraryClusterResolveResponse, String> {
+    let store = Arc::clone(&runtime.store);
+    library_spawn_blocking(move || {
+        if let Some(key) = request.cluster_key.filter(|k| !k.is_empty()) {
+            let candidates = crate::server_cluster::resolve_candidates_by_cluster_key(
+                &store,
+                &request.servers_ordered,
+                &key,
+            )?;
+            return Ok(LibraryClusterResolveResponse {
+                candidates,
+                cluster_key: Some(key),
+            });
+        }
+        let server_id = request
+            .server_id
+            .as_deref()
+            .filter(|s| !s.is_empty())
+            .ok_or_else(|| "cluster_key or (server_id, track_id) required".to_string())?;
+        let track_id = request
+            .track_id
+            .as_deref()
+            .filter(|s| !s.is_empty())
+            .ok_or_else(|| "cluster_key or (server_id, track_id) required".to_string())?;
+        let cluster_key =
+            crate::server_cluster::cluster_key_for_track(&store, server_id, track_id)?;
+        let candidates = crate::server_cluster::resolve_candidates_for_track(
+            &store,
+            &request.servers_ordered,
+            server_id,
+            track_id,
+        )?;
+        Ok(LibraryClusterResolveResponse {
+            candidates,
+            cluster_key,
+        })
+    })
+    .await
+}
+
+#[tauri::command]
+pub async fn library_search_cluster(
+    runtime: State<'_, LibraryRuntime>,
+    query: String,
+    limit: Option<u32>,
+    servers_ordered: Vec<String>,
+) -> Result<LibraryCrossServerSearchResponse, String> {
+    let store = Arc::clone(&runtime.store);
+    let limit = limit.unwrap_or(100);
+    library_spawn_blocking(move || {
+        crate::server_cluster::run_cluster_search(&store, &query, limit, &servers_ordered)
+    })
+    .await
 }
 
 // ── helpers ──────────────────────────────────────────────────────────

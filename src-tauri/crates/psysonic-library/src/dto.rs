@@ -658,6 +658,51 @@ pub struct LibraryCrossServerSearchResponse {
     pub servers_searched: Vec<String>,
 }
 
+/// Cluster candidate row for playback / write fan-out resolution.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct LibraryClusterCandidateDto {
+    pub server_id: String,
+    pub track_id: String,
+    pub duration_sec: i64,
+    pub priority_rank: u32,
+    pub is_winner: bool,
+}
+
+/// `library_cluster_list_tracks` request.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct LibraryClusterListTracksRequest {
+    /// Ordered member server ids (index 0 = highest priority).
+    pub servers_ordered: Vec<String>,
+    #[serde(default)]
+    pub limit: Option<u32>,
+    #[serde(default)]
+    pub offset: Option<u32>,
+}
+
+/// `library_cluster_resolve_candidates` request — provide cluster_key OR seed track.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct LibraryClusterResolveRequest {
+    pub servers_ordered: Vec<String>,
+    #[serde(default)]
+    pub cluster_key: Option<String>,
+    #[serde(default)]
+    pub server_id: Option<String>,
+    #[serde(default)]
+    pub track_id: Option<String>,
+}
+
+/// `library_cluster_resolve_candidates` response.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct LibraryClusterResolveResponse {
+    pub candidates: Vec<LibraryClusterCandidateDto>,
+    #[serde(default)]
+    pub cluster_key: Option<String>,
+}
+
 /// Read `MAX(server_updated_at)` for non-deleted tracks on this server
 /// — used by `SyncStateDto` so callers can show "tracks watermark" in
 /// Settings without a separate column.
