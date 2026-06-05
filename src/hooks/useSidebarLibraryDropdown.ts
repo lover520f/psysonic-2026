@@ -25,6 +25,7 @@ export function useSidebarLibraryDropdown(): Result {
     setDropdownRect({
       top: r.bottom + 4,
       left: r.left,
+      /** Minimum width (trigger); panel grows to fit labels via `max-content`. */
       width: r.width,
     });
   }, []);

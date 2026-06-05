@@ -6,6 +6,7 @@ mod detail;
 mod advanced_search;
 mod db;
 mod keys;
+mod library_scope;
 mod list;
 mod list_albums;
 mod list_artists;

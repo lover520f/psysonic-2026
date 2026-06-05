@@ -15,6 +15,7 @@ import { dedupeById } from '../dedupeById';
 import { albumToAlbum, artistToArtist, trackToSong } from '../library/advancedSearchLocal';
 import { albumBrowseHasServerFilters } from '../library/albumBrowseFilters';
 import type { AlbumBrowsePageResult, AlbumBrowseQuery } from '../library/albumBrowseTypes';
+import { buildClusterLibraryScopes } from './clusterLibraryScopes';
 import { getActiveClusterId, isClusterMode } from './clusterScope';
 import { getClusterMergeMemberIds } from './representative';
 
@@ -48,6 +49,7 @@ export async function clusterBrowseTracksPage(
       serversOrdered: members,
       limit: pageSize,
       offset,
+      libraryScopes: buildClusterLibraryScopes(members),
     });
     return env.tracks.map(trackToSong);
   } catch {
@@ -66,6 +68,7 @@ export async function clusterBrowseAlbumsPage(
       serversOrdered: members,
       limit: pageSize,
       offset,
+      libraryScopes: buildClusterLibraryScopes(members),
     });
     return {
       albums: resp.albums.map(albumToAlbum),
@@ -87,6 +90,7 @@ export async function clusterBrowseArtistsPage(
       serversOrdered: members,
       limit: pageSize,
       offset,
+      libraryScopes: buildClusterLibraryScopes(members),
     });
     const artists = resp.artists.map(artistToArtist);
     return { artists, hasMore: resp.hasMore };

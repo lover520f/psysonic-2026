@@ -371,7 +371,7 @@ export interface AuthState {
   setRandomMixSize: (v: number) => void;
   setShowLuckyMixMenu: (v: boolean) => void;
   setMusicFolders: (folders: Array<{ id: string; name: string }>) => void;
-  setMusicLibraryFilter: (folderId: 'all' | string) => void;
+  setMusicLibraryFilter: (folderId: 'all' | string, serverId?: string) => void;
 
   /** Navigation style for Mix pages: single hub ('hub') or separate sidebar entries ('separate'). */
   randomNavMode: 'hub' | 'separate';

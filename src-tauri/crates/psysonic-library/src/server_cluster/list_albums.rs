@@ -8,6 +8,7 @@ use crate::search::PAGE_LIMIT_MAX;
 use crate::store::LibraryStore;
 
 use super::db::ATTACH_ALIAS;
+use super::library_scope::scope_filter_sql_and_params;
 use super::priority::{in_list_sql, priority_case_sql};
 
 pub fn list_merged_albums(
@@ -15,6 +16,7 @@ pub fn list_merged_albums(
     servers_ordered: &[String],
     limit: u32,
     offset: u32,
+    library_scopes: &std::collections::HashMap<String, String>,
 ) -> Result<LibraryClusterAlbumsResponse, String> {
     if servers_ordered.is_empty() {
         return Ok(LibraryClusterAlbumsResponse {
@@ -26,6 +28,7 @@ pub fn list_merged_albums(
     let offset = offset.min(i32::MAX as u32) as i32;
     let (in_placeholders, mut in_params) = in_list_sql(servers_ordered);
     let (priority_sql, mut priority_params) = priority_case_sql("t.server_id", servers_ordered);
+    let (scope_sql, mut scope_params) = scope_filter_sql_and_params("t", servers_ordered, library_scopes);
 
     let sql = format!(
         "WITH candidates AS (
@@ -40,7 +43,7 @@ pub fn list_merged_albums(
              ON k.server_id = t.server_id AND k.track_id = t.id
            WHERE t.deleted = 0
              AND t.server_id IN ({in_placeholders})
-             AND t.album_id IS NOT NULL AND t.album_id != ''
+             AND t.album_id IS NOT NULL AND t.album_id != ''{scope_sql}
          ),
          partitioned AS (
            SELECT c.tid,
@@ -87,6 +90,7 @@ pub fn list_merged_albums(
     let mut params: Vec<SqlValue> = Vec::new();
     params.append(&mut priority_params);
     params.append(&mut in_params);
+    params.append(&mut scope_params);
     params.push(SqlValue::Integer(limit as i64));
     params.push(SqlValue::Integer(offset as i64));
 
@@ -185,7 +189,14 @@ mod tests {
             .unwrap();
         rebuild_all_cluster_keys(&store).unwrap();
 
-        let resp = list_merged_albums(&store, &["s1".into(), "s2".into()], 50, 0).unwrap();
+        let resp = list_merged_albums(
+            &store,
+            &["s1".into(), "s2".into()],
+            50,
+            0,
+            &std::collections::HashMap::new(),
+        )
+        .unwrap();
         assert_eq!(resp.albums.len(), 1);
         assert_eq!(resp.albums[0].server_id, "s1");
     }

@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { getMusicFolders } from '../api/subsonicLibrary';
 import { probeEntityRatingSupport } from '../api/subsonicStarRating';
 import { useAuthStore } from '../store/authStore';
+import { setCachedMusicFolders } from '../utils/musicFoldersCache';
 import { cleanupOrphanedOrbitPlaylists } from '../utils/orbit';
 
 /**
@@ -29,8 +30,10 @@ export function useServerCapabilitiesProbe(): void {
       const stillThisServer = () => !cancelled && useAuthStore.getState().activeServerId === serverAtStart;
       try {
         const folders = await getMusicFolders();
+        setCachedMusicFolders(serverAtStart, folders);
         if (stillThisServer()) setMusicFolders(folders);
       } catch {
+        setCachedMusicFolders(serverAtStart, []);
         if (stillThisServer()) setMusicFolders([]);
       }
       try {

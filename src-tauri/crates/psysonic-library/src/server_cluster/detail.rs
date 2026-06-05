@@ -367,7 +367,7 @@ fn list_related_albums(
     if artist_id.is_empty() && artist_name.is_empty() {
         return Ok(Vec::new());
     }
-    let resp = list_merged_albums(store, servers_ordered, 500, 0)?;
+    let resp = list_merged_albums(store, servers_ordered, 500, 0, &std::collections::HashMap::new())?;
     Ok(resp
         .albums
         .into_iter()

@@ -4,6 +4,7 @@
 
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use std::collections::HashMap;
 
 use crate::filter::{EntityKind, FilterOp};
 use crate::repos::TrackRow;
@@ -687,6 +688,9 @@ pub struct LibraryClusterListTracksRequest {
     pub limit: Option<u32>,
     #[serde(default)]
     pub offset: Option<u32>,
+    /// Per-member music-folder scope (`server_id` → folder id). Omitted members = all libraries.
+    #[serde(default)]
+    pub library_scopes: HashMap<String, String>,
 }
 
 /// `library_cluster_advanced_search` request.
@@ -713,6 +717,9 @@ pub struct LibraryClusterAdvancedSearchRequest {
     pub offset: u32,
     #[serde(default)]
     pub skip_totals: bool,
+    /// Per-member music-folder scope (`server_id` → folder id). Omitted members = all libraries.
+    #[serde(default)]
+    pub library_scopes: HashMap<String, String>,
 }
 
 /// Merged album browse response for cluster scope.

@@ -572,7 +572,13 @@ pub async fn library_cluster_list_tracks(
     let limit = request.limit.unwrap_or(100);
     let offset = request.offset.unwrap_or(0);
     library_spawn_blocking(move || {
-        crate::server_cluster::list_merged_tracks(&store, &servers_ordered, limit, offset)
+        crate::server_cluster::list_merged_tracks(
+            &store,
+            &servers_ordered,
+            limit,
+            offset,
+            &request.library_scopes,
+        )
     })
     .await
 }
@@ -587,7 +593,13 @@ pub async fn library_cluster_list_albums(
     let limit = request.limit.unwrap_or(100);
     let offset = request.offset.unwrap_or(0);
     library_spawn_blocking(move || {
-        crate::server_cluster::list_merged_albums(&store, &servers_ordered, limit, offset)
+        crate::server_cluster::list_merged_albums(
+            &store,
+            &servers_ordered,
+            limit,
+            offset,
+            &request.library_scopes,
+        )
     })
     .await
 }
@@ -602,7 +614,13 @@ pub async fn library_cluster_list_artists(
     let limit = request.limit.unwrap_or(100);
     let offset = request.offset.unwrap_or(0);
     library_spawn_blocking(move || {
-        crate::server_cluster::list_merged_artists(&store, &servers_ordered, limit, offset)
+        crate::server_cluster::list_merged_artists(
+            &store,
+            &servers_ordered,
+            limit,
+            offset,
+            &request.library_scopes,
+        )
     })
     .await
 }

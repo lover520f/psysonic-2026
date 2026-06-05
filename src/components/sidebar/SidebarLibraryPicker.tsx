@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { Check, ChevronDown, Music2 } from 'lucide-react';
@@ -22,6 +22,39 @@ export default function SidebarLibraryPicker({
 }: Props) {
   const { t } = useTranslation();
   const libraryTriggerPlain = filterId === 'all';
+  const panelRef = useRef<HTMLDivElement>(null);
+  const [panelWidth, setPanelWidth] = useState<number | null>(null);
+  const allLibrariesLabel = t('sidebar.allLibraries');
+
+  useLayoutEffect(() => {
+    if (!libraryDropdownOpen) {
+      setPanelWidth(null);
+      return;
+    }
+    const measure = () => {
+      const panel = panelRef.current;
+      if (!panel) return;
+      const minW = dropdownRect.width;
+      const maxW = Math.max(minW, window.innerWidth - dropdownRect.left - 8);
+      panel.dataset.measure = 'true';
+      panel.style.width = 'max-content';
+      panel.style.minWidth = `${minW}px`;
+      const measured = panel.offsetWidth;
+      delete panel.dataset.measure;
+      panel.style.width = '';
+      panel.style.minWidth = '';
+      setPanelWidth(Math.min(Math.max(minW, measured), maxW));
+    };
+    measure();
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
+  }, [
+    libraryDropdownOpen,
+    dropdownRect.left,
+    dropdownRect.width,
+    musicFolders,
+    allLibrariesLabel,
+  ]);
 
   return (
     <>
@@ -52,6 +85,7 @@ export default function SidebarLibraryPicker({
       {libraryDropdownOpen &&
         createPortal(
           <div
+            ref={panelRef}
             className={`nav-library-dropdown-panel${musicFolders.length > 10 ? ' nav-library-dropdown-panel--many-libraries' : ''}`}
             role="listbox"
             aria-label={t('sidebar.libraryScope')}
@@ -59,9 +93,8 @@ export default function SidebarLibraryPicker({
               position: 'fixed',
               top: dropdownRect.top,
               left: dropdownRect.left,
-              width: dropdownRect.width,
               minWidth: dropdownRect.width,
-              maxWidth: dropdownRect.width,
+              width: panelWidth ?? 'max-content',
               boxSizing: 'border-box',
             }}
           >

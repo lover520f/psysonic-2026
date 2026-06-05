@@ -481,17 +481,30 @@ function mapServersOrderedToIndexKeys(serverIds: string[]): string[] {
   return serverIds.map(serverIndexKeyForId);
 }
 
+function mapClusterLibraryScopesToIndexKeys(
+  scopes: Record<string, string> | undefined,
+): Record<string, string> | undefined {
+  if (!scopes) return undefined;
+  const out: Record<string, string> = {};
+  for (const [sid, scope] of Object.entries(scopes)) {
+    out[serverIndexKeyForId(sid)] = scope;
+  }
+  return Object.keys(out).length > 0 ? out : undefined;
+}
+
 /** Merged track list for cluster scope (ordered members = priority). */
 export function libraryClusterListTracks(args: {
   serversOrdered: string[];
   limit?: number;
   offset?: number;
+  libraryScopes?: Record<string, string>;
 }): Promise<LibraryTracksEnvelope> {
   return invoke<LibraryTracksEnvelope>('library_cluster_list_tracks', {
     request: {
       serversOrdered: mapServersOrderedToIndexKeys(args.serversOrdered),
       limit: args.limit,
       offset: args.offset,
+      libraryScopes: mapClusterLibraryScopesToIndexKeys(args.libraryScopes) ?? {},
     },
   }).then(env => ({
     ...env,
@@ -513,12 +526,14 @@ export function libraryClusterListAlbums(args: {
   serversOrdered: string[];
   limit?: number;
   offset?: number;
+  libraryScopes?: Record<string, string>;
 }): Promise<LibraryClusterAlbumsResponse> {
   return invoke<LibraryClusterAlbumsResponse>('library_cluster_list_albums', {
     request: {
       serversOrdered: mapServersOrderedToIndexKeys(args.serversOrdered),
       limit: args.limit,
       offset: args.offset,
+      libraryScopes: mapClusterLibraryScopesToIndexKeys(args.libraryScopes) ?? {},
     },
   }).then(resp => ({
     ...resp,
@@ -530,12 +545,14 @@ export function libraryClusterListArtists(args: {
   serversOrdered: string[];
   limit?: number;
   offset?: number;
+  libraryScopes?: Record<string, string>;
 }): Promise<LibraryClusterArtistsResponse> {
   return invoke<LibraryClusterArtistsResponse>('library_cluster_list_artists', {
     request: {
       serversOrdered: mapServersOrderedToIndexKeys(args.serversOrdered),
       limit: args.limit,
       offset: args.offset,
+      libraryScopes: mapClusterLibraryScopesToIndexKeys(args.libraryScopes) ?? {},
     },
   }).then(resp => ({
     ...resp,
@@ -696,6 +713,7 @@ export interface LibraryClusterAdvancedSearchRequest {
   limit: number;
   offset?: number;
   skipTotals?: boolean;
+  libraryScopes?: Record<string, string>;
 }
 
 export function libraryClusterAdvancedSearch(
@@ -714,6 +732,7 @@ export function libraryClusterAdvancedSearch(
       limit: request.limit,
       offset: request.offset ?? 0,
       skipTotals: request.skipTotals ?? false,
+      libraryScopes: mapClusterLibraryScopesToIndexKeys(request.libraryScopes) ?? {},
     },
   }).then(response => ({
     ...response,

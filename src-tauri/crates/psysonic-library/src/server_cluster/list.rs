@@ -8,6 +8,7 @@ use crate::search::{aliased_track_columns, PAGE_LIMIT_MAX};
 use crate::store::LibraryStore;
 
 use super::db::ATTACH_ALIAS;
+use super::library_scope::scope_filter_sql_and_params;
 use super::merge::DURATION_TOLERANCE_SEC;
 use super::priority::{in_list_sql, priority_case_sql};
 
@@ -18,6 +19,7 @@ pub fn list_merged_tracks(
     servers_ordered: &[String],
     limit: u32,
     offset: u32,
+    library_scopes: &std::collections::HashMap<String, String>,
 ) -> Result<LibraryTracksEnvelope, String> {
     if servers_ordered.is_empty() {
         return Ok(LibraryTracksEnvelope {
@@ -29,6 +31,7 @@ pub fn list_merged_tracks(
     let offset = offset.min(i32::MAX as u32) as i32;
     let (in_placeholders, mut in_params) = in_list_sql(servers_ordered);
     let (priority_sql, mut priority_params) = priority_case_sql("t.server_id", servers_ordered);
+    let (scope_sql, mut scope_params) = scope_filter_sql_and_params("t", servers_ordered, library_scopes);
 
     let cols = aliased_track_columns("t");
     let sql = format!(
@@ -43,7 +46,7 @@ pub fn list_merged_tracks(
            FROM track t
            LEFT JOIN {ATTACH_ALIAS}.track_cluster_key k
              ON k.server_id = t.server_id AND k.track_id = t.id
-           WHERE t.deleted = 0 AND t.server_id IN ({in_placeholders})
+           WHERE t.deleted = 0 AND t.server_id IN ({in_placeholders}){scope_sql}
          ),
          refs AS (
            SELECT cluster_key, MIN(priority_rank) AS best_rank
@@ -84,6 +87,7 @@ pub fn list_merged_tracks(
     let mut params: Vec<SqlValue> = Vec::new();
     params.append(&mut priority_params);
     params.append(&mut in_params);
+    params.append(&mut scope_params);
     params.push(SqlValue::Integer(limit as i64));
     params.push(SqlValue::Integer(offset as i64));
 
@@ -104,6 +108,7 @@ pub fn list_merged_tracks(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::collections::HashMap;
     use crate::repos::{TrackRepository, TrackRow};
     use crate::server_cluster::rebuild::rebuild_all_cluster_keys;
 
@@ -158,7 +163,7 @@ mod tests {
             .unwrap();
         rebuild_all_cluster_keys(&store).unwrap();
 
-        let env = list_merged_tracks(&store, &["s1".into(), "s2".into()], 50, 0).unwrap();
+        let env = list_merged_tracks(&store, &["s1".into(), "s2".into()], 50, 0, &HashMap::new()).unwrap();
         assert_eq!(env.tracks.len(), 1);
         assert_eq!(env.tracks[0].server_id, "s1");
     }
@@ -174,7 +179,7 @@ mod tests {
             .unwrap();
         rebuild_all_cluster_keys(&store).unwrap();
 
-        let env = list_merged_tracks(&store, &["s2".into()], 50, 0).unwrap();
+        let env = list_merged_tracks(&store, &["s2".into()], 50, 0, &std::collections::HashMap::new()).unwrap();
         assert_eq!(env.tracks.len(), 1);
         assert_eq!(env.tracks[0].server_id, "s2");
     }
@@ -193,7 +198,7 @@ mod tests {
             })
             .unwrap();
         rebuild_all_cluster_keys(&store).unwrap();
-        let env = list_merged_tracks(&store, &["s1".into(), "s2".into()], 50, 0).unwrap();
+        let env = list_merged_tracks(&store, &["s1".into(), "s2".into()], 50, 0, &HashMap::new()).unwrap();
         assert_eq!(env.tracks.len(), 2);
     }
 }

@@ -35,8 +35,28 @@ export function createMusicLibraryActions(set: SetState, get: GetState): Pick<
       });
     },
 
-    setMusicLibraryFilter: (folderId) => {
-      const sid = get().activeServerId;
+    setMusicLibraryFilter: (folderId, targetServerId) => {
+      const { activeClusterId, clusters, activeServerId } = get();
+      if (activeClusterId) {
+        const cluster = clusters.find(c => c.id === activeClusterId);
+        if (!cluster) return;
+        set(s => {
+          const next = { ...s.musicLibraryFilterByServer };
+          if (folderId === 'all' && !targetServerId) {
+            for (const sid of cluster.serverIds) next[sid] = 'all';
+          } else if (targetServerId) {
+            next[targetServerId] = folderId;
+          } else {
+            return s;
+          }
+          return {
+            musicLibraryFilterByServer: next,
+            musicLibraryFilterVersion: s.musicLibraryFilterVersion + 1,
+          };
+        });
+        return;
+      }
+      const sid = activeServerId;
       if (!sid) return;
       set(s => ({
         musicLibraryFilterByServer: { ...s.musicLibraryFilterByServer, [sid]: folderId },

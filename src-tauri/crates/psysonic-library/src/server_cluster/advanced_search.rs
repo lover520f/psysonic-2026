@@ -38,7 +38,7 @@ pub fn run_cluster_advanced_search(
     for server_id in &req.servers_ordered {
         let server_req = LibraryAdvancedSearchRequest {
             server_id: server_id.clone(),
-            library_scope: None,
+            library_scope: req.library_scopes.get(server_id).cloned(),
             query: req.query.clone(),
             entity_types: req.entity_types.clone(),
             filters: req.filters.clone(),
@@ -345,6 +345,7 @@ mod tests {
                 limit: 50,
                 offset: 0,
                 skip_totals: false,
+                library_scopes: HashMap::new(),
             },
         )
         .unwrap();
@@ -382,6 +383,7 @@ mod tests {
                 limit: 1,
                 offset: 1,
                 skip_totals: false,
+                library_scopes: HashMap::new(),
             },
         )
         .unwrap();
