@@ -2,6 +2,7 @@ export const orbit = {
   triggerLabel: 'Orbit',
   triggerTooltip: 'Start or join a shared listening session',
   launchCreate: 'Create a session',
+  clusterCreateBlocked: 'Exit cluster mode to host Orbit',
   launchJoin: 'Join a session',
   launchHelp: 'How does this work?',
   launchHelpSoon: 'Coming soon',

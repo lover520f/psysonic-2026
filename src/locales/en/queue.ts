@@ -29,6 +29,7 @@ export const queue = {
   nextTracks: 'Next Tracks',
   shareQueue: 'Copy queue share link',
   shareQueueEmpty: 'The queue is empty — nothing to share.',
+  shareClusterMixedWarning: 'This queue has tracks from multiple servers. Only tracks from the primary server will be included in the share link. Continue?',
   emptyQueue: 'The queue is empty.',
   crossServerEnqueueBlocked: 'Tracks from another server cannot be added to the current queue. Finish or clear the queue first.',
   trackSingular: 'track',

@@ -7,6 +7,11 @@ import {
   invalidateStarredAlbumBrowse,
   refreshStarredAlbumIndexFromServer,
 } from '../utils/library/starredAlbumIndexSync';
+import { isClusterMode } from '../utils/serverCluster/clusterScope';
+import {
+  clusterFanOutRating,
+  clusterFanOutStar,
+} from '../utils/serverCluster/clusterWriteFanout';
 import type {
   EntityRatingSupportLevel,
   StarredResults,
@@ -32,12 +37,16 @@ export async function star(
   type: 'song' | 'album' | 'artist' = 'album',
   _meta?: StarPatchMeta,
 ): Promise<void> {
+  const serverId = useAuthStore.getState().activeServerId;
+  if (type === 'song' && isClusterMode() && serverId) {
+    await clusterFanOutStar(serverId, id, true);
+    return;
+  }
   const params: Record<string, string> = {};
   if (type === 'song') params.id = id;
   if (type === 'album') params.albumId = id;
   if (type === 'artist') params.artistId = id;
   await api('star.view', params);
-  const serverId = useAuthStore.getState().activeServerId;
   if (type === 'song') {
     patchLibraryTrackOnUse(serverId, id, { starredAt: Date.now() });
   } else if (type === 'album' && serverId) {
@@ -52,12 +61,16 @@ export async function unstar(
   type: 'song' | 'album' | 'artist' = 'album',
   _meta?: StarPatchMeta,
 ): Promise<void> {
+  const serverId = useAuthStore.getState().activeServerId;
+  if (type === 'song' && isClusterMode() && serverId) {
+    await clusterFanOutStar(serverId, id, false);
+    return;
+  }
   const params: Record<string, string> = {};
   if (type === 'song') params.id = id;
   if (type === 'album') params.albumId = id;
   if (type === 'artist') params.artistId = id;
   await api('unstar.view', params);
-  const serverId = useAuthStore.getState().activeServerId;
   if (type === 'song') {
     patchLibraryTrackOnUse(serverId, id, { starredAt: null });
   } else if (type === 'album' && serverId) {
@@ -68,6 +81,12 @@ export async function unstar(
 }
 
 export async function setRating(id: string, rating: number): Promise<void> {
+  const serverId = useAuthStore.getState().activeServerId;
+  if (isClusterMode() && serverId) {
+    await clusterFanOutRating(serverId, id, rating);
+    invalidateEntityUserRatingCaches(id);
+    return;
+  }
   await api('setRating.view', { id, rating });
   // No-op in Rust when `id` is an album/artist (no track row matches).
   patchLibraryTrackOnUse(useAuthStore.getState().activeServerId, id, { userRating: rating });

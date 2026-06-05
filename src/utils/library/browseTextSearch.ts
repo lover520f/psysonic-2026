@@ -404,6 +404,9 @@ export async function runLocalRandomSongs(
   serverId: string | null | undefined,
   limit: number,
 ): Promise<SubsonicSong[] | null> {
+  const clusterOffset = Math.floor(Math.random() * 500);
+  const clusterPage = await clusterBrowseTracksPage(clusterOffset, limit);
+  if (clusterPage?.length) return clusterPage;
   if (!serverId || !(await libraryIsReady(serverId))) return null;
   try {
     const resp = await libraryAdvancedSearch({

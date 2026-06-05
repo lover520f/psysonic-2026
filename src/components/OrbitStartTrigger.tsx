@@ -4,6 +4,7 @@ import { Orbit as OrbitIcon, Plus, LogIn, HelpCircle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useOrbitStore } from '../store/orbitStore';
 import { useAuthStore } from '../store/authStore';
+import { isClusterMode } from '../utils/serverCluster/clusterScope';
 import { useHelpModalStore } from '../store/helpModalStore';
 import OrbitStartModal from './OrbitStartModal';
 import OrbitJoinModal from './OrbitJoinModal';
@@ -57,7 +58,14 @@ export default function OrbitStartTrigger() {
       }
     : { display: 'none' };
 
-  const pickCreate = () => { setPopoverOpen(false); setStartOpen(true); };
+  const pickCreate = () => {
+    if (isClusterMode()) {
+      setPopoverOpen(false);
+      return;
+    }
+    setPopoverOpen(false);
+    setStartOpen(true);
+  };
   const pickJoin   = () => { setPopoverOpen(false); setJoinOpen(true); };
   const pickHelp   = () => { setPopoverOpen(false); useHelpModalStore.getState().open(); };
 
@@ -83,7 +91,13 @@ export default function OrbitStartTrigger() {
 
       {popoverOpen && createPortal(
         <div ref={popRef} className="nav-library-dropdown-panel orbit-launch-pop" style={popoverStyle} role="menu">
-          <button type="button" className="orbit-launch-pop__item" onClick={pickCreate}>
+          <button
+            type="button"
+            className="orbit-launch-pop__item"
+            onClick={pickCreate}
+            disabled={isClusterMode()}
+            title={isClusterMode() ? t('orbit.clusterCreateBlocked') : undefined}
+          >
             <Plus size={14} />
             <span>{t('orbit.launchCreate')}</span>
           </button>

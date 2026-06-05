@@ -1,6 +1,9 @@
 import { api, apiForServer } from './subsonicClient';
 import type { SubsonicNowPlaying } from './subsonicTypes';
 import { patchLibraryTrackOnUse } from '../utils/library/patchOnUse';
+import { isClusterMode } from '../utils/serverCluster/clusterScope';
+import { clusterFanOutScrobbleSubmission } from '../utils/serverCluster/clusterWriteFanout';
+import { useAuthStore } from '../store/authStore';
 
 async function scrobbleOnServer(
   serverId: string,
@@ -15,6 +18,11 @@ async function scrobbleOnServer(
 
 export async function scrobbleSong(id: string, time: number, serverId: string): Promise<void> {
   if (!serverId) return;
+  if (isClusterMode()) {
+    const browseId = useAuthStore.getState().activeServerId ?? serverId;
+    await clusterFanOutScrobbleSubmission(browseId, id, time);
+    return;
+  }
   try {
     await scrobbleOnServer(serverId, id, true, time);
     // Patch-on-use (§6.5 / F3): reflect the play in the local index so the

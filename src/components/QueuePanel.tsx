@@ -12,7 +12,8 @@ import { usePlaylistStore } from '../store/playlistStore';
 import { useTranslation } from 'react-i18next';
 import { usePlaybackLibraryNavigate } from '../hooks/usePlaybackLibraryNavigate';
 import { useAuthStore } from '../store/authStore';
-import { encodeSharePayload } from '../utils/share/shareLink';
+import { resolveServerIdForIndexKey } from '../utils/server/serverLookup';
+import { isClusterMode } from '../utils/serverCluster/clusterScope';
 import { serverShareBaseUrl } from '../utils/server/serverEndpoint';
 import { copyTextToClipboard } from '../utils/server/serverMagicString';
 import { showToast } from '../utils/ui/toast';
@@ -205,6 +206,13 @@ function QueuePanelHostOrSolo() {
     // host on a dual-address profile).
     const active = useAuthStore.getState().getActiveServer();
     if (!active) return;
+    if (isClusterMode()) {
+      const repId = active.id;
+      const foreign = queueItems.some(
+        r => resolveServerIdForIndexKey(r.serverId) !== repId,
+      );
+      if (foreign && !confirm(t('queue.shareClusterMixedWarning'))) return;
+    }
     const srv = serverShareBaseUrl(active);
     if (!srv) return;
     const ids = queueItems.map(r => r.trackId);

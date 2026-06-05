@@ -58,6 +58,13 @@ import {
   setSeekTarget,
 } from './seekTargetState';
 import { refreshWaveformForTrack } from './waveformRefresh';
+import { isClusterMode } from '../utils/serverCluster/clusterScope';
+import {
+  cascadeClusterPlayback,
+  resolveClusterPlaybackForTrack,
+} from '../utils/serverCluster/clusterPlaybackResolve';
+import { resolveServerIdForIndexKey } from '../utils/server/serverLookup';
+import { serverIndexKeyForProfile } from '../utils/server/serverIndexKey';
 
 type SetState = (
   partial: Partial<PlayerState> | ((state: PlayerState) => Partial<PlayerState>),
@@ -259,22 +266,45 @@ export function runPlayTrack(
       && getPlaybackCacheServerKey(),
     );
 
-  const runPlayTrackBody = () => {
+  const browseServerId = authState.activeServerId ?? '';
+  const browseTrackId = track.id;
+
+  void (async () => {
+    let playTrackResolved = track;
+    let streamServerProfileId = '';
+
+    if (isClusterMode() && browseServerId) {
+      const resolved = await resolveClusterPlaybackForTrack(browseServerId, track.id);
+      if (resolved) {
+        playTrackResolved = { ...track, id: resolved.trackId };
+        streamServerProfileId = resolved.serverId;
+      }
+    }
+
+    const runPlayTrackBody = () => {
     const authStateNow = useAuthStore.getState();
-    const playbackSid = getPlaybackServerId();
-    const playbackCacheSid = getPlaybackCacheServerKey();
-    const url = resolvePlaybackUrl(track.id, playbackCacheSid);
-    recordEnginePlayUrl(track.id, url);
+    const stateNow = get();
+    const refAtIdx = stateNow.queueItems[playIdx];
+    const refServerProfile =
+      streamServerProfileId
+      || (refAtIdx ? resolveServerIdForIndexKey(refAtIdx.serverId) : '')
+      || getPlaybackServerId();
+    const refServer = authStateNow.servers.find(s => s.id === refServerProfile);
+    const playbackCacheSid = refServer
+      ? serverIndexKeyForProfile(refServer) || refServerProfile
+      : getPlaybackCacheServerKey();
+    const url = resolvePlaybackUrl(playTrackResolved.id, playbackCacheSid);
+    recordEnginePlayUrl(playTrackResolved.id, url);
     const preloadedTrackId = get().enginePreloadedTrackId;
-    const keepPreloadHint = preloadedTrackId === track.id;
+    const keepPreloadHint = preloadedTrackId === playTrackResolved.id;
     const playbackSourceHint = playbackSourceHintForResolvedUrl(
-      track.id,
+      playTrackResolved.id,
       playbackCacheSid,
       url,
     );
     if (import.meta.env.DEV) {
       console.info('[psysonic][playTrack-source]', {
-        trackId: track.id,
+        trackId: playTrackResolved.id,
         resolvedUrl: url,
         preloadedTrackId,
         keepPreloadHint,
@@ -282,37 +312,45 @@ export function runPlayTrack(
       });
     }
 
-    // Set state immediately so the UI updates before the download completes.
-    // currentRadio: null ensures the PlayerBar switches out of radio mode right away.
     const queueSid = get().queueServerId ?? '';
-    // When the caller replaced the queue (explicit `queue` arg), seed the
-    // resolver with those tracks so the UI / hot paths resolve them without a
-    // network round-trip. No-arg jumps reuse already-cached refs.
     if (queue && queueSid) seedQueueResolver(queueSid, queue);
+    const queuePatch =
+      streamServerProfileId && refAtIdx
+        ? {
+            queueItems: stateNow.queueItems.map((r, i) =>
+              i === playIdx
+                ? {
+                    ...r,
+                    serverId: serverIndexKeyForProfile(refServer!) || streamServerProfileId,
+                    trackId: playTrackResolved.id,
+                  }
+                : r,
+            ),
+          }
+        : replacing
+          ? { queueItems: toQueueItemRefs(queueSid, queue) }
+          : {};
     set({
-      currentTrack: track,
+      currentTrack: playTrackResolved,
       currentRadio: null,
       waveformBins: null,
-      ...deriveNormalizationSnapshot(track, normWindow, normIdx),
-      // Only a replace rewrites the queue; navigation keeps the canonical refs.
-      ...(replacing ? { queueItems: toQueueItemRefs(queueSid, queue) } : {}),
+      ...deriveNormalizationSnapshot(playTrackResolved, normWindow, normIdx),
+      ...queuePatch,
       queueIndex: idx >= 0 ? idx : 0,
       progress: initialProgress,
       buffered: 0,
       currentTime: initialTime,
       scrobbled: false,
       lastfmLoved: false,
-      // HTTP stream: wait for Rust `audio:playing` so the seekbar does not
-      // extrapolate while RangedHttpSource / legacy reader is still buffering.
       isPlaying: playbackSourceHint !== 'stream',
       isPlaybackBuffering: playbackSourceHint === 'stream',
       currentPlaybackSource: playbackSourceHint,
-      enginePreloadedTrackId: keepPreloadHint ? track.id : null,
+      enginePreloadedTrackId: keepPreloadHint ? playTrackResolved.id : null,
     });
 
     if (
       prevTrack
-      && !sameQueueTrackId(prevTrack.id, track.id)
+      && !sameQueueTrackId(prevTrack.id, playTrackResolved.id)
       && authStateNow.hotCacheEnabled
     ) {
       const prevPromoteSid = getPlaybackCacheServerKey();
@@ -324,35 +362,37 @@ export function runPlayTrack(
         );
       }
     }
-    void refreshWaveformForTrack(track.id);
-    void refreshLoudnessForTrack(track.id);
+    void refreshWaveformForTrack(playTrackResolved.id);
+    void refreshLoudnessForTrack(playTrackResolved.id);
     setDeferHotCachePrefetch(true);
     const replayGainDb = resolveReplayGainDb(
-      track, prevTrack, nextNeighbour,
+      playTrackResolved, prevTrack, nextNeighbour,
       isReplayGainActive(), authStateNow.replayGainMode,
     );
-    const replayGainPeak = isReplayGainActive() ? (track.replayGainPeak ?? null) : null;
+    const replayGainPeak = isReplayGainActive() ? (playTrackResolved.replayGainPeak ?? null) : null;
     invoke('audio_play', {
       url,
       volume: state.volume,
-      durationHint: track.duration,
+      durationHint: playTrackResolved.duration,
       replayGainDb,
       replayGainPeak,
-      loudnessGainDb: loudnessGainDbForEngineBind(track.id),
+      loudnessGainDb: loudnessGainDbForEngineBind(playTrackResolved.id),
       preGainDb: authStateNow.replayGainPreGainDb,
       fallbackDb: authStateNow.replayGainFallbackDb,
       manual,
       hiResEnabled: authStateNow.enableHiRes,
-      analysisTrackId: track.id,
-      serverId: getPlaybackIndexKey() || null,
-      streamFormatSuffix: track.suffix ?? null,
+      analysisTrackId: playTrackResolved.id,
+      serverId: playbackCacheSid || null,
+      streamFormatSuffix: playTrackResolved.suffix ?? null,
     })
       .then(() => {
         if (getPlayGeneration() !== gen) return;
         if (keepPreloadHint) {
           set({ enginePreloadedTrackId: null });
         }
-        const durSeek = track.duration && track.duration > 0 ? track.duration : null;
+        const durSeek = playTrackResolved.duration && playTrackResolved.duration > 0
+          ? playTrackResolved.duration
+          : null;
         const seekTo = initialTime;
         const canSeekAfterPlay =
           seekTo > 0.05 && (durSeek == null || seekTo < durSeek - 0.05);
@@ -361,12 +401,12 @@ export function runPlayTrack(
             .then(() => {
               if (getPlayGeneration() !== gen) return;
               setSeekTarget(seekTo);
-              if (getSeekFallbackVisualTarget()?.trackId === track.id) {
+              if (getSeekFallbackVisualTarget()?.trackId === playTrackResolved.id) {
                 setSeekFallbackVisualTarget(null);
               }
             })
             .catch(() => {
-              if (getSeekFallbackVisualTarget()?.trackId === track.id) {
+              if (getSeekFallbackVisualTarget()?.trackId === playTrackResolved.id) {
                 setSeekFallbackVisualTarget(null);
               }
             });
@@ -374,6 +414,23 @@ export function runPlayTrack(
       })
       .catch((err: unknown) => {
         if (getPlayGeneration() !== gen) return;
+        if (isClusterMode() && browseServerId && refServerProfile) {
+          void cascadeClusterPlayback(browseServerId, browseTrackId, refServerProfile).then(next => {
+            if (!next || getPlayGeneration() !== gen) {
+              setDeferHotCachePrefetch(false);
+              set({ isPlaying: false });
+              setTimeout(() => {
+                if (getPlayGeneration() !== gen) return;
+                get().next(false);
+              }, 500);
+              return;
+            }
+            playTrackResolved = { ...playTrackResolved, id: next.trackId };
+            streamServerProfileId = next.serverId;
+            runPlayTrackBody();
+          });
+          return;
+        }
         setDeferHotCachePrefetch(false);
         console.error('[psysonic] audio_play failed:', err);
         set({ isPlaying: false });
@@ -383,41 +440,41 @@ export function runPlayTrack(
         }, 500);
       });
 
-    // Report Now Playing to Navidrome (for Live/getNowPlaying) + Last.fm
     const { nowPlayingEnabled: npEnabled, scrobblingEnabled: lfmEnabled, lastfmSessionKey: lfmKey } = useAuthStore.getState();
-    if (npEnabled) reportNowPlaying(track.id, getPlaybackServerId());
+    if (npEnabled) reportNowPlaying(playTrackResolved.id, refServerProfile || getPlaybackServerId());
     if (lfmKey) {
-      if (lfmEnabled) lastfmUpdateNowPlaying(track, lfmKey);
-      lastfmGetTrackLoved(track.title, track.artist, lfmKey).then(loved => {
-        const cacheKey = `${track.title}::${track.artist}`;
+      if (lfmEnabled) lastfmUpdateNowPlaying(playTrackResolved, lfmKey);
+      lastfmGetTrackLoved(playTrackResolved.title, playTrackResolved.artist, lfmKey).then(loved => {
+        const cacheKey = `${playTrackResolved.title}::${playTrackResolved.artist}`;
         set(s => ({
           lastfmLoved: loved,
           lastfmLovedCache: { ...s.lastfmLovedCache, [cacheKey]: loved },
         }));
       });
     }
-    syncQueueToServer(get().queueItems, track, initialTime);
-    touchHotCacheOnPlayback(track.id, playbackCacheSid);
+    syncQueueToServer(get().queueItems, playTrackResolved, initialTime);
+    touchHotCacheOnPlayback(playTrackResolved.id, playbackCacheSid);
   };
 
-  const hotPromoteSid = getPlaybackCacheServerKey();
-  if (needSameTrackHotPromote && hotPromoteSid) {
-    void promoteCompletedStreamToHotCache(
-      track,
-      hotPromoteSid,
-      authState.hotCacheDownloadDir || null,
-    )
-      .then(() => {
-        if (getPlayGeneration() !== gen) return;
-        runPlayTrackBody();
-      })
-      .catch((err: unknown) => {
-        if (getPlayGeneration() !== gen) return;
-        setDeferHotCachePrefetch(false);
-        console.error('[psysonic] same-track hot promote / play body failed:', err);
-        set({ isPlaying: false });
-      });
-  } else {
-    runPlayTrackBody();
-  }
+    const hotPromoteSid = getPlaybackCacheServerKey();
+    if (needSameTrackHotPromote && hotPromoteSid) {
+      void promoteCompletedStreamToHotCache(
+        track,
+        hotPromoteSid,
+        authState.hotCacheDownloadDir || null,
+      )
+        .then(() => {
+          if (getPlayGeneration() !== gen) return;
+          runPlayTrackBody();
+        })
+        .catch((err: unknown) => {
+          if (getPlayGeneration() !== gen) return;
+          setDeferHotCachePrefetch(false);
+          console.error('[psysonic] same-track hot promote / play body failed:', err);
+          set({ isPlaying: false });
+        });
+    } else {
+      runPlayTrackBody();
+    }
+  })();
 }
