@@ -362,6 +362,35 @@ fn fts_album_text_match_query(req: &LibraryAdvancedSearchRequest, text: &str) ->
     }
 }
 
+/// Synced `album` rows + LIKE/scope filters — avoids FTS over the full track index.
+fn try_build_album_from_table(
+    store: &LibraryStore,
+    req: &LibraryAdvancedSearchRequest,
+    text: Option<&str>,
+    scalar: &[&LibraryFilterClause],
+    limit: u32,
+    offset: u32,
+    skip_totals: bool,
+    applied: &mut BTreeSet<String>,
+) -> Result<Option<(Vec<LibraryAlbumDto>, u32)>, String> {
+    if scalar_requires_lossless_track_grouping(scalar)
+        || scalar_requires_track_derived_entities(scalar)
+    {
+        return Ok(None);
+    }
+    if !crate::album_browse::album_table_usable(store, &req.server_id)? {
+        return Ok(None);
+    }
+    let table = build_album_from_table(store, req, text, scalar, limit, offset, skip_totals, applied)?;
+    if text.is_some() {
+        return Ok(Some(table));
+    }
+    if !table.0.is_empty() || table.1 > 0 {
+        return Ok(Some(table));
+    }
+    Ok(None)
+}
+
 #[allow(clippy::too_many_arguments)]
 fn build_album(
     store: &LibraryStore,
@@ -382,6 +411,11 @@ fn build_album(
     // track-derived groups with `t.starred_at`.
     if req.starred_only == Some(true) {
         return build_album_from_table(store, req, text, scalar, limit, offset, skip_totals, applied);
+    }
+    if let Some(table) = try_build_album_from_table(
+        store, req, text, scalar, limit, offset, skip_totals, applied,
+    )? {
+        return Ok(table);
     }
     if server_has_indexed_tracks(store, &req.server_id)? {
         if let Some(q) = text.and_then(|t| fts_album_text_match_query(req, t)) {

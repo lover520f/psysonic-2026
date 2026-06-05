@@ -143,7 +143,7 @@ fn map_row(r: &rusqlite::Row<'_>) -> rusqlite::Result<LibraryAlbumDto> {
     })
 }
 
-fn album_table_usable(store: &LibraryStore, server_id: &str) -> Result<bool, String> {
+pub(crate) fn album_table_usable(store: &LibraryStore, server_id: &str) -> Result<bool, String> {
     store
         .with_read_conn(|c| {
             c.query_row(
@@ -317,10 +317,12 @@ pub fn list_albums(
     store: &LibraryStore,
     req: &LibraryAlbumBrowseRequest,
 ) -> Result<LibraryAlbumBrowseResponse, String> {
-    // Unscoped plain browse: read the synced `album` table (~5k rows).
-    // Scoped browse (one or more libraries): filter tracks by `library_id`
-    // first, then GROUP BY — same union semantics as lossless / advanced search.
-    if !browse_is_scoped(req) && album_table_usable(store, &req.server_id)? {
+    let scope_ids = effective_scope_ids(req);
+    // Unscoped, or a single library: `album` table + EXISTS (fast on ~5k rows).
+    // Multi-library union: filter tracks by `library_id IN (...)` then GROUP BY.
+    if album_table_usable(store, &req.server_id)?
+        && (!browse_is_scoped(req) || scope_ids.len() == 1)
+    {
         return list_albums_from_table(store, req);
     }
     if !crate::dto::track_index_nonempty(store, &req.server_id)? {
