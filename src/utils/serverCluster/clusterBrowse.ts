@@ -2,6 +2,8 @@
  * Cluster-mode browse helpers — merged index reads when `activeClusterId` is set.
  */
 import {
+  libraryClusterListFavoriteAlbums,
+  libraryClusterListFavoriteArtists,
   libraryClusterListAlbums,
   libraryClusterListArtists,
   libraryClusterListFavorites,
@@ -119,9 +121,21 @@ export async function clusterBrowseTextSearchPage(
   offset: number,
   pageSize: number,
 ): Promise<SubsonicSong[] | null> {
-  const all = await clusterBrowseTextSearch(query, offset + pageSize);
-  if (!all) return null;
-  return all.slice(offset, offset + pageSize);
+  const members = await resolveClusterBrowseMembers();
+  if (!members) return null;
+  const q = query.trim();
+  if (!q) return null;
+  try {
+    const resp = await librarySearchCluster({
+      query: q,
+      limit: pageSize,
+      offset,
+      serversOrdered: members,
+    });
+    return resp.hits.map(trackToSong);
+  } catch {
+    return null;
+  }
 }
 
 /** Merged favorites from the local index (starred on any member). */
@@ -133,36 +147,14 @@ export async function clusterLoadFavorites(): Promise<{
   const members = await resolveClusterBrowseMembers();
   if (!members) return null;
   try {
-    const env = await libraryClusterListFavorites({ serversOrdered: members, limit: 2000, offset: 0 });
-    const songs = env.tracks.map(trackToSong);
-    const albums = dedupeById(
-      songs
-        .filter(s => s.albumId)
-        .map(
-          s =>
-            ({
-              id: s.albumId!,
-              name: s.album,
-              artist: s.artist,
-              artistId: s.artistId,
-              coverArt: s.coverArt,
-              starred: 'true',
-            }) as SubsonicAlbum,
-        ),
-    );
-    const artists = dedupeById(
-      songs
-        .filter(s => s.artistId || s.artist)
-        .map(
-          s =>
-            ({
-              id: s.artistId || s.artist,
-              name: s.artist,
-              coverArt: s.artistId,
-              starred: 'true',
-            }) as SubsonicArtist,
-        ),
-    );
+    const [tracksEnv, albumsResp, artistsResp] = await Promise.all([
+      libraryClusterListFavorites({ serversOrdered: members, limit: 2000, offset: 0 }),
+      libraryClusterListFavoriteAlbums({ serversOrdered: members, limit: 1000, offset: 0 }),
+      libraryClusterListFavoriteArtists({ serversOrdered: members, limit: 1000, offset: 0 }),
+    ]);
+    const songs = tracksEnv.tracks.map(trackToSong);
+    const albums = dedupeById(albumsResp.albums.map(albumToAlbum).map(a => ({ ...a, starred: a.starred ?? 'true' })));
+    const artists = dedupeById(artistsResp.artists.map(artistToArtist).map(a => ({ ...a, starred: a.starred ?? 'true' })));
     return { songs, albums, artists };
   } catch {
     return null;

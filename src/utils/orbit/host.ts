@@ -15,6 +15,7 @@ import {
 } from '../../api/orbit';
 import { generateSessionId } from './helpers';
 import { writeOrbitHeartbeat, writeOrbitState } from './remote';
+import { isClusterMode } from '../serverCluster/clusterScope';
 
 export interface StartOrbitArgs {
   /** Human-readable name the host chose. */
@@ -39,6 +40,9 @@ export interface StartOrbitArgs {
  * On throw the store is left in the pre-call state — nothing partially bound.
  */
 export async function startOrbitSession(args: StartOrbitArgs): Promise<OrbitState> {
+  if (isClusterMode()) {
+    throw new Error('Orbit host is disabled in cluster mode');
+  }
   const server = useAuthStore.getState().getActiveServer();
   const username = server?.username;
   if (!username) throw new Error('No active Navidrome server / user');

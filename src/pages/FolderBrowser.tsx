@@ -11,6 +11,11 @@ import FolderBrowserColumn from '../components/folderBrowser/FolderBrowserColumn
 import { useFolderBrowserNowPlayingPath } from '../hooks/useFolderBrowserNowPlayingPath';
 import { useFolderBrowserScrolling } from '../hooks/useFolderBrowserScrolling';
 import { useFolderBrowserKeyboardNav } from '../hooks/useFolderBrowserKeyboardNav';
+import { isClusterMode } from '../utils/serverCluster/clusterScope';
+import { resolveClusterBrowseMembers } from '../utils/serverCluster/clusterBrowse';
+import { apiForServer, libraryFilterParamsForServer } from '../api/subsonicClient';
+import { serverListDisplayLabel } from '../utils/server/serverDisplayName';
+import { useAuthStore } from '../store/authStore';
 
 export default function FolderBrowser() {
   const { t } = useTranslation();
@@ -22,6 +27,8 @@ export default function FolderBrowser() {
   const pendingNavColRef = useRef<number | null>(null);
   const [keyboardPos, setKeyboardPos] = useState<NavPos | null>(null);
   const [contextAnchorPos, setContextAnchorPos] = useState<NavPos | null>(null);
+  const [clusterGroups, setClusterGroups] = useState<Array<{ serverId: string; label: string; items: SubsonicDirectoryEntry[] }>>([]);
+  const [clusterLoading, setClusterLoading] = useState(false);
   const currentTrack = usePlayerStore(s => s.currentTrack);
   const isPlaying = usePlayerStore(s => s.isPlaying);
   const playTrack = usePlayerStore(s => s.playTrack);
@@ -59,6 +66,48 @@ export default function FolderBrowser() {
       .catch(() => {
         setColumns([{ ...placeholder, items: [], loading: false, error: true }]);
       });
+  }, []);
+
+  useEffect(() => {
+    if (!isClusterMode()) return;
+    let cancelled = false;
+    setClusterLoading(true);
+    void (async () => {
+      const members = await resolveClusterBrowseMembers();
+      if (!members?.length) {
+        if (!cancelled) {
+          setClusterGroups([]);
+          setClusterLoading(false);
+        }
+        return;
+      }
+      const all = useAuthStore.getState().servers;
+      const settled = await Promise.allSettled(
+        members.map(async (serverId: string) => {
+          const data = await apiForServer<{ musicFolders?: { musicFolder?: Array<{ id: string; name: string }> } }>(
+            serverId,
+            'getMusicFolders.view',
+            libraryFilterParamsForServer(serverId),
+          );
+          const server = all.find(s => s.id === serverId);
+          const label = server ? serverListDisplayLabel(server, all) : serverId;
+          const items = (data.musicFolders?.musicFolder ?? []).map(f => ({
+            id: f.id,
+            title: f.name,
+            isDir: true,
+          }));
+          return { serverId, label, items };
+        }),
+      );
+      if (cancelled) return;
+      const groups: Array<{ serverId: string; label: string; items: SubsonicDirectoryEntry[] }> = [];
+      settled.forEach((r) => {
+        if (r.status === 'fulfilled') groups.push(r.value);
+      });
+      setClusterGroups(groups);
+      setClusterLoading(false);
+    })();
+    return () => { cancelled = true; };
   }, []);
 
   useEffect(() => {
@@ -315,6 +364,40 @@ export default function FolderBrowser() {
     if (col.loading || col.error || col.items.length === 0) return false;
     return Math.abs(colIndex - visibleAnchorColIndex) > 1;
   }, [compactColumnsEnabled, visibleAnchorColIndex]);
+
+  if (isClusterMode()) {
+    return (
+      <div className="folder-browser">
+        <h1 className="page-title folder-browser-title">{t('sidebar.folderBrowser')}</h1>
+        {clusterLoading ? (
+          <div style={{ display: 'flex', justifyContent: 'center', padding: '2rem' }}>
+            <div className="spinner" />
+          </div>
+        ) : clusterGroups.length === 0 ? (
+          <div className="empty-state">{t('cluster.browseUnsupported')}</div>
+        ) : (
+          <div style={{ display: 'grid', gap: 16 }}>
+            {clusterGroups.map(group => (
+              <section key={group.serverId}>
+                <h3 style={{ margin: '0 0 10px' }}>{group.label}</h3>
+                {group.items.length === 0 ? (
+                  <div className="empty-state" style={{ padding: '10px 0' }}>{t('cluster.browseUnsupported')}</div>
+                ) : (
+                  <div style={{ display: 'grid', gap: 8 }}>
+                    {group.items.map(item => (
+                      <div key={`${group.serverId}:${item.id}`} className="card" style={{ padding: '10px 12px' }}>
+                        {item.title}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </section>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="folder-browser">

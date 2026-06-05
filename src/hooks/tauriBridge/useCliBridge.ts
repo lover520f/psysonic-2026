@@ -48,7 +48,7 @@ export function useCliBridge(navigate: NavigateFunction) {
       }
       const serverId = useAuthStore.getState().activeServerId;
       try {
-        const similar = await getSimilarSongs(song.id, 50);
+        const similar = await getSimilarSongs(song.id, 50, song.clusterBrowseServerId);
         if (serverId) useAuthStore.getState().setAudiomuseNavidromeIssue(serverId, false);
         const mixCfg = getMixMinRatingsConfigFromAuth();
         const ratedFiltered = await filterSongsForLuckyMixRatings(

@@ -55,6 +55,7 @@ import {
   runLocalBrowseFullSearch,
   runNetworkBrowseFullSearch,
 } from '../utils/library/browseTextSearch';
+import { isClusterMode } from '../utils/serverCluster/clusterScope';
 import { useLibraryIndexStore } from '../store/libraryIndexStore';
 import { MOOD_GROUP_IDS } from '../config/moodGroups';
 import { usePerfProbeFlags } from '../utils/perf/perfFlags';
@@ -864,7 +865,7 @@ export default function SearchBrowsePage() {
           {!perfFlags.disableMainstageVirtualLists && (
             <SongBrowseSection
               title={t('tracks.browseTitle')}
-              emptyBrowseText={t('tracks.browseUnsupported')}
+              emptyBrowseText={isClusterMode() ? t('cluster.browseUnsupported') : t('tracks.browseUnsupported')}
               searchActive={tracksSearchActive}
               songs={songBrowse.songs}
               hasMore={songBrowse.hasMore}

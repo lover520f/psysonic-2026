@@ -20,6 +20,11 @@ import RadioEditModal from '../components/internetRadio/RadioEditModal';
 import RadioDirectoryModal from '../components/internetRadio/RadioDirectoryModal';
 import { usePerfProbeFlags } from '../utils/perf/perfFlags';
 import { VirtualCardGrid } from '../components/VirtualCardGrid';
+import { isClusterMode } from '../utils/serverCluster/clusterScope';
+import { resolveClusterBrowseMembers } from '../utils/serverCluster/clusterBrowse';
+import { apiForServer } from '../api/subsonicClient';
+import { serverListDisplayLabel } from '../utils/server/serverDisplayName';
+import { useAuthStore } from '../store/authStore';
 
 export default function InternetRadio() {
   const { t } = useTranslation();
@@ -45,12 +50,50 @@ export default function InternetRadio() {
   });
   const [manualOrder, setManualOrder] = useState<string[]>([]);
   const [dragOver, setDragOver] = useState<{ id: string; side: 'before' | 'after' } | null>(null);
+  const [clusterGroups, setClusterGroups] = useState<Array<{ serverId: string; label: string; stations: InternetRadioStation[] }>>([]);
+  const [clusterLoading, setClusterLoading] = useState(false);
 
   useEffect(() => {
     getInternetRadioStations()
       .then(setStations)
       .catch(() => {})
       .finally(() => setLoading(false));
+  }, []);
+
+  useEffect(() => {
+    if (!isClusterMode()) return;
+    let cancelled = false;
+    setClusterLoading(true);
+    void (async () => {
+      const members = await resolveClusterBrowseMembers();
+      if (!members?.length) {
+        if (!cancelled) {
+          setClusterGroups([]);
+          setClusterLoading(false);
+        }
+        return;
+      }
+      const all = useAuthStore.getState().servers;
+      const settled = await Promise.allSettled(
+        members.map(async (serverId: string) => {
+          const data = await apiForServer<{ internetRadioStations?: { internetRadioStation?: InternetRadioStation[] } }>(
+            serverId,
+            'getInternetRadioStations.view',
+          );
+          const server = all.find(s => s.id === serverId);
+          const label = server ? serverListDisplayLabel(server, all) : serverId;
+          return { serverId, label, stations: data.internetRadioStations?.internetRadioStation ?? [] };
+        }),
+      );
+      if (cancelled) return;
+      const groups: Array<{ serverId: string; label: string; stations: InternetRadioStation[] }> = [];
+      settled.forEach((r) => {
+        if (r.status === 'fulfilled') groups.push(r.value);
+      });
+      setClusterGroups(groups);
+      setClusterLoading(false);
+    })();
+    return () => { cancelled = true; };
   }, []);
 
   const reload = async () => {
@@ -219,6 +262,46 @@ export default function InternetRadio() {
     return (
       <div className="content-body" style={{ display: 'flex', justifyContent: 'center', padding: '4rem' }}>
         <div className="spinner" />
+      </div>
+    );
+  }
+
+  if (isClusterMode()) {
+    return (
+      <div className="content-body animate-fade-in">
+        <h1 className="page-title">{t('radio.title')}</h1>
+        {clusterLoading ? (
+          <div style={{ display: 'flex', justifyContent: 'center', padding: '2rem' }}>
+            <div className="spinner" />
+          </div>
+        ) : clusterGroups.length === 0 ? (
+          <div className="empty-state">{t('radio.empty')}</div>
+        ) : (
+          <div style={{ display: 'grid', gap: 16 }}>
+            {clusterGroups.map(group => (
+              <section key={group.serverId}>
+                <h3 style={{ margin: '0 0 10px' }}>{group.label}</h3>
+                {group.stations.length === 0 ? (
+                  <div className="empty-state" style={{ padding: '10px 0' }}>{t('radio.empty')}</div>
+                ) : (
+                  <div style={{ display: 'grid', gap: 8 }}>
+                    {group.stations.map(station => (
+                      <button
+                        key={`${group.serverId}:${station.id}`}
+                        className="btn btn-secondary"
+                        style={{ width: '100%', justifyContent: 'space-between' }}
+                        onClick={() => playRadio(station)}
+                      >
+                        <span>{station.name}</span>
+                        <span style={{ opacity: 0.7 }}>{group.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </section>
+            ))}
+          </div>
+        )}
       </div>
     );
   }

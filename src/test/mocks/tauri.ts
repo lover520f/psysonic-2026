@@ -35,6 +35,47 @@ export function registerDefaultCoverInvokeHandlers(): void {
   onInvoke('cover_cache_ensure', () => ({ hit: false, path: '', tier: 128 }));
 }
 
+export function registerDefaultLibraryClusterInvokeHandlers(): void {
+  onInvoke('library_search_cluster', () => ({ hits: [], fuzzy: [], serversSearched: [] }));
+  onInvoke('library_cluster_advanced_search', () => ({
+    artists: [],
+    albums: [],
+    tracks: [],
+    totals: { artists: 0, albums: 0, tracks: 0 },
+    appliedFilters: [],
+    source: 'local',
+  }));
+  onInvoke('library_cluster_list_tracks', () => ({ tracks: [], total: 0 }));
+  onInvoke('library_cluster_list_favorites', () => ({ tracks: [], total: 0 }));
+  onInvoke('library_cluster_list_albums', () => ({ albums: [], hasMore: false }));
+  onInvoke('library_cluster_list_artists', () => ({ artists: [], hasMore: false }));
+  onInvoke('library_cluster_list_favorite_albums', () => ({ albums: [], hasMore: false }));
+  onInvoke('library_cluster_list_favorite_artists', () => ({ artists: [], hasMore: false }));
+  onInvoke('library_cluster_player_stats_year_summary', () => ({
+    totalListenedSec: 0,
+    sessionCount: 0,
+    trackPlayCount: 0,
+    uniqueTrackCount: 0,
+    listeningDayCount: 0,
+    fullCount: 0,
+    partialCount: 0,
+  }));
+  onInvoke('library_cluster_player_stats_heatmap', () => []);
+  onInvoke('library_cluster_player_stats_day_detail', () => ({
+    totals: {
+      totalListenedSec: 0,
+      sessionCount: 0,
+      trackPlayCount: 0,
+      fullCount: 0,
+      partialCount: 0,
+    },
+    tracks: [],
+  }));
+  onInvoke('library_cluster_player_stats_recent_days', () => []);
+  onInvoke('library_cluster_player_stats_most_played', () => []);
+  onInvoke('library_cluster_resolve_candidates', () => ({ candidates: [], clusterKey: null }));
+}
+
 // Tauri's typed signatures are strict (InvokeArgs / Event<T>). Tests don't
 // need that level of precision — cast the mocks to `any` so the helpers
 // accept simple `{ payload }` envelopes and plain object args.
@@ -94,6 +135,7 @@ export function resetTauriMocks(): void {
   eventListeners.clear();
   invokeMock.mockClear();
   listenMock.mockClear();
+  registerDefaultLibraryClusterInvokeHandlers();
 }
 
 export { invokeMock, listenMock };

@@ -48,6 +48,7 @@ import { useGlobalDndAndSelectionBlockers } from '../hooks/useGlobalDndAndSelect
 import { useAppActivityTracking } from '../hooks/useAppActivityTracking';
 import { useMainScrollingIndicator } from '../hooks/useMainScrollingIndicator';
 import { useCoverNavigationPriority } from '../hooks/useCoverNavigationPriority';
+import { useClusterPlaybackMonitor } from '../hooks/useClusterPlaybackMonitor';
 import { useLiveSearchRouteScope } from '../hooks/useLiveSearchRouteScope';
 import { useNowPlayingPrewarm } from '../hooks/useNowPlayingPrewarm';
 import { useOfflineAutoNav } from '../hooks/useOfflineAutoNav';
@@ -102,6 +103,7 @@ export function AppShell() {
   const location = useLocation();
   const prevPathnameRef = useRef(location.pathname);
   useCoverNavigationPriority();
+  useClusterPlaybackMonitor();
   useLiveSearchRouteScope();
   useNowPlayingPrewarm();
   const useCustomTitlebar = useAuthStore(s => s.useCustomTitlebar);

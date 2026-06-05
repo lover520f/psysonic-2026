@@ -8,6 +8,10 @@ import type {
   SubsonicArtistInfo,
   SubsonicSong,
 } from './subsonicTypes';
+import { isClusterMode } from '../utils/serverCluster/clusterScope';
+import { resolveClusterBrowseMembers } from '../utils/serverCluster/clusterBrowse';
+import { libraryClusterResolveCandidates } from './library';
+import { mergeClusterTracks, resolveClusterSeedIds } from '../utils/serverCluster/clusterDiscoveryMerge';
 
 export async function getArtists(): Promise<SubsonicArtist[]> {
   const data = await api<{ artists: { index: any } }>('getArtists.view', {
@@ -60,6 +64,9 @@ export async function getArtistInfoForServer(
 }
 
 export async function getTopSongs(artist: string): Promise<SubsonicSong[]> {
+  if (isClusterMode()) {
+    return getTopSongsCluster(artist);
+  }
   const { activeServerId } = useAuthStore.getState();
   if (!activeServerId) return [];
   return getTopSongsForServer(activeServerId, artist);
@@ -83,7 +90,59 @@ export async function getTopSongsForServer(serverId: string, artist: string): Pr
   }
 }
 
+async function getTopSongsCluster(artist: string): Promise<SubsonicSong[]> {
+  const members = await resolveClusterBrowseMembers();
+  if (!members?.length) return [];
+  const settled = await Promise.allSettled(
+    members.map(serverId =>
+      apiForServer<{ topSongs: { song: SubsonicSong[] } }>(
+        serverId,
+        'getTopSongs.view',
+        { artist, count: 20, ...libraryFilterParamsForServer(serverId) },
+      ).then(data => ({ serverId, songs: data.topSongs?.song ?? [] })),
+    ),
+  );
+  const merged = mergeClusterTracks(
+    settled.flatMap((row, idx) =>
+      row.status === 'fulfilled'
+        ? row.value.songs.map(song => ({
+          item: { ...song, clusterBrowseServerId: row.value.serverId },
+          serverId: row.value.serverId,
+          priorityRank: idx,
+        }))
+        : [],
+    ),
+  );
+  return merged.slice(0, 5);
+}
+
 export async function getSimilarSongs2(id: string, count = 50): Promise<SubsonicSong[]> {
+  if (isClusterMode()) {
+    const members = await resolveClusterBrowseMembers();
+    if (!members?.length) return [];
+    const requestCount = similarSongsRequestCount(count);
+    const settled = await Promise.allSettled(
+      members.map(serverId =>
+        apiForServer<{ similarSongs2: { song: SubsonicSong[] } }>(
+          serverId,
+          'getSimilarSongs2.view',
+          { id, count: requestCount, ...libraryFilterParamsForServer(serverId) },
+        ).then(data => ({ serverId, songs: data.similarSongs2?.song ?? [] })),
+      ),
+    );
+    const merged = mergeClusterTracks(
+      settled.flatMap((row, idx) =>
+        row.status === 'fulfilled'
+          ? row.value.songs.map(song => ({
+            item: { ...song, clusterBrowseServerId: row.value.serverId },
+            serverId: row.value.serverId,
+            priorityRank: idx,
+          }))
+          : [],
+      ),
+    );
+    return merged.filter(s => s.id !== id).slice(0, count);
+  }
   try {
     const requestCount = similarSongsRequestCount(count);
     const data = await api<{ similarSongs2: { song: SubsonicSong[] } }>('getSimilarSongs2.view', { id, count: requestCount, ...libraryFilterParams() });
@@ -96,7 +155,54 @@ export async function getSimilarSongs2(id: string, count = 50): Promise<Subsonic
 }
 
 /** Similar tracks for a song id (Subsonic `getSimilarSongs`) — Navidrome + AudioMuse Instant Mix. */
-export async function getSimilarSongs(id: string, count = 50): Promise<SubsonicSong[]> {
+export async function getSimilarSongs(
+  id: string,
+  count = 50,
+  browseServerId?: string,
+): Promise<SubsonicSong[]> {
+  if (isClusterMode()) {
+    const members = await resolveClusterBrowseMembers();
+    if (!members?.length) return [];
+    const activeServerId = browseServerId ?? useAuthStore.getState().activeServerId ?? members[0] ?? '';
+    const requestCount = similarSongsRequestCount(count);
+    const seedCandidates = await libraryClusterResolveCandidates({
+      serversOrdered: members,
+      serverId: activeServerId,
+      trackId: id,
+    }).catch(() => null);
+    const seeds = resolveClusterSeedIds(
+      Object.fromEntries((seedCandidates?.candidates ?? []).map(c => [c.serverId, c.trackId])),
+      members,
+    );
+    const resolvedSeeds = seeds.length > 0
+      ? seeds
+      : members.map(serverId => ({ serverId, seedId: id }));
+    const settled = await Promise.allSettled(
+      resolvedSeeds.map(({ serverId, seedId }) =>
+        apiForServer<{ similarSongs: { song: SubsonicSong | SubsonicSong[] } }>(
+          serverId,
+          'getSimilarSongs.view',
+          { id: seedId, count: requestCount, ...libraryFilterParamsForServer(serverId) },
+        ).then(data => {
+          const raw = data.similarSongs?.song;
+          const songs = !raw ? [] : Array.isArray(raw) ? raw : [raw];
+          return { serverId, songs };
+        }),
+      ),
+    );
+    const merged = mergeClusterTracks(
+      settled.flatMap((row, idx) =>
+        row.status === 'fulfilled'
+          ? row.value.songs.map(song => ({
+            item: { ...song, clusterBrowseServerId: row.value.serverId },
+            serverId: row.value.serverId,
+            priorityRank: idx,
+          }))
+          : [],
+      ),
+    );
+    return merged.filter(s => s.id !== id).slice(0, count);
+  }
   try {
     const requestCount = similarSongsRequestCount(count);
     const data = await api<{ similarSongs: { song: SubsonicSong | SubsonicSong[] } }>('getSimilarSongs.view', { id, count: requestCount, ...libraryFilterParams() });

@@ -2,11 +2,13 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import {
-  libraryGetPlayerStatsDayDetail,
-  libraryGetPlayerStatsRecentDays,
   type PlaySessionDayDetail,
   type PlaySessionRecentDay,
 } from '../../api/library';
+import {
+  loadPlayerStatsDayDetail,
+  loadPlayerStatsRecentDays,
+} from '../../utils/serverCluster/clusterPlayerStats';
 import { formatPlayerStatsListeningTotal } from '../../utils/format/formatHumanDuration';
 import {
   formatPlayerStatsDayLabel,
@@ -54,7 +56,7 @@ export default function PlayerStatsRecentDays({
   const loadDetail = useCallback(async (date: string) => {
     setLoadingDates(prev => new Set(prev).add(date));
     try {
-      const detail = await libraryGetPlayerStatsDayDetail(date);
+      const detail = await loadPlayerStatsDayDetail(date);
       setDetails(prev => new Map(prev).set(date, detail));
     } catch {
       /* ignore */
@@ -70,7 +72,7 @@ export default function PlayerStatsRecentDays({
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
-    libraryGetPlayerStatsRecentDays(PLAYER_STATS_RECENT_DAYS_LIMIT)
+    loadPlayerStatsRecentDays(PLAYER_STATS_RECENT_DAYS_LIMIT)
       .then(rows => {
         if (!cancelled) {
           setDays(rows);
@@ -89,7 +91,7 @@ export default function PlayerStatsRecentDays({
   useEffect(() => {
     if (liveRefreshKey === 0) return;
     let cancelled = false;
-    libraryGetPlayerStatsRecentDays(PLAYER_STATS_RECENT_DAYS_LIMIT)
+    loadPlayerStatsRecentDays(PLAYER_STATS_RECENT_DAYS_LIMIT)
       .then(rows => {
         if (cancelled) return;
         setDays(rows);

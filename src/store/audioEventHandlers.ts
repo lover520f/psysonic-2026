@@ -18,6 +18,7 @@ import {
   getPlaybackIndexKey,
   getPlaybackServerId,
 } from '../utils/playback/playbackServer';
+import { resolveServerIdForIndexKey } from '../utils/server/serverLookup';
 import { resolvePlaybackUrl } from '../utils/playback/resolvePlaybackUrl';
 import { resolveReplayGainDb } from '../utils/audio/resolveReplayGainDb';
 import { showToast } from '../utils/ui/toast';
@@ -93,7 +94,10 @@ export function handleAudioPlaying(duration: number): void {
   notifyLibraryPlaybackHint('playing');
   const track = usePlayerStore.getState().currentTrack;
   if (track) {
-    void playListenSessionOpen(track, getPlaybackServerId(), duration);
+    const st = usePlayerStore.getState();
+    const ref = st.queueItems[st.queueIndex];
+    const sid = ref ? resolveServerIdForIndexKey(ref.serverId) : getPlaybackServerId();
+    void playListenSessionOpen(track, sid, duration);
   }
 }
 
@@ -187,7 +191,11 @@ export function handleAudioProgress(
   // Scrobble at 50%: Last.fm + Navidrome (updates play_date / recently played)
   if (progress >= 0.5 && !store.scrobbled) {
     usePlayerStore.setState({ scrobbled: true });
-    scrobbleSong(track.id, Date.now(), getPlaybackServerId());
+    const ref = store.queueItems[store.queueIndex];
+    const resolvedSid = ref
+      ? resolveServerIdForIndexKey(ref.serverId)
+      : getPlaybackServerId();
+    scrobbleSong(track.id, Date.now(), getPlaybackServerId(), resolvedSid);
     const { scrobblingEnabled, lastfmSessionKey } = useAuthStore.getState();
     if (scrobblingEnabled && lastfmSessionKey) {
       lastfmScrobble(track, Date.now(), lastfmSessionKey);
@@ -476,7 +484,10 @@ export function handleAudioTrackSwitched(_duration: number): void {
 
   // Report Now Playing to Navidrome + Last.fm
   const { nowPlayingEnabled, scrobblingEnabled, lastfmSessionKey } = useAuthStore.getState();
-  if (nowPlayingEnabled) reportNowPlaying(nextTrack.id, getPlaybackServerId());
+  const st = usePlayerStore.getState();
+  const ref = st.queueItems[st.queueIndex];
+  const resolvedSid = ref ? resolveServerIdForIndexKey(ref.serverId) : getPlaybackServerId();
+  if (nowPlayingEnabled) reportNowPlaying(nextTrack.id, resolvedSid);
   if (lastfmSessionKey) {
     if (scrobblingEnabled) lastfmUpdateNowPlaying(nextTrack, lastfmSessionKey);
     lastfmGetTrackLoved(nextTrack.title, nextTrack.artist, lastfmSessionKey).then(loved => {

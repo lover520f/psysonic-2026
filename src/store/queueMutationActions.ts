@@ -2,6 +2,7 @@ import { invoke } from '@tauri-apps/api/core';
 import { orbitBulkGuard } from '../utils/orbitBulkGuard';
 import { useAuthStore } from './authStore';
 import { setIsAudioPaused } from './engineState';
+import { useLuckyMixStore } from './luckyMixStore';
 import { prefetchLoudnessForEnqueuedTracks } from './loudnessPrefetch';
 import type { PlayerState, QueueItemRef, Track } from './playerStoreTypes';
 import { toQueueItemRefs } from '../utils/library/queueItemRef';
@@ -26,7 +27,8 @@ import {
   ensureQueueServerPinned,
   playbackServerDiffersFromActive,
 } from '../utils/playback/playbackServer';
-import { useLuckyMixStore } from './luckyMixStore';
+import { isClusterMode } from '../utils/serverCluster/clusterScope';
+import { clusterAwareQueueRefs } from '../utils/serverCluster/clusterEnqueueResolve';
 import { showToast } from '../utils/ui/toast';
 
 type SetState = (
@@ -35,6 +37,7 @@ type SetState = (
 type GetState = () => PlayerState;
 
 function blockCrossServerEnqueue(): boolean {
+  if (isClusterMode()) return false;
   if (useLuckyMixStore.getState().isRolling) return false;
   if (!playbackServerDiffersFromActive()) return false;
   showToast(i18n.t('queue.crossServerEnqueueBlocked'), 4500, 'error');
@@ -89,20 +92,35 @@ export function createQueueMutationActions(set: SetState, get: GetState): Pick<
       }
       if (!skipQueueUndo) pushQueueUndoFromGetter(get);
       ensureQueueServerPinned();
-      set(state => {
-        seedIncoming(state, tracks);
-        const items = itemsOf(state);
+      const state = get();
+      seedIncoming(state, tracks);
+      if (!isClusterMode()) {
         const incoming = toQueueItemRefs(state.queueServerId ?? '', tracks);
-        // Insert before the first upcoming auto-added track so the
-        // "Added automatically" separator always stays at the boundary.
-        const firstAutoIdx = items.findIndex((r, i) => r.autoAdded && i > state.queueIndex);
-        const newItems = firstAutoIdx === -1
-          ? [...items, ...incoming]
-          : [...items.slice(0, firstAutoIdx), ...incoming, ...items.slice(firstAutoIdx)];
-        syncQueueToServer(newItems, state.currentTrack, state.currentTime);
-        prefetchLoudnessForEnqueuedTracks(newItems, state.queueIndex);
-        return { queueItems: newItems };
-      });
+        set(s => {
+          const items = itemsOf(s);
+          const firstAutoIdx = items.findIndex((r, i) => r.autoAdded && i > s.queueIndex);
+          const newItems = firstAutoIdx === -1
+            ? [...items, ...incoming]
+            : [...items.slice(0, firstAutoIdx), ...incoming, ...items.slice(firstAutoIdx)];
+          syncQueueToServer(newItems, s.currentTrack, s.currentTime);
+          prefetchLoudnessForEnqueuedTracks(newItems, s.queueIndex);
+          return { queueItems: newItems };
+        });
+        return;
+      }
+      void (async () => {
+        const incoming = await clusterAwareQueueRefs(tracks, state.queueServerId ?? '');
+        set(s => {
+          const items = itemsOf(s);
+          const firstAutoIdx = items.findIndex((r, i) => r.autoAdded && i > s.queueIndex);
+          const newItems = firstAutoIdx === -1
+            ? [...items, ...incoming]
+            : [...items.slice(0, firstAutoIdx), ...incoming, ...items.slice(firstAutoIdx)];
+          syncQueueToServer(newItems, s.currentTrack, s.currentTime);
+          prefetchLoudnessForEnqueuedTracks(newItems, s.queueIndex);
+          return { queueItems: newItems };
+        });
+      })();
     },
 
     setRadioArtistId: (artistId) => {
@@ -121,46 +139,55 @@ export function createQueueMutationActions(set: SetState, get: GetState): Pick<
       }
       pushQueueUndoFromGetter(get);
       ensureQueueServerPinned();
-      set(state => {
-        const items = itemsOf(state);
-        // Drop all upcoming (not yet played) radio tracks — clicking "Start Radio"
-        // again replaces the pending radio batch instead of stacking on top.
-        const beforeAndCurrent = items.slice(0, state.queueIndex + 1);
-        const upcoming = items.slice(state.queueIndex + 1).filter(r => !r.radioAdded);
-        // Tracks about to leave the queue here. Callers like ContextMenu.startRadio
-        // pass the previous pending radio back in `tracks` to merge with new
-        // similars — the seen-set must not block those re-introductions.
-        const droppedRadioIds = items
-          .slice(state.queueIndex + 1)
-          .filter(r => r.radioAdded)
-          .map(r => r.trackId);
-        for (const id of droppedRadioIds) deleteRadioSessionSeen(id);
-        // Capture surviving queue ids in the seen-set so the next radio top-up
-        // can dedupe against the seed track + already-queued non-radio items.
-        for (const r of beforeAndCurrent) addRadioSessionSeen(r.trackId);
-        for (const r of upcoming) addRadioSessionSeen(r.trackId);
-        // Drop incoming tracks already seen earlier this session AND
-        // intra-batch duplicates (top + similar Last.fm responses commonly
-        // overlap). The seen-set is mutated inside the loop so a repeated
-        // id later in `tracks` is rejected by the same pass that admitted
-        // the first occurrence (issue #500).
-        const dedupedTracks: Track[] = [];
-        for (const t of tracks) {
-          if (hasRadioSessionSeen(t.id)) continue;
-          addRadioSessionSeen(t.id);
-          dedupedTracks.push(t);
-        }
-        seedIncoming(state, dedupedTracks);
+      const state = get();
+      const items = itemsOf(state);
+      const beforeAndCurrent = items.slice(0, state.queueIndex + 1);
+      const upcoming = items.slice(state.queueIndex + 1).filter(r => !r.radioAdded);
+      const droppedRadioIds = items
+        .slice(state.queueIndex + 1)
+        .filter(r => r.radioAdded)
+        .map(r => r.trackId);
+      for (const id of droppedRadioIds) deleteRadioSessionSeen(id);
+      for (const r of beforeAndCurrent) addRadioSessionSeen(r.trackId);
+      for (const r of upcoming) addRadioSessionSeen(r.trackId);
+      const dedupedTracks: Track[] = [];
+      for (const t of tracks) {
+        if (hasRadioSessionSeen(t.id)) continue;
+        addRadioSessionSeen(t.id);
+        dedupedTracks.push(t);
+      }
+      seedIncoming(state, dedupedTracks);
+      if (!isClusterMode()) {
         const incoming = toQueueItemRefs(state.queueServerId ?? '', dedupedTracks);
-        // Insert new radio tracks before any autoAdded tracks in the upcoming section.
-        const firstAutoIdx = upcoming.findIndex(r => r.autoAdded);
-        const mergedItems = firstAutoIdx === -1
-          ? [...upcoming, ...incoming]
-          : [...upcoming.slice(0, firstAutoIdx), ...incoming, ...upcoming.slice(firstAutoIdx)];
-        const newItems = [...beforeAndCurrent, ...mergedItems];
-        syncQueueToServer(newItems, state.currentTrack, state.currentTime);
-        return { queueItems: newItems };
-      });
+        set(s => {
+          const liveItems = itemsOf(s);
+          const head = liveItems.slice(0, s.queueIndex + 1);
+          const tail = liveItems.slice(s.queueIndex + 1).filter(r => !r.radioAdded);
+          const firstAutoIdx = tail.findIndex(r => r.autoAdded);
+          const mergedItems = firstAutoIdx === -1
+            ? [...tail, ...incoming]
+            : [...tail.slice(0, firstAutoIdx), ...incoming, ...tail.slice(firstAutoIdx)];
+          const newItems = [...head, ...mergedItems];
+          syncQueueToServer(newItems, s.currentTrack, s.currentTime);
+          return { queueItems: newItems };
+        });
+        return;
+      }
+      void (async () => {
+        const incoming = await clusterAwareQueueRefs(dedupedTracks, state.queueServerId ?? '');
+        set(s => {
+          const liveItems = itemsOf(s);
+          const head = liveItems.slice(0, s.queueIndex + 1);
+          const tail = liveItems.slice(s.queueIndex + 1).filter(r => !r.radioAdded);
+          const firstAutoIdx = tail.findIndex(r => r.autoAdded);
+          const mergedItems = firstAutoIdx === -1
+            ? [...tail, ...incoming]
+            : [...tail.slice(0, firstAutoIdx), ...incoming, ...tail.slice(firstAutoIdx)];
+          const newItems = [...head, ...mergedItems];
+          syncQueueToServer(newItems, s.currentTrack, s.currentTime);
+          return { queueItems: newItems };
+        });
+      })();
     },
 
     enqueueAt: (tracks, insertIndex, _orbitConfirmed = false) => {
@@ -173,19 +200,37 @@ export function createQueueMutationActions(set: SetState, get: GetState): Pick<
       }
       pushQueueUndoFromGetter(get);
       ensureQueueServerPinned();
-      set(state => {
-        seedIncoming(state, tracks);
-        const items = itemsOf(state);
-        const idx = Math.max(0, Math.min(insertIndex, items.length));
+      const state = get();
+      seedIncoming(state, tracks);
+      if (!isClusterMode()) {
         const incoming = toQueueItemRefs(state.queueServerId ?? '', tracks);
-        const newItems = [...items.slice(0, idx), ...incoming, ...items.slice(idx)];
-        const newQueueIndex = idx <= state.queueIndex
-          ? state.queueIndex + tracks.length
-          : state.queueIndex;
-        syncQueueToServer(newItems, state.currentTrack, state.currentTime);
-        prefetchLoudnessForEnqueuedTracks(newItems, newQueueIndex);
-        return { queueItems: newItems, queueIndex: newQueueIndex };
-      });
+        set(s => {
+          const items = itemsOf(s);
+          const idx = Math.max(0, Math.min(insertIndex, items.length));
+          const newItems = [...items.slice(0, idx), ...incoming, ...items.slice(idx)];
+          const newQueueIndex = idx <= s.queueIndex
+            ? s.queueIndex + tracks.length
+            : s.queueIndex;
+          syncQueueToServer(newItems, s.currentTrack, s.currentTime);
+          prefetchLoudnessForEnqueuedTracks(newItems, newQueueIndex);
+          return { queueItems: newItems, queueIndex: newQueueIndex };
+        });
+        return;
+      }
+      void (async () => {
+        const incoming = await clusterAwareQueueRefs(tracks, state.queueServerId ?? '');
+        set(s => {
+          const items = itemsOf(s);
+          const idx = Math.max(0, Math.min(insertIndex, items.length));
+          const newItems = [...items.slice(0, idx), ...incoming, ...items.slice(idx)];
+          const newQueueIndex = idx <= s.queueIndex
+            ? s.queueIndex + tracks.length
+            : s.queueIndex;
+          syncQueueToServer(newItems, s.currentTrack, s.currentTime);
+          prefetchLoudnessForEnqueuedTracks(newItems, newQueueIndex);
+          return { queueItems: newItems, queueIndex: newQueueIndex };
+        });
+      })();
     },
 
     playNext: (tracks) => {

@@ -12,6 +12,9 @@ import { playAlbum, playAlbumShuffled } from '../utils/playback/playAlbum';
 import { useLongPressAction } from '../hooks/useLongPressAction';
 import { LongPressWaveOverlay } from '../components/LongPressWaveOverlay';
 import { useTranslation } from 'react-i18next';
+import { isClusterMode } from '../utils/serverCluster/clusterScope';
+import { loadPlayerStatsMostPlayed } from '../utils/serverCluster/clusterPlayerStats';
+import { trackToSong } from '../utils/library/advancedSearchLocal';
 
 const PAGE_SIZE = 50;
 
@@ -113,6 +116,24 @@ export default function MostPlayed() {
     setAlbums([]);
     setHasMore(true);
     try {
+      if (isClusterMode()) {
+        const rows = await loadPlayerStatsMostPlayed(PAGE_SIZE);
+        const asAlbums = rows.map(row => {
+          const s = trackToSong(row.track);
+          return {
+            id: s.albumId || `${row.track.serverId}:${s.id}`,
+            name: s.album,
+            artist: s.artist,
+            artistId: s.artistId || '',
+            coverArt: s.coverArt,
+            playCount: row.trackPlayCount,
+          } as SubsonicAlbum;
+        });
+        setAlbums(asAlbums);
+        setHasMore(false);
+        setLoading(false);
+        return;
+      }
       const result = await getAlbumList('frequent', PAGE_SIZE, 0);
       setAlbums(result);
       setHasMore(result.length === PAGE_SIZE);
@@ -123,6 +144,7 @@ export default function MostPlayed() {
   useEffect(() => { load(); }, [load]);
 
   const loadMore = async () => {
+    if (isClusterMode()) return;
     if (loadingMore || !hasMore) return;
     setLoadingMore(true);
     try {

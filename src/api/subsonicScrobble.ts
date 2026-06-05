@@ -16,11 +16,16 @@ async function scrobbleOnServer(
   await apiForServer(serverId, 'scrobble.view', params);
 }
 
-export async function scrobbleSong(id: string, time: number, serverId: string): Promise<void> {
+export async function scrobbleSong(
+  id: string,
+  time: number,
+  serverId: string,
+  resolvedServerId?: string,
+): Promise<void> {
   if (!serverId) return;
   if (isClusterMode()) {
     const browseId = useAuthStore.getState().activeServerId ?? serverId;
-    await clusterFanOutScrobbleSubmission(browseId, id, time);
+    await clusterFanOutScrobbleSubmission(browseId, id, time, resolvedServerId ?? serverId);
     return;
   }
   try {

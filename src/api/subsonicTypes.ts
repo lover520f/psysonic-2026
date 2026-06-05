@@ -100,6 +100,8 @@ export interface SubsonicSong {
     subRole?: string;
     artist: { id?: string; name: string };
   }>;
+  /** Psysonic cluster: browse-origin server for fan-out resolution (client-only). */
+  clusterBrowseServerId?: string;
 }
 
 export interface InternetRadioStation {

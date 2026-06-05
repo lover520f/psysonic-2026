@@ -3,12 +3,14 @@ import type { SubsonicAlbum } from '../../api/subsonicTypes';
 import { libraryScopeForServer } from '../../api/subsonicClient';
 import { dedupeById } from '../dedupeById';
 import { albumToAlbum } from './advancedSearchLocal';
-import { sharedServerFilters } from './albumBrowseFilters';
+import { albumBrowseHasServerFilters, sharedServerFilters } from './albumBrowseFilters';
 import { albumSortClauses, sortSubsonicAlbums } from './albumBrowseSort';
 import { libraryIsReady } from './libraryReady';
 import type { AlbumBrowsePageResult, AlbumBrowseQuery } from './albumBrowseTypes';
 import { GENRE_ALBUM_FETCH_LIMIT } from './albumBrowseTypes';
 import { canUseClusterAlbumBrowse, clusterBrowseAlbumsPage } from '../serverCluster/clusterBrowse';
+import { clusterAdvancedSearchLocal } from './clusterAdvancedSearchLocal';
+import { isClusterMode } from '../serverCluster/clusterScope';
 
 function markServerStarredAlbums(albums: SubsonicAlbum[]) {
   return albums.map(a => ({ ...a, starred: a.starred ?? 'true' }));
@@ -22,10 +24,31 @@ export async function runLocalAlbumBrowse(
   pageSize: number,
   restrictAlbumIds?: string[],
 ): Promise<AlbumBrowsePageResult | null> {
+  const clusterAndFiltered = isClusterMode() && albumBrowseHasServerFilters(query);
   if (canUseClusterAlbumBrowse(query, restrictAlbumIds)) {
     const clusterPage = await clusterBrowseAlbumsPage(offset, pageSize);
     if (clusterPage) return clusterPage;
   }
+  if (clusterAndFiltered) {
+    const shared = sharedServerFilters(query, restrictAlbumIds != null);
+    const resp = await clusterAdvancedSearchLocal({
+      query: undefined,
+      entityTypes: ['album'],
+      filters: shared,
+      starredOnly: restrictAlbumIds != null ? undefined : (query.starredOnly || undefined),
+      restrictAlbumIds: restrictAlbumIds ?? undefined,
+      sort: albumSortClauses(query.sort),
+      limit: pageSize,
+      offset,
+      skipTotals: true,
+    });
+    if (!resp) return { albums: [], hasMore: false };
+    return {
+      albums: resp.albums.map(albumToAlbum),
+      hasMore: resp.albums.length === pageSize,
+    };
+  }
+  if (isClusterMode()) return { albums: [], hasMore: false };
   if (!serverId || !(await libraryIsReady(serverId))) return null;
 
   const scope = libraryScopeForServer(serverId) ?? undefined;

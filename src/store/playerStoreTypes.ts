@@ -33,6 +33,8 @@ export interface Track {
    *  end of the current Play-Next streak. Stale flags behind queueIndex are
    *  harmless — the streak scan only looks forward from queueIndex+1. */
   playNextAdded?: boolean;
+  /** Psysonic cluster: browse-origin server for resolve-on-enqueue (client-only). */
+  clusterBrowseServerId?: string;
 }
 
 /**

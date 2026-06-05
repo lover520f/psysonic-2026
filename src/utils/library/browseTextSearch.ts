@@ -30,6 +30,7 @@ import {
 } from './libraryDevLog';
 import { libraryIsReady } from './libraryReady';
 import { clusterBrowseArtistsPage, clusterBrowseTextSearchPage, clusterBrowseTracksPage } from '../serverCluster/clusterBrowse';
+import { isClusterMode } from '../serverCluster/clusterScope';
 import { raceSearchSources, type SearchRaceWinner } from './searchRace';
 
 export type { LibrarySearchSurface };
@@ -304,6 +305,7 @@ export async function runLocalBrowseSongPage(
   if (q) {
     const clusterPage = await clusterBrowseTextSearchPage(q, offset, pageSize);
     if (clusterPage) return clusterPage;
+    if (isClusterMode()) return [];
   }
   if (!serverId || !(await libraryIsReady(serverId))) return null;
   if (!q) return null;
@@ -407,6 +409,7 @@ export async function runLocalRandomSongs(
   const clusterOffset = Math.floor(Math.random() * 500);
   const clusterPage = await clusterBrowseTracksPage(clusterOffset, limit);
   if (clusterPage?.length) return clusterPage;
+  if (isClusterMode()) return [];
   if (!serverId || !(await libraryIsReady(serverId))) return null;
   try {
     const resp = await libraryAdvancedSearch({

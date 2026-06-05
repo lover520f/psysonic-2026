@@ -21,14 +21,15 @@ use crate::cross_server;
 use crate::dto::{
     count_local_tracks, local_tracks_max_updated_ms, track_index_nonempty, ArtifactInputDto,
     FactInputDto,     LibraryAdvancedSearchRequest, LibraryAdvancedSearchResponse,
-    LibraryClusterListTracksRequest, LibraryClusterResolveRequest,
+    LibraryClusterAdvancedSearchRequest, LibraryClusterListTracksRequest, LibraryClusterResolveRequest,
     LibraryClusterResolveResponse, LibraryClusterAlbumsResponse, LibraryClusterArtistsResponse,
-    LibraryClusterScopeRequest, LibraryClusterPlayerStatsRequest,
+    LibraryClusterScopeRequest, LibraryClusterPlayerStatsRequest, LibraryClusterPlayerStatsDayDetailRequest,
     LibraryClusterEntityDetailRequest, LibraryClusterAlbumDetailResponse,
     LibraryClusterArtistDetailResponse,
     LibraryCrossServerSearchResponse, LibraryLiveSearchRequest, LibraryLiveSearchResponse, LibraryTrackDto,
     LibraryTracksEnvelope, OfflinePathDto, PlaySessionDayDetailDto, PlaySessionHeatmapDayDto,
-    PlaySessionInputDto, PlaySessionRecentDayDto, PlaySessionYearBoundsDto, PlaySessionYearSummaryDto, PurgeReportDto, SyncJobDto, SyncStateDto,
+    PlaySessionInputDto, PlaySessionMostPlayedDto, PlaySessionRecentDayDto, PlaySessionYearBoundsDto,
+    PlaySessionYearSummaryDto, PurgeReportDto, SyncJobDto, SyncStateDto,
     TrackArtifactDto, TrackFactDto, TrackRefDto,
 };
 use crate::live_search;
@@ -479,6 +480,16 @@ pub async fn library_advanced_search(
 }
 
 #[tauri::command]
+pub async fn library_cluster_advanced_search(
+    runtime: State<'_, LibraryRuntime>,
+    request: LibraryClusterAdvancedSearchRequest,
+) -> Result<LibraryAdvancedSearchResponse, String> {
+    let store = Arc::clone(&runtime.store);
+    library_spawn_blocking(move || crate::server_cluster::run_cluster_advanced_search(&store, request))
+        .await
+}
+
+#[tauri::command]
 pub async fn library_list_lossless_albums(
     runtime: State<'_, LibraryRuntime>,
     request: crate::dto::LibraryLosslessAlbumsRequest,
@@ -612,6 +623,36 @@ pub async fn library_cluster_list_favorites(
 }
 
 #[tauri::command]
+pub async fn library_cluster_list_favorite_albums(
+    runtime: State<'_, LibraryRuntime>,
+    request: LibraryClusterScopeRequest,
+) -> Result<LibraryClusterAlbumsResponse, String> {
+    let store = Arc::clone(&runtime.store);
+    let servers_ordered = request.servers_ordered;
+    let limit = request.limit.unwrap_or(500);
+    let offset = request.offset.unwrap_or(0);
+    library_spawn_blocking(move || {
+        crate::server_cluster::list_merged_favorite_albums(&store, &servers_ordered, limit, offset)
+    })
+    .await
+}
+
+#[tauri::command]
+pub async fn library_cluster_list_favorite_artists(
+    runtime: State<'_, LibraryRuntime>,
+    request: LibraryClusterScopeRequest,
+) -> Result<LibraryClusterArtistsResponse, String> {
+    let store = Arc::clone(&runtime.store);
+    let servers_ordered = request.servers_ordered;
+    let limit = request.limit.unwrap_or(500);
+    let offset = request.offset.unwrap_or(0);
+    library_spawn_blocking(move || {
+        crate::server_cluster::list_merged_favorite_artists(&store, &servers_ordered, limit, offset)
+    })
+    .await
+}
+
+#[tauri::command]
 pub fn library_cluster_player_stats_year_summary(
     runtime: State<'_, LibraryRuntime>,
     request: LibraryClusterPlayerStatsRequest,
@@ -632,6 +673,42 @@ pub fn library_cluster_player_stats_heatmap(
         &runtime.store,
         &request.servers_ordered,
         request.year,
+    )
+}
+
+#[tauri::command]
+pub fn library_cluster_player_stats_day_detail(
+    runtime: State<'_, LibraryRuntime>,
+    request: LibraryClusterPlayerStatsDayDetailRequest,
+) -> Result<PlaySessionDayDetailDto, String> {
+    crate::server_cluster::cluster_day_detail(
+        &runtime.store,
+        &request.servers_ordered,
+        &request.date_iso,
+    )
+}
+
+#[tauri::command]
+pub fn library_cluster_player_stats_recent_days(
+    runtime: State<'_, LibraryRuntime>,
+    request: LibraryClusterScopeRequest,
+) -> Result<Vec<PlaySessionRecentDayDto>, String> {
+    crate::server_cluster::cluster_recent_days(
+        &runtime.store,
+        &request.servers_ordered,
+        request.limit.unwrap_or(30),
+    )
+}
+
+#[tauri::command]
+pub fn library_cluster_player_stats_most_played(
+    runtime: State<'_, LibraryRuntime>,
+    request: LibraryClusterScopeRequest,
+) -> Result<Vec<PlaySessionMostPlayedDto>, String> {
+    crate::server_cluster::cluster_most_played(
+        &runtime.store,
+        &request.servers_ordered,
+        request.limit.unwrap_or(50),
     )
 }
 
@@ -714,12 +791,14 @@ pub async fn library_search_cluster(
     runtime: State<'_, LibraryRuntime>,
     query: String,
     limit: Option<u32>,
+    offset: Option<u32>,
     servers_ordered: Vec<String>,
 ) -> Result<LibraryCrossServerSearchResponse, String> {
     let store = Arc::clone(&runtime.store);
     let limit = limit.unwrap_or(100);
+    let offset = offset.unwrap_or(0);
     library_spawn_blocking(move || {
-        crate::server_cluster::run_cluster_search(&store, &query, limit, &servers_ordered)
+        crate::server_cluster::run_cluster_search(&store, &query, limit, offset, &servers_ordered)
     })
     .await
 }
@@ -1091,6 +1170,12 @@ async fn library_sync_start_inner(
         };
         if let Some(runtime) = app_for_emit.try_state::<LibraryRuntime>() {
             let _ = runtime.store.checkpoint_wal("sync.checkpoint");
+            if outcome.ok {
+                let _ = crate::server_cluster::rebuild_cluster_keys_for_server(
+                    &runtime.store,
+                    &server_id_for_emit,
+                );
+            }
         }
         let _ = app_for_emit.emit(LibrarySyncProgressPayload::IDLE_EVENT_NAME, &outcome);
 

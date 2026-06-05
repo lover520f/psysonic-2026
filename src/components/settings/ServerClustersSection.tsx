@@ -6,6 +6,10 @@ import { useDragDrop, useDragSource } from '../../contexts/DragDropContext';
 import { serverListDisplayLabel } from '../../utils/server/serverDisplayName';
 import { switchActiveCluster } from '../../utils/server/switchActiveServer';
 import type { ServerCluster } from '../../utils/serverCluster/types';
+import {
+  getClusterMergeDiagnostics,
+  type ClusterMergeDiagnostics,
+} from '../../utils/serverCluster/clusterMergeStatus';
 
 type MemberDropTarget = { idx: number; before: boolean } | null;
 
@@ -19,6 +23,7 @@ export function ServerClustersSection() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
   const [memberDropTarget, setMemberDropTarget] = useState<MemberDropTarget>(null);
+  const [diagnosticsByCluster, setDiagnosticsByCluster] = useState<Record<string, ClusterMergeDiagnostics>>({});
   const memberDropRef = useRef<MemberDropTarget>(null);
   const dragClusterIdRef = useRef<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -31,6 +36,20 @@ export function ServerClustersSection() {
       dragClusterIdRef.current = null;
     }
   }, [psyDragState.isDragging]);
+
+  useEffect(() => {
+    let cancelled = false;
+    void Promise.all(auth.clusters.map(async cluster => {
+      const diag = await getClusterMergeDiagnostics(cluster);
+      return [cluster.id, diag] as const;
+    })).then(entries => {
+      if (cancelled) return;
+      setDiagnosticsByCluster(Object.fromEntries(entries));
+    }).catch(() => {
+      if (!cancelled) setDiagnosticsByCluster({});
+    });
+    return () => { cancelled = true; };
+  }, [auth.clusters, auth.servers, auth.activeClusterId, auth.musicLibraryFilterVersion]);
 
   const startCreate = () => {
     setCreating(true);
@@ -215,6 +234,14 @@ export function ServerClustersSection() {
                 {cluster.serverIds.map((sid, memberIdx) => {
                   const srv = auth.servers.find(s => s.id === sid);
                   if (!srv) return null;
+                  const status = diagnosticsByCluster[cluster.id]?.members.find(m => m.serverId === sid);
+                  const statusLabel = !status
+                    ? ''
+                    : status.included
+                      ? t('cluster.memberIncluded')
+                      : status.reason === 'indexing'
+                        ? t('cluster.memberExcludedIndexing')
+                        : t('cluster.memberExcludedOffline');
                   const isBefore =
                     psyDragState.isDragging &&
                     dragClusterIdRef.current === cluster.id &&
@@ -244,6 +271,11 @@ export function ServerClustersSection() {
                     >
                       <ClusterMemberGrip clusterId={cluster.id} idx={memberIdx} label={cluster.name} />
                       <span style={{ flex: 1 }}>{serverListDisplayLabel(srv, auth.servers)}</span>
+                      {statusLabel && (
+                        <span style={{ fontSize: 11, color: status?.included ? 'var(--text-muted)' : 'var(--warning)' }}>
+                          {statusLabel}
+                        </span>
+                      )}
                       <button
                         type="button"
                         className="btn btn-ghost"

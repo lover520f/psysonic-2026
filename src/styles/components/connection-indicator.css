@@ -83,6 +83,14 @@
   white-space: nowrap;
 }
 
+.connection-indicator-cluster-banner {
+  margin-top: 4px;
+  max-width: 280px;
+  font-size: 10px;
+  line-height: 1.25;
+  color: var(--text-muted);
+}
+
 /* Server card actions collapse to icon-only on narrow viewports — labels
  * remain available as native tooltips via the existing `data-tooltip` /
  * `aria-label` attributes. Breakpoint is tuned to where the action row

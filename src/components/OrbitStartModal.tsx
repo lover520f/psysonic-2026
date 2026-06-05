@@ -15,6 +15,7 @@ import { useAuthStore } from '../store/authStore';
 import { usePlayerStore } from '../store/playerStore';
 import { isLanUrl, serverShareBaseUrl } from '../utils/server/serverEndpoint';
 import { ORBIT_DEFAULT_MAX_USERS } from '../api/orbit';
+import { isClusterMode } from '../utils/serverCluster/clusterScope';
 
 interface Props { onClose: () => void; }
 
@@ -36,6 +37,7 @@ export default function OrbitStartModal({ onClose }: Props) {
   const [copied, setCopied]       = useState(false);
   const [hasCopied, setHasCopied] = useState(false);
   const [clearQueue, setClearQueue] = useState(false);
+  const clusterBlocked = isClusterMode();
 
   const server     = useAuthStore.getState().getActiveServer();
   // Orbit links go to remote guests — use the share URL (public by default
@@ -70,6 +72,10 @@ export default function OrbitStartModal({ onClose }: Props) {
 
   const onStart = async () => {
     setError(null);
+    if (clusterBlocked) {
+      setError(t('orbit.clusterCreateBlocked'));
+      return;
+    }
     const trimmed = name.trim();
     if (!trimmed) { setError(t('orbit.errNameRequired')); return; }
 
@@ -222,7 +228,7 @@ export default function OrbitStartModal({ onClose }: Props) {
             type="button"
             className="btn btn-primary"
             onClick={onStart}
-            disabled={busy || !name.trim()}
+            disabled={busy || !name.trim() || clusterBlocked}
           >
             {busy
               ? t('orbit.btnStarting')

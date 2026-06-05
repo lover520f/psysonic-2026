@@ -668,17 +668,98 @@ export function libraryClusterArtistDetail(args: {
 export function librarySearchCluster(args: {
   query: string;
   limit?: number;
+  offset?: number;
   serversOrdered: string[];
 }): Promise<LibraryCrossServerSearchResponse> {
   return invoke<LibraryCrossServerSearchResponse>('library_search_cluster', {
     query: args.query,
     limit: args.limit,
+    offset: args.offset,
     serversOrdered: mapServersOrderedToIndexKeys(args.serversOrdered),
   }).then(response => ({
     ...response,
     hits: mapTracksServerId(response.hits),
     fuzzy: mapTracksServerId(response.fuzzy),
     serversSearched: response.serversSearched.map(id => mapServerIdFromIndexKey(id)),
+  }));
+}
+
+export interface LibraryClusterAdvancedSearchRequest {
+  serversOrdered: string[];
+  query?: string | null;
+  entityTypes: LibraryEntityType[];
+  filters?: LibraryFilterClause[];
+  starredOnly?: boolean | null;
+  restrictAlbumIds?: string[] | null;
+  queryAlbumTitleOnly?: boolean | null;
+  sort?: LibrarySortClause[];
+  limit: number;
+  offset?: number;
+  skipTotals?: boolean;
+}
+
+export function libraryClusterAdvancedSearch(
+  request: LibraryClusterAdvancedSearchRequest,
+): Promise<LibraryAdvancedSearchResponse> {
+  return invoke<LibraryAdvancedSearchResponse>('library_cluster_advanced_search', {
+    request: {
+      serversOrdered: mapServersOrderedToIndexKeys(request.serversOrdered),
+      query: request.query ?? undefined,
+      entityTypes: request.entityTypes,
+      filters: request.filters ?? [],
+      starredOnly: request.starredOnly ?? undefined,
+      restrictAlbumIds: request.restrictAlbumIds ?? undefined,
+      queryAlbumTitleOnly: request.queryAlbumTitleOnly ?? undefined,
+      sort: request.sort ?? [],
+      limit: request.limit,
+      offset: request.offset ?? 0,
+      skipTotals: request.skipTotals ?? false,
+    },
+  }).then(response => ({
+    ...response,
+    artists: response.artists.map(artist => ({
+      ...artist,
+      serverId: mapServerIdFromIndexKey(artist.serverId),
+    })),
+    albums: response.albums.map(album => ({
+      ...album,
+      serverId: mapServerIdFromIndexKey(album.serverId),
+    })),
+    tracks: mapTracksServerId(response.tracks),
+  }));
+}
+
+export function libraryClusterListFavoriteAlbums(args: {
+  serversOrdered: string[];
+  limit?: number;
+  offset?: number;
+}): Promise<LibraryClusterAlbumsResponse> {
+  return invoke<LibraryClusterAlbumsResponse>('library_cluster_list_favorite_albums', {
+    request: {
+      serversOrdered: mapServersOrderedToIndexKeys(args.serversOrdered),
+      limit: args.limit,
+      offset: args.offset,
+    },
+  }).then(resp => ({
+    ...resp,
+    albums: resp.albums.map(a => ({ ...a, serverId: mapServerIdFromIndexKey(a.serverId) })),
+  }));
+}
+
+export function libraryClusterListFavoriteArtists(args: {
+  serversOrdered: string[];
+  limit?: number;
+  offset?: number;
+}): Promise<LibraryClusterArtistsResponse> {
+  return invoke<LibraryClusterArtistsResponse>('library_cluster_list_favorite_artists', {
+    request: {
+      serversOrdered: mapServersOrderedToIndexKeys(args.serversOrdered),
+      limit: args.limit,
+      offset: args.offset,
+    },
+  }).then(resp => ({
+    ...resp,
+    artists: resp.artists.map(a => ({ ...a, serverId: mapServerIdFromIndexKey(a.serverId) })),
   }));
 }
 
@@ -1030,6 +1111,60 @@ export function libraryGetPlayerStatsYearBounds(): Promise<PlaySessionYearBounds
 
 export function libraryGetPlayerStatsRecentDays(limit = 30): Promise<PlaySessionRecentDay[]> {
   return invoke<PlaySessionRecentDay[]>('library_get_player_stats_recent_days', { limit });
+}
+
+export interface PlaySessionMostPlayed {
+  track: LibraryTrackDto;
+  trackPlayCount: number;
+  totalListenedSec: number;
+}
+
+export function libraryClusterPlayerStatsDayDetail(args: {
+  serversOrdered: string[];
+  dateIso: string;
+}): Promise<PlaySessionDayDetail> {
+  return invoke<PlaySessionDayDetail>('library_cluster_player_stats_day_detail', {
+    request: {
+      serversOrdered: mapServersOrderedToIndexKeys(args.serversOrdered),
+      dateIso: args.dateIso,
+    },
+  }).then(detail => ({
+    ...detail,
+    tracks: detail.tracks.map(track => ({
+      ...track,
+      serverId: mapServerIdFromIndexKey(track.serverId),
+    })),
+  }));
+}
+
+export function libraryClusterPlayerStatsRecentDays(args: {
+  serversOrdered: string[];
+  limit?: number;
+}): Promise<PlaySessionRecentDay[]> {
+  return invoke<PlaySessionRecentDay[]>('library_cluster_player_stats_recent_days', {
+    request: {
+      serversOrdered: mapServersOrderedToIndexKeys(args.serversOrdered),
+      limit: args.limit,
+    },
+  });
+}
+
+export function libraryClusterPlayerStatsMostPlayed(args: {
+  serversOrdered: string[];
+  limit?: number;
+}): Promise<PlaySessionMostPlayed[]> {
+  return invoke<PlaySessionMostPlayed[]>('library_cluster_player_stats_most_played', {
+    request: {
+      serversOrdered: mapServersOrderedToIndexKeys(args.serversOrdered),
+      limit: args.limit,
+    },
+  }).then(rows => rows.map(row => ({
+    ...row,
+    track: {
+      ...row.track,
+      serverId: mapServerIdFromIndexKey(row.track.serverId),
+    },
+  })));
 }
 
 // ── Event subscriptions ───────────────────────────────────────────────

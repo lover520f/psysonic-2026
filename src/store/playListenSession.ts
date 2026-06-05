@@ -7,6 +7,7 @@ import {
 } from '../api/library';
 import { libraryIsReady } from '../utils/library/libraryReady';
 import { getPlaybackServerId } from '../utils/playback/playbackServer';
+import { resolveServerIdForIndexKey } from '../utils/server/serverLookup';
 import { emitPlaySessionRecorded } from './playSessionRecorded';
 import { useLibraryIndexStore } from './libraryIndexStore';
 
@@ -179,7 +180,11 @@ export async function playListenSessionFinalize(reason: PlaySessionEndReason): P
 }
 
 export async function playListenSessionOnTrackSwitched(nextTrack: Track): Promise<void> {
-  const serverId = getPlaybackServerId();
+  const state = usePlayerStore.getState();
+  const ref = state.queueItems[state.queueIndex];
+  const serverId = ref
+    ? resolveServerIdForIndexKey(ref.serverId)
+    : getPlaybackServerId();
   await playListenSessionFinalize('switch');
   await playListenSessionOpen(nextTrack, serverId, nextTrack.duration);
 }

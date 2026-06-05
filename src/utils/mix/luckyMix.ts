@@ -292,7 +292,8 @@ export async function buildAndPlayLuckyMix(): Promise<void> {
     for (let i = 0; i < seeds.length; i++) {
       bailIfCancelled();
       const seed = seeds[i];
-      const oneRaw = await getSimilarSongs(seed.id, 60).catch(() => [] as SubsonicSong[]);
+      const oneRaw = await getSimilarSongs(seed.id, 60, seed.clusterBrowseServerId)
+        .catch(() => [] as SubsonicSong[]);
       const oneScoped = await filterSongsToActiveLibrary(oneRaw);
       similarRaw = uniqueAppend(similarRaw, oneRaw);
       similar = uniqueAppend(similar, oneScoped);

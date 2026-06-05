@@ -36,6 +36,8 @@ import { logLibrarySearch, timed } from './libraryDevLog';
 import { isLosslessSuffix } from './losslessFormats';
 import { albumIsCompilation } from './albumCompilation';
 import { OXIMEDIA_MOOD_SEARCH_ENABLED } from './trackEnrichment';
+import { clusterAdvancedSearchLocal } from './clusterAdvancedSearchLocal';
+import { isClusterMode } from '../serverCluster/clusterScope';
 
 export const ADVANCED_SEARCH_YEAR_ALBUM_LIMIT = 100;
 
@@ -200,6 +202,7 @@ export function trackToSong(t: LibraryTrackDto): SubsonicSong {
     bpm: resolvedBpm,
     isrc: t.isrc ?? undefined,
     albumArtist: t.albumArtist ?? undefined,
+    clusterBrowseServerId: t.serverId,
   };
   // `rawJson` is the authoritative original song — let it override the
   // hot-column fallbacks (it carries OpenSubsonic extras too).
@@ -320,7 +323,25 @@ export async function runLocalAdvancedSearch(
       0,
       skipTotals,
     );
-    const { result: resp, ms: invokeMs } = await timed(() => libraryAdvancedSearch(req));
+    const run = async () => {
+      if (isClusterMode()) {
+        return await clusterAdvancedSearchLocal({
+          query: req.query,
+          entityTypes: req.entityTypes,
+          filters: req.filters,
+          starredOnly: req.starredOnly,
+          restrictAlbumIds: req.restrictAlbumIds,
+          sort: req.sort,
+          limit: req.limit,
+          offset: req.offset,
+          skipTotals: req.skipTotals,
+          queryAlbumTitleOnly: req.queryAlbumTitleOnly,
+        });
+      }
+      return libraryAdvancedSearch(req);
+    };
+    const { result: resp, ms: invokeMs } = await timed(run);
+    if (!resp) return null;
     if (resp.source !== 'local') return null;
     const page = {
       artists: resp.artists.map(artistToArtist),
@@ -380,7 +401,7 @@ export async function runLocalSongBrowse(
   if (!serverId) return null;
   if (!(await libraryIsReady(serverId))) return null;
   try {
-    const resp = await libraryAdvancedSearch({
+    const req: LibraryAdvancedSearchRequest = {
       serverId,
       libraryScope: libraryScopeForServer(serverId),
       query: undefined,
@@ -388,7 +409,22 @@ export async function runLocalSongBrowse(
       limit: pageSize,
       offset,
       skipTotals: true,
-    });
+    };
+    const resp = isClusterMode()
+      ? await clusterAdvancedSearchLocal({
+        entityTypes: req.entityTypes,
+        query: req.query,
+        filters: req.filters,
+        starredOnly: req.starredOnly,
+        restrictAlbumIds: req.restrictAlbumIds,
+        sort: req.sort,
+        limit: req.limit,
+        offset: req.offset,
+        skipTotals: req.skipTotals,
+        queryAlbumTitleOnly: req.queryAlbumTitleOnly,
+      })
+      : await libraryAdvancedSearch(req);
+    if (!resp) return [];
     if (resp.source !== 'local') return null;
     return resp.tracks.map(trackToSong);
   } catch {
@@ -416,7 +452,21 @@ export async function loadMoreLocalSongs(
     if (clusterPage) return clusterPage;
   }
   const req = buildRequest(serverId, opts, ['track'], pageSize, offset, true);
-  const resp = await libraryAdvancedSearch(req);
+  const resp = isClusterMode()
+    ? await clusterAdvancedSearchLocal({
+      query: req.query,
+      entityTypes: req.entityTypes,
+      filters: req.filters,
+      starredOnly: req.starredOnly,
+      restrictAlbumIds: req.restrictAlbumIds,
+      sort: req.sort,
+      limit: req.limit,
+      offset: req.offset,
+      skipTotals: req.skipTotals,
+      queryAlbumTitleOnly: req.queryAlbumTitleOnly,
+    })
+    : await libraryAdvancedSearch(req);
+  if (!resp) return [];
   return resp.tracks.map(trackToSong);
 }
 
@@ -436,7 +486,12 @@ export async function tryRunLocalAdvancedSearch(
     suppressLog,
   );
   if (readyPage) return readyPage;
-  return runLocalAdvancedSearch(serverId, opts, songsLimit, true, true, suppressLog);
+  const retryPage = await runLocalAdvancedSearch(serverId, opts, songsLimit, true, true, suppressLog);
+  if (retryPage) return retryPage;
+  if (isClusterMode()) {
+    return { artists: [], albums: [], songs: [], songsTotal: 0 };
+  }
+  return null;
 }
 
 function yearOnlyAlbumBrowseQuery(opts: LocalSearchOpts): AlbumBrowseQuery | null {

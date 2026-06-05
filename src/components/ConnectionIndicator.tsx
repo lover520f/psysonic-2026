@@ -10,6 +10,7 @@ import { switchActiveCluster, switchActiveServer } from '../utils/server/switchA
 import { showToast } from '../utils/ui/toast';
 import { serverListDisplayLabel } from '../utils/server/serverDisplayName';
 import type { ServerCluster } from '../utils/serverCluster/types';
+import ClusterMergeBanner from './ClusterMergeBanner';
 
 interface Props {
   status: ConnectionStatus;
@@ -31,6 +32,9 @@ export default function ConnectionIndicator({ status, isLan, serverName }: Props
   const menuPanelRef = useRef<HTMLDivElement>(null);
 
   const multi = servers.length > 1 || clusters.length > 0;
+  const activeCluster = activeClusterId
+    ? clusters.find(cluster => cluster.id === activeClusterId) ?? null
+    : null;
 
   const updateMenuPosition = useCallback(() => {
     const el = hostRef.current;
@@ -170,6 +174,7 @@ export default function ConnectionIndicator({ status, isLan, serverName }: Props
           </span>
         </div>
       </div>
+      {activeCluster && <ClusterMergeBanner cluster={activeCluster} />}
       {multi &&
         menuOpen &&
         typeof document !== 'undefined' &&

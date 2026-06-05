@@ -1,7 +1,8 @@
 import { getPlaylist } from '../api/subsonicPlaylists';
 import { getGenres } from '../api/subsonicGenres';
+import { apiForServer } from '../api/subsonicClient';
 import { filterSongsToActiveLibrary } from '../api/subsonicLibrary';
-import type { SubsonicPlaylist, SubsonicGenre } from '../api/subsonicTypes';
+import type { SubsonicPlaylist, SubsonicGenre, SubsonicSong } from '../api/subsonicTypes';
 import { songToTrack } from '../utils/playback/songToTrack';
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -29,6 +30,9 @@ import PlaylistsHeader from '../components/playlists/PlaylistsHeader';
 import PlaylistCard from '../components/playlists/PlaylistCard';
 import { usePerfProbeFlags } from '../utils/perf/perfFlags';
 import { VirtualCardGrid } from '../components/VirtualCardGrid';
+import { isClusterMode } from '../utils/serverCluster/clusterScope';
+import { resolveClusterBrowseMembers } from '../utils/serverCluster/clusterBrowse';
+import { serverListDisplayLabel } from '../utils/server/serverDisplayName';
 
 function formatDuration(seconds: number): string {
   return formatHumanHoursMinutes(seconds);
@@ -65,6 +69,8 @@ export default function Playlists() {
     usePlaylistsLibraryScopeCounts(playlists, musicLibraryFilterVersion);
   const [playingId, setPlayingId] = useState<string | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [clusterGroups, setClusterGroups] = useState<Array<{ serverId: string; label: string; playlists: SubsonicPlaylist[] }>>([]);
+  const [clusterLoading, setClusterLoading] = useState(false);
   const nameInputRef = useRef<HTMLInputElement>(null);
 
   // ── Multi-selection ──────────────────────────────────────────────────────
@@ -96,6 +102,44 @@ export default function Playlists() {
     fetchPlaylists().finally(() => setLoading(false));
     getGenres().then(setGenres).catch(() => {});
   }, [fetchPlaylists]);
+
+  useEffect(() => {
+    if (!isClusterMode()) return;
+    let cancelled = false;
+    setClusterLoading(true);
+    void (async () => {
+      const members = await resolveClusterBrowseMembers();
+      if (!members || members.length === 0) {
+        if (!cancelled) {
+          setClusterGroups([]);
+          setClusterLoading(false);
+        }
+        return;
+      }
+      const all = useAuthStore.getState().servers;
+      const settled = await Promise.allSettled(
+        members.map(async (serverId: string) => {
+          const data = await apiForServer<{ playlists?: { playlist?: SubsonicPlaylist[] } }>(
+            serverId,
+            'getPlaylists.view',
+            { _t: Date.now() },
+          );
+          const playlistsForServer = (data.playlists?.playlist ?? []).filter(p => !p.name.startsWith('__psyorbit_'));
+          const server = all.find(s => s.id === serverId);
+          const label = server ? serverListDisplayLabel(server, all) : serverId;
+          return { serverId, label, playlists: playlistsForServer };
+        }),
+      );
+      if (cancelled) return;
+      const groups: Array<{ serverId: string; label: string; playlists: SubsonicPlaylist[] }> = [];
+      settled.forEach((r) => {
+        if (r.status === 'fulfilled') groups.push(r.value);
+      });
+      setClusterGroups(groups);
+      setClusterLoading(false);
+    })();
+    return () => { cancelled = true; };
+  }, [musicLibraryFilterVersion]);
 
   useEffect(() => {
     if (creating) nameInputRef.current?.focus();
@@ -165,6 +209,61 @@ export default function Playlists() {
     return (
       <div className="content-body" style={{ display: 'flex', justifyContent: 'center', padding: '4rem' }}>
         <div className="spinner" />
+      </div>
+    );
+  }
+
+  if (isClusterMode()) {
+    return (
+      <div className="content-body animate-fade-in">
+        <h1 className="page-title">{t('playlists.title')}</h1>
+        {clusterLoading ? (
+          <div style={{ display: 'flex', justifyContent: 'center', padding: '2rem' }}>
+            <div className="spinner" />
+          </div>
+        ) : clusterGroups.length === 0 ? (
+          <div className="empty-state">{t('playlists.empty')}</div>
+        ) : (
+          <div style={{ display: 'grid', gap: 16 }}>
+            {clusterGroups.map(group => (
+              <section key={group.serverId}>
+                <h3 style={{ margin: '0 0 10px' }}>{group.label}</h3>
+                {group.playlists.length === 0 ? (
+                  <div className="empty-state" style={{ padding: '10px 0' }}>{t('playlists.empty')}</div>
+                ) : (
+                  <div className="playlist-grid">
+                    {group.playlists.map(pl => (
+                      <button
+                        key={`${group.serverId}:${pl.id}`}
+                        className="btn btn-secondary"
+                        style={{ width: '100%', justifyContent: 'space-between', marginBottom: 8 }}
+                        onClick={async () => {
+                          if (playingId === `${group.serverId}:${pl.id}`) return;
+                          setPlayingId(`${group.serverId}:${pl.id}`);
+                          try {
+                            const data = await apiForServer<{ playlist: SubsonicPlaylist & { entry?: SubsonicSong[] } }>(
+                              group.serverId,
+                              'getPlaylist.view',
+                              { id: pl.id },
+                            );
+                            const tracks = (data.playlist.entry ?? [])
+                              .map(song => ({ ...song, clusterBrowseServerId: group.serverId }))
+                              .map(songToTrack);
+                            if (tracks.length > 0) playTrack(tracks[0], tracks);
+                          } catch {}
+                          setPlayingId(null);
+                        }}
+                      >
+                        <span>{pl.name}</span>
+                        <span style={{ opacity: 0.75 }}>{pl.songCount ?? 0}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </section>
+            ))}
+          </div>
+        )}
       </div>
     );
   }

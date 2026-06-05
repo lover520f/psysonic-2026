@@ -5,6 +5,7 @@ import { albumToAlbum } from './advancedSearchLocal';
 import { albumSortClauses, sortSubsonicAlbums, type AlbumBrowseSort } from './albumBrowseSort';
 import type { AlbumBrowsePageResult } from './albumBrowseTypes';
 import { libraryIsReady } from './libraryReady';
+import { isClusterMode } from '../serverCluster/clusterScope';
 
 /** First paint — one visible slice only. */
 export const GENRE_ALBUM_FIRST_PAGE = 60;
@@ -72,6 +73,7 @@ export async function fetchGenreAlbumPage(
   if (indexEnabled) {
     const local = await fetchLocalGenreAlbumPage(serverId, genre, offset, pageSize, sort);
     if (local != null) return local;
+    if (isClusterMode()) return { albums: [], hasMore: false };
   }
 
   return fetchNetworkGenreAlbumPage(genre, offset, pageSize, sort);

@@ -209,10 +209,35 @@ function QueuePanelHostOrSolo() {
     if (!active) return;
     if (isClusterMode()) {
       const repId = active.id;
-      const foreign = queueItems.some(
-        r => resolveServerIdForIndexKey(r.serverId) !== repId,
+      const exportRefs = queueItems.filter(
+        r => resolveServerIdForIndexKey(r.serverId) === repId,
       );
-      if (foreign && !confirm(t('queue.shareClusterMixedWarning'))) return;
+      const foreignCount = queueItems.length - exportRefs.length;
+      if (foreignCount > 0) {
+        const msg = t('queue.shareClusterMixedWarning', {
+          exported: exportRefs.length,
+          total: queueItems.length,
+        });
+        if (!confirm(msg)) return;
+      }
+      if (exportRefs.length === 0) {
+        showToast(t('queue.shareClusterNothingOnPrimary'), 4000, 'info');
+        return;
+      }
+      const srv = serverShareBaseUrl(active);
+      if (!srv) return;
+      const ids = exportRefs.map(r => r.trackId);
+      const ok = await copyTextToClipboard(encodeSharePayload({ srv, k: 'queue', ids }));
+      if (ok) {
+        showToast(
+          foreignCount > 0
+            ? t('queue.shareClusterExportedCount', { exported: exportRefs.length, total: queueItems.length })
+            : t('contextMenu.shareCopied'),
+        );
+      } else {
+        showToast(t('contextMenu.shareCopyFailed'), 4000, 'error');
+      }
+      return;
     }
     const srv = serverShareBaseUrl(active);
     if (!srv) return;

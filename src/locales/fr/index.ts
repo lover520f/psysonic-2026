@@ -42,6 +42,7 @@ import { deviceSync } from './deviceSync';
 import { orbit } from './orbit';
 import { tray } from './tray';
 import { licenses } from './licenses';
+import { cluster } from './cluster';
 
 export const frTranslation = {
   sidebar,
@@ -88,4 +89,5 @@ export const frTranslation = {
   orbit,
   tray,
   licenses,
+  cluster,
 };

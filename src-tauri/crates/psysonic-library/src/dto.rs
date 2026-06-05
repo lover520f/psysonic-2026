@@ -365,6 +365,14 @@ pub struct PlaySessionRecentDayDto {
     pub partial_count: u32,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct PlaySessionMostPlayedDto {
+    pub track: LibraryTrackDto,
+    pub track_play_count: u32,
+    pub total_listened_sec: f64,
+}
+
 /// Earliest/latest calendar years with at least one session (local TZ).
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
@@ -681,6 +689,32 @@ pub struct LibraryClusterListTracksRequest {
     pub offset: Option<u32>,
 }
 
+/// `library_cluster_advanced_search` request.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct LibraryClusterAdvancedSearchRequest {
+    /// Ordered member server ids (index 0 = highest priority).
+    pub servers_ordered: Vec<String>,
+    #[serde(default)]
+    pub query: Option<String>,
+    pub entity_types: Vec<EntityKind>,
+    #[serde(default)]
+    pub filters: Vec<LibraryFilterClause>,
+    #[serde(default)]
+    pub starred_only: Option<bool>,
+    #[serde(default)]
+    pub restrict_album_ids: Option<Vec<String>>,
+    #[serde(default)]
+    pub query_album_title_only: Option<bool>,
+    #[serde(default)]
+    pub sort: Vec<LibrarySortClause>,
+    pub limit: u32,
+    #[serde(default)]
+    pub offset: u32,
+    #[serde(default)]
+    pub skip_totals: bool,
+}
+
 /// Merged album browse response for cluster scope.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
@@ -713,6 +747,13 @@ pub struct LibraryClusterScopeRequest {
 pub struct LibraryClusterPlayerStatsRequest {
     pub servers_ordered: Vec<String>,
     pub year: i32,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct LibraryClusterPlayerStatsDayDetailRequest {
+    pub servers_ordered: Vec<String>,
+    pub date_iso: String,
 }
 
 /// `library_cluster_resolve_candidates` request — provide cluster_key OR seed track.
