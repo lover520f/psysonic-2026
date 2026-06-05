@@ -606,6 +606,64 @@ export function libraryClusterResolveCandidates(args: {
   }));
 }
 
+export interface LibraryClusterAlbumDetailResponse {
+  album: LibraryAlbumDto;
+  tracks: LibraryTrackDto[];
+  ownerServerId: string;
+  relatedAlbums: LibraryAlbumDto[];
+}
+
+export interface LibraryClusterArtistDetailResponse {
+  artist: LibraryArtistDto;
+  albums: LibraryAlbumDto[];
+  topTracks: LibraryTrackDto[];
+  ownerServerId: string;
+  artistKey?: string | null;
+}
+
+export function libraryClusterAlbumDetail(args: {
+  serversOrdered: string[];
+  serverId: string;
+  entityId: string;
+}): Promise<LibraryClusterAlbumDetailResponse> {
+  return invoke<LibraryClusterAlbumDetailResponse>('library_cluster_album_detail', {
+    request: {
+      serversOrdered: mapServersOrderedToIndexKeys(args.serversOrdered),
+      serverId: serverIndexKeyForId(args.serverId),
+      entityId: args.entityId,
+    },
+  }).then(resp => ({
+    ...resp,
+    album: { ...resp.album, serverId: mapServerIdFromIndexKey(resp.album.serverId) },
+    tracks: mapTracksServerId(resp.tracks),
+    ownerServerId: mapServerIdFromIndexKey(resp.ownerServerId),
+    relatedAlbums: resp.relatedAlbums.map(a => ({
+      ...a,
+      serverId: mapServerIdFromIndexKey(a.serverId),
+    })),
+  }));
+}
+
+export function libraryClusterArtistDetail(args: {
+  serversOrdered: string[];
+  serverId: string;
+  entityId: string;
+}): Promise<LibraryClusterArtistDetailResponse> {
+  return invoke<LibraryClusterArtistDetailResponse>('library_cluster_artist_detail', {
+    request: {
+      serversOrdered: mapServersOrderedToIndexKeys(args.serversOrdered),
+      serverId: serverIndexKeyForId(args.serverId),
+      entityId: args.entityId,
+    },
+  }).then(resp => ({
+    ...resp,
+    artist: { ...resp.artist, serverId: mapServerIdFromIndexKey(resp.artist.serverId) },
+    albums: resp.albums.map(a => ({ ...a, serverId: mapServerIdFromIndexKey(a.serverId) })),
+    topTracks: mapTracksServerId(resp.topTracks),
+    ownerServerId: mapServerIdFromIndexKey(resp.ownerServerId),
+  }));
+}
+
 /** Cluster-mode search — dedup by cluster_key + priority. */
 export function librarySearchCluster(args: {
   query: string;

@@ -34,7 +34,7 @@ export async function clusterFanOutScrobbleSubmission(
   const targets = await allCandidateTrackIds(browseServerId, trackId);
   const toWrite = syncAll ? targets : targets.slice(0, 1);
   await Promise.allSettled(
-    toWrite.map(async ({ serverId, tid }) => {
+    toWrite.map(async ({ serverId, trackId: tid }) => {
       await apiForServer(serverId, 'scrobble.view', { id: tid, submission: true, time });
       patchLibraryTrackOnUse(serverId, tid, { playedAt: time });
     }),
@@ -50,7 +50,7 @@ export async function clusterFanOutStar(
   if (!isClusterMode()) return;
   const targets = await allCandidateTrackIds(browseServerId, trackId);
   await Promise.allSettled(
-    targets.map(async ({ serverId, tid }) => {
+    targets.map(async ({ serverId, trackId: tid }) => {
       const params = { id: tid };
       await apiForServer(serverId, star ? 'star.view' : 'unstar.view', params);
       patchLibraryTrackOnUse(serverId, tid, { starredAt: star ? Date.now() : null });
@@ -67,7 +67,7 @@ export async function clusterFanOutRating(
   if (!isClusterMode()) return;
   const targets = await allCandidateTrackIds(browseServerId, trackId);
   await Promise.allSettled(
-    targets.map(async ({ serverId, tid }) => {
+    targets.map(async ({ serverId, trackId: tid }) => {
       await apiForServer(serverId, 'setRating.view', { id: tid, rating });
       patchLibraryTrackOnUse(serverId, tid, { userRating: rating });
     }),

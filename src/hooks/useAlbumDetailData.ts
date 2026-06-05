@@ -1,9 +1,13 @@
 import { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { getAlbum } from '../api/subsonicLibrary';
-import { getArtist } from '../api/subsonicArtists';
 import type { SubsonicAlbum } from '../api/subsonicTypes';
+import { useAuthStore } from '../store/authStore';
+import { loadClusterAlbumDetail } from '../utils/serverCluster/clusterDetail';
+import { isClusterMode } from '../utils/serverCluster/clusterScope';
+import { readClusterSeedServerId } from '../utils/navigation/albumDetailNavigation';
 
-type AlbumPayload = Awaited<ReturnType<typeof getAlbum>>;
+type AlbumPayload = { album: SubsonicAlbum; songs: import('../api/subsonicTypes').SubsonicSong[] };
 
 interface UseAlbumDetailDataResult {
   album: AlbumPayload | null;
@@ -21,13 +25,12 @@ interface UseAlbumDetailDataResult {
  * a follow-up call so the related-albums grid can render without blocking
  * the initial paint.
  *
- * On every id change we reset `relatedAlbums` to an empty array so the
- * grid doesn't briefly show the previous album's neighbours while the
- * new fetch is in flight. The two starred state pieces (`isStarred`,
- * `starredSongs`) are seeded from the response so optimistic toggles
- * have a baseline to revert to.
+ * In cluster mode, loads a virtual aggregate from the merged local index
+ * (spec §4) — never falls back to a single-server `getAlbum`.
  */
 export function useAlbumDetailData(id: string | undefined): UseAlbumDetailDataResult {
+  const location = useLocation();
+  const activeServerId = useAuthStore(s => s.activeServerId);
   const [album, setAlbum] = useState<AlbumPayload | null>(null);
   const [relatedAlbums, setRelatedAlbums] = useState<SubsonicAlbum[]>([]);
   const [loading, setLoading] = useState(true);
@@ -36,23 +39,56 @@ export function useAlbumDetailData(id: string | undefined): UseAlbumDetailDataRe
 
   useEffect(() => {
     if (!id) return;
+    let cancelled = false;
     setLoading(true);
     setRelatedAlbums([]);
-    getAlbum(id).then(async data => {
-      setAlbum(data);
-      setIsStarred(!!data.album.starred);
-      const initialStarred = new Set<string>();
-      data.songs.forEach(s => { if (s.starred) initialStarred.add(s.id); });
-      setStarredSongs(initialStarred);
-      setLoading(false);
-      try {
-        const artistData = await getArtist(data.album.artistId);
-        setRelatedAlbums(artistData.albums.filter(a => a.id !== id));
-      } catch (e) {
-        console.error('Failed to fetch related albums', e);
+
+    (async () => {
+      if (isClusterMode()) {
+        const seedServerId = readClusterSeedServerId(location.state) ?? activeServerId ?? '';
+        const clusterData = await loadClusterAlbumDetail({ albumId: id, seedServerId });
+        if (cancelled) return;
+        if (!clusterData) {
+          setAlbum(null);
+          setLoading(false);
+          return;
+        }
+        const payload: AlbumPayload = { album: clusterData.album, songs: clusterData.songs };
+        setAlbum(payload);
+        setIsStarred(!!clusterData.album.starred);
+        const initialStarred = new Set<string>();
+        clusterData.songs.forEach(s => { if (s.starred) initialStarred.add(s.id); });
+        setStarredSongs(initialStarred);
+        setRelatedAlbums(clusterData.relatedAlbums);
+        setLoading(false);
+        return;
       }
-    }).catch(() => setLoading(false));
-  }, [id]);
+
+      try {
+        const data = await getAlbum(id);
+        if (cancelled) return;
+        setAlbum(data);
+        setIsStarred(!!data.album.starred);
+        const initialStarred = new Set<string>();
+        data.songs.forEach(s => { if (s.starred) initialStarred.add(s.id); });
+        setStarredSongs(initialStarred);
+        setLoading(false);
+        try {
+          const { getArtist } = await import('../api/subsonicArtists');
+          const artistData = await getArtist(data.album.artistId);
+          if (!cancelled) {
+            setRelatedAlbums(artistData.albums.filter(a => a.id !== id));
+          }
+        } catch (e) {
+          console.error('Failed to fetch related albums', e);
+        }
+      } catch {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+
+    return () => { cancelled = true; };
+  }, [id, location.state, activeServerId]);
 
   return { album, setAlbum, relatedAlbums, loading, isStarred, setIsStarred, starredSongs, setStarredSongs };
 }

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { search } from '../api/subsonicSearch';
 import { getArtist, getArtistInfo, getTopSongs } from '../api/subsonicArtists';
 import type {
@@ -7,6 +8,9 @@ import type {
 import { useAuthStore } from '../store/authStore';
 import { runLocalArtistLosslessBrowse } from '../utils/library/browseTextSearch';
 import { isLosslessSuffix } from '../utils/library/losslessFormats';
+import { loadClusterArtistDetail } from '../utils/serverCluster/clusterDetail';
+import { isClusterMode } from '../utils/serverCluster/clusterScope';
+import { readClusterSeedServerId } from '../utils/navigation/albumDetailNavigation';
 
 export interface UseArtistDetailDataOptions {
   /** When true, albums and top tracks are limited to lossless containers (local index preferred). */
@@ -45,6 +49,7 @@ export function useArtistDetailData(
   options: UseArtistDetailDataOptions = {},
 ): ArtistDetailDataResult {
   const losslessOnly = options.losslessOnly ?? false;
+  const location = useLocation();
   const serverId = useAuthStore(s => s.activeServerId);
   const audiomuseNavidromeEnabled = useAuthStore(
     s => !!(s.activeServerId && s.audiomuseNavidromeByServer[s.activeServerId]),
@@ -71,6 +76,29 @@ export function useArtistDetailData(
 
     (async () => {
       try {
+        if (isClusterMode()) {
+          const seedServerId = readClusterSeedServerId(location.state) ?? serverId ?? '';
+          const clusterData = await loadClusterArtistDetail({ artistId: id, seedServerId });
+          if (cancelled) return;
+          if (!clusterData) {
+            setArtist(null);
+            setAlbums([]);
+            setLoading(false);
+            return;
+          }
+          let nextAlbums = clusterData.albums;
+          let nextSongs = clusterData.topSongs;
+          if (losslessOnly) {
+            ({ albums: nextAlbums, songs: nextSongs } = filterNetworkArtistToLossless(nextAlbums, nextSongs));
+          }
+          setArtist(clusterData.artist);
+          setAlbums(nextAlbums);
+          setTopSongs(nextSongs);
+          setIsStarred(!!clusterData.artist.starred);
+          setLoading(false);
+          return;
+        }
+
         if (losslessOnly && serverId) {
           const local = await runLocalArtistLosslessBrowse(serverId, id);
           if (cancelled) return;
@@ -112,7 +140,7 @@ export function useArtistDetailData(
     })();
 
     return () => { cancelled = true; };
-  }, [id, losslessOnly, serverId]);
+  }, [id, losslessOnly, serverId, location.state]);
 
   useEffect(() => {
     if (!id) return;

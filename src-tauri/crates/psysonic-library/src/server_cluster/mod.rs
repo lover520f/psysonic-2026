@@ -2,6 +2,7 @@
 //! in a separate attached SQLite DB (`library-cluster.db`). Distinct from
 //! `repos/play_session/cluster.rs` (listening-session time-gap grouping).
 
+mod detail;
 mod db;
 mod keys;
 mod list;
@@ -16,6 +17,7 @@ mod rebuild;
 mod resolve;
 mod search;
 
+pub use detail::{cluster_album_detail, cluster_artist_detail};
 pub use db::{
     attach_cluster_database, attach_cluster_database_uri, cluster_db_path, ensure_cluster_schema,
     init_cluster_meta, needs_norm_rebuild, ATTACH_ALIAS, CLUSTER_DB_FILENAME, NORM_VERSION,

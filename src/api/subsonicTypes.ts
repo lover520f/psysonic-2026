@@ -26,6 +26,8 @@ export interface SubsonicAlbum {
   displayArtist?: string;
   /** OpenSubsonic: per-disc subtitles (e.g. "Sessions" on CD 3 of a deluxe edition). */
   discTitles?: SubsonicDiscTitle[];
+  /** Psysonic cluster: originating server for merged browse rows (client-only). */
+  clusterSeedServerId?: string;
 }
 
 export interface SubsonicDiscTitle {
@@ -144,6 +146,8 @@ export interface SubsonicArtist {
   starred?: string;
   /** Present on some servers (e.g. OpenSubsonic) for artist-level rating. */
   userRating?: number;
+  /** Psysonic cluster: originating server for merged browse rows (client-only). */
+  clusterSeedServerId?: string;
 }
 
 export interface SubsonicGenre {

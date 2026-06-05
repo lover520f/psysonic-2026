@@ -15,6 +15,22 @@ import type { SubsonicArtistInfo } from '../api/subsonicTypes';
 
 vi.mock('../api/subsonicArtists');
 vi.mock('../api/subsonicSearch');
+vi.mock('../utils/serverCluster/clusterScope', () => ({
+  isClusterMode: () => false,
+}));
+vi.mock('react-router-dom', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('react-router-dom')>();
+  return {
+    ...actual,
+    useLocation: () => ({
+      pathname: '/artist/test',
+      search: '',
+      hash: '',
+      state: null,
+      key: 'default',
+    }),
+  };
+});
 
 import { getArtist, getArtistInfo, getTopSongs } from '../api/subsonicArtists';
 import { search } from '../api/subsonicSearch';

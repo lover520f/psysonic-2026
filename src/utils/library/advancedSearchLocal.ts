@@ -238,6 +238,7 @@ export function albumToAlbum(a: LibraryAlbumDto): SubsonicAlbum {
   };
   const merged = mergeAlbumRawJson(base, raw as Partial<SubsonicAlbum>);
   if (albumIsCompilation(merged)) merged.isCompilation = true;
+  merged.clusterSeedServerId = a.serverId;
   return merged;
 }
 
@@ -249,7 +250,7 @@ export function artistToArtist(ar: LibraryArtistDto): SubsonicArtist {
     albumCount: ar.albumCount ?? undefined,
     coverArt: ar.id,
   };
-  return { ...base, ...(raw as Partial<SubsonicArtist>) };
+  return { ...base, ...(raw as Partial<SubsonicArtist>), clusterSeedServerId: ar.serverId };
 }
 
 /**

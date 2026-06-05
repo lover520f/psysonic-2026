@@ -15,6 +15,8 @@ import {
 
 export type AlbumDetailLocationState = {
   returnTo?: string;
+  /** Cluster mode: server that owns the seed entity id (from merged browse). */
+  clusterSeedServerId?: string;
 };
 
 export type AlbumsBrowseRestoreLocationState = {
@@ -23,6 +25,12 @@ export type AlbumsBrowseRestoreLocationState = {
   composerBrowseRestore?: boolean;
   advancedSearchRestore?: boolean;
 };
+
+export function readClusterSeedServerId(state: unknown): string | null {
+  const seed = (state as AlbumDetailLocationState | null)?.clusterSeedServerId;
+  if (typeof seed !== 'string' || seed.length === 0) return null;
+  return seed;
+}
 
 export function readAlbumDetailReturnTo(state: unknown): string | null {
   const returnTo = (state as AlbumDetailLocationState | null)?.returnTo;
@@ -173,26 +181,30 @@ export function navigateToAlbumDetail(
   navigate: NavigateFunction,
   location: Pick<Location, 'pathname' | 'search' | 'hash' | 'state'>,
   albumId: string,
-  opts?: { search?: string },
+  opts?: { search?: string; seedServerId?: string },
 ): void {
   saveSearchLeaveIfNeeded(location);
   const returnTo = buildReturnTo(location);
   const raw = opts?.search ?? '';
   const qs = raw ? (raw.startsWith('?') ? raw : `?${raw}`) : '';
-  navigate(`/album/${albumId}${qs}`, { state: { returnTo } satisfies AlbumDetailLocationState });
+  const state: AlbumDetailLocationState = { returnTo };
+  if (opts?.seedServerId) state.clusterSeedServerId = opts.seedServerId;
+  navigate(`/album/${albumId}${qs}`, { state });
 }
 
 export function navigateToArtistDetail(
   navigate: NavigateFunction,
   location: Pick<Location, 'pathname' | 'search' | 'hash' | 'state'>,
   artistId: string,
-  opts?: { search?: string },
+  opts?: { search?: string; seedServerId?: string },
 ): void {
   saveSearchLeaveIfNeeded(location);
   const returnTo = buildReturnTo(location);
   const raw = opts?.search ?? '';
   const qs = raw ? (raw.startsWith('?') ? raw : `?${raw}`) : '';
-  navigate(`/artist/${artistId}${qs}`, { state: { returnTo } satisfies AlbumDetailLocationState });
+  const state: AlbumDetailLocationState = { returnTo };
+  if (opts?.seedServerId) state.clusterSeedServerId = opts.seedServerId;
+  navigate(`/artist/${artistId}${qs}`, { state });
 }
 
 export function navigateToComposerDetail(

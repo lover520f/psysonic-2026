@@ -23,7 +23,10 @@ export default function ArtistCardLocal({ artist, linkQuery, libraryResolve = fa
   return (
     <div
       className="artist-card"
-      onClick={() => navigateToArtist(artist.id, linkQuery ? { search: linkQuery } : undefined)}
+      onClick={() => navigateToArtist(artist.id, {
+        search: linkQuery,
+        seedServerId: artist.clusterSeedServerId,
+      })}
     >
       <div className="artist-card-avatar">
         {coverRef ? (

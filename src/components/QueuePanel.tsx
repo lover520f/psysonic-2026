@@ -16,6 +16,7 @@ import { resolveServerIdForIndexKey } from '../utils/server/serverLookup';
 import { isClusterMode } from '../utils/serverCluster/clusterScope';
 import { serverShareBaseUrl } from '../utils/server/serverEndpoint';
 import { copyTextToClipboard } from '../utils/server/serverMagicString';
+import { encodeSharePayload } from '../utils/share/shareLink';
 import { showToast } from '../utils/ui/toast';
 import { useThemeStore } from '../store/themeStore';
 import { useLyricsStore } from '../store/lyricsStore';

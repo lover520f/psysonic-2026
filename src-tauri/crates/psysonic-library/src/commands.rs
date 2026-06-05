@@ -24,6 +24,8 @@ use crate::dto::{
     LibraryClusterListTracksRequest, LibraryClusterResolveRequest,
     LibraryClusterResolveResponse, LibraryClusterAlbumsResponse, LibraryClusterArtistsResponse,
     LibraryClusterScopeRequest, LibraryClusterPlayerStatsRequest,
+    LibraryClusterEntityDetailRequest, LibraryClusterAlbumDetailResponse,
+    LibraryClusterArtistDetailResponse,
     LibraryCrossServerSearchResponse, LibraryLiveSearchRequest, LibraryLiveSearchResponse, LibraryTrackDto,
     LibraryTracksEnvelope, OfflinePathDto, PlaySessionDayDetailDto, PlaySessionHeatmapDayDto,
     PlaySessionInputDto, PlaySessionRecentDayDto, PlaySessionYearBoundsDto, PlaySessionYearSummaryDto, PurgeReportDto, SyncJobDto, SyncStateDto,
@@ -673,6 +675,36 @@ pub async fn library_cluster_resolve_candidates(
             candidates,
             cluster_key,
         })
+    })
+    .await
+}
+
+#[tauri::command]
+pub async fn library_cluster_album_detail(
+    runtime: State<'_, LibraryRuntime>,
+    request: LibraryClusterEntityDetailRequest,
+) -> Result<LibraryClusterAlbumDetailResponse, String> {
+    let store = Arc::clone(&runtime.store);
+    let servers_ordered = request.servers_ordered;
+    let server_id = request.server_id;
+    let entity_id = request.entity_id;
+    library_spawn_blocking(move || {
+        crate::server_cluster::cluster_album_detail(&store, &servers_ordered, &server_id, &entity_id)
+    })
+    .await
+}
+
+#[tauri::command]
+pub async fn library_cluster_artist_detail(
+    runtime: State<'_, LibraryRuntime>,
+    request: LibraryClusterEntityDetailRequest,
+) -> Result<LibraryClusterArtistDetailResponse, String> {
+    let store = Arc::clone(&runtime.store);
+    let servers_ordered = request.servers_ordered;
+    let server_id = request.server_id;
+    let entity_id = request.entity_id;
+    library_spawn_blocking(move || {
+        crate::server_cluster::cluster_artist_detail(&store, &servers_ordered, &server_id, &entity_id)
     })
     .await
 }

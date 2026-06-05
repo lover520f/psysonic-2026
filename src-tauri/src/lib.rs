@@ -719,6 +719,8 @@ pub fn run() {
             psysonic_library::commands::library_cluster_player_stats_year_summary,
             psysonic_library::commands::library_cluster_player_stats_heatmap,
             psysonic_library::commands::library_cluster_resolve_candidates,
+            psysonic_library::commands::library_cluster_album_detail,
+            psysonic_library::commands::library_cluster_artist_detail,
             psysonic_library::commands::library_search_cluster,
             psysonic_library::commands::library_get_track,
             psysonic_library::commands::library_get_tracks_batch,

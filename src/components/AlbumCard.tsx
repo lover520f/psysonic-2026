@@ -88,7 +88,7 @@ function AlbumCard({
 
   const handleClick = (opts?: { shiftKey?: boolean }) => {
     if (selectionMode) { onToggleSelect?.(album.id, opts); return; }
-    navigateToAlbum(album.id, { search: linkQuery });
+    navigateToAlbum(album.id, { search: linkQuery, seedServerId: album.clusterSeedServerId });
   };
 
   return (

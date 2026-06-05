@@ -7,7 +7,7 @@ export function useNavigateToAlbum() {
   const navigate = useNavigate();
   const location = useLocation();
   return useCallback(
-    (albumId: string, opts?: { search?: string }) => {
+    (albumId: string, opts?: { search?: string; seedServerId?: string }) => {
       navigateToAlbumDetail(navigate, location, albumId, opts);
     },
     [navigate, location],

@@ -737,6 +737,37 @@ pub struct LibraryClusterResolveResponse {
     pub cluster_key: Option<String>,
 }
 
+/// `library_cluster_album_detail` request.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct LibraryClusterEntityDetailRequest {
+    pub servers_ordered: Vec<String>,
+    pub server_id: String,
+    pub entity_id: String,
+}
+
+/// Virtual aggregate album detail (spec §4).
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct LibraryClusterAlbumDetailResponse {
+    pub album: LibraryAlbumDto,
+    pub tracks: Vec<LibraryTrackDto>,
+    pub owner_server_id: String,
+    pub related_albums: Vec<LibraryAlbumDto>,
+}
+
+/// Virtual aggregate artist detail (spec §4).
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct LibraryClusterArtistDetailResponse {
+    pub artist: LibraryArtistDto,
+    pub albums: Vec<LibraryAlbumDto>,
+    pub top_tracks: Vec<LibraryTrackDto>,
+    pub owner_server_id: String,
+    #[serde(default)]
+    pub artist_key: Option<String>,
+}
+
 /// Read `MAX(server_updated_at)` for non-deleted tracks on this server
 /// — used by `SyncStateDto` so callers can show "tracks watermark" in
 /// Settings without a separate column.

@@ -29,7 +29,7 @@ import {
   type LibrarySearchSurface,
 } from './libraryDevLog';
 import { libraryIsReady } from './libraryReady';
-import { clusterBrowseArtistsPage, clusterBrowseTextSearchPage } from '../serverCluster/clusterBrowse';
+import { clusterBrowseArtistsPage, clusterBrowseTextSearchPage, clusterBrowseTracksPage } from '../serverCluster/clusterBrowse';
 import { raceSearchSources, type SearchRaceWinner } from './searchRace';
 
 export type { LibrarySearchSurface };
