@@ -25,6 +25,8 @@ export function useConnectionStatus() {
   // public alternate must read as 'public', not 'local'.
   const [activeEndpointKind, setActiveEndpointKind] = useState<ServerEndpointKind | null>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const activeServerId = useAuthStore(s => s.activeServerId);
+  const activeClusterId = useAuthStore(s => s.activeClusterId);
 
   const check = useCallback(async () => {
     const server = useAuthStore.getState().getActiveServer();
@@ -100,14 +102,18 @@ export function useConnectionStatus() {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
     };
-  }, [check, perfFlags.disableBackgroundPolling]);
+  }, [check, perfFlags.disableBackgroundPolling, activeServerId, activeClusterId]);
 
   const server = useAuthStore(s => s.getActiveServer());
   const servers = useAuthStore(s => s.servers);
-  const serverName = useMemo(
-    () => (server ? serverListDisplayLabel(server, servers) : ''),
-    [server, servers],
-  );
+  const clusters = useAuthStore(s => s.clusters);
+  const serverName = useMemo(() => {
+    if (activeClusterId) {
+      const cluster = clusters.find(c => c.id === activeClusterId);
+      if (cluster) return cluster.name;
+    }
+    return server ? serverListDisplayLabel(server, servers) : '';
+  }, [activeClusterId, clusters, server, servers]);
 
   return {
     status,

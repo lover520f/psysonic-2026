@@ -3,12 +3,13 @@ import React, { useState, useEffect, useLayoutEffect, useRef, useCallback } from
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { Check, ChevronDown } from 'lucide-react';
+import { Check, ChevronDown, Layers } from 'lucide-react';
 import { ConnectionStatus } from '../hooks/useConnectionStatus';
 import { useAuthStore } from '../store/authStore';
-import { switchActiveServer } from '../utils/server/switchActiveServer';
+import { switchActiveCluster, switchActiveServer } from '../utils/server/switchActiveServer';
 import { showToast } from '../utils/ui/toast';
 import { serverListDisplayLabel } from '../utils/server/serverDisplayName';
+import type { ServerCluster } from '../utils/serverCluster/types';
 
 interface Props {
   status: ConnectionStatus;
@@ -20,14 +21,16 @@ export default function ConnectionIndicator({ status, isLan, serverName }: Props
   const { t } = useTranslation();
   const navigate = useNavigate();
   const servers = useAuthStore(s => s.servers);
+  const clusters = useAuthStore(s => s.clusters);
   const activeServerId = useAuthStore(s => s.activeServerId);
+  const activeClusterId = useAuthStore(s => s.activeClusterId);
   const [menuOpen, setMenuOpen] = useState(false);
   const [switchingId, setSwitchingId] = useState<string | null>(null);
   const [menuFixed, setMenuFixed] = useState({ top: 0, right: 0 });
   const hostRef = useRef<HTMLDivElement>(null);
   const menuPanelRef = useRef<HTMLDivElement>(null);
 
-  const multi = servers.length > 1;
+  const multi = servers.length > 1 || clusters.length > 0;
 
   const updateMenuPosition = useCallback(() => {
     const el = hostRef.current;
@@ -81,7 +84,7 @@ export default function ConnectionIndicator({ status, isLan, serverName }: Props
   };
 
   const onPickServer = async (srv: ServerProfile) => {
-    if (srv.id === activeServerId) {
+    if (!activeClusterId && srv.id === activeServerId) {
       setMenuOpen(false);
       return;
     }
@@ -96,14 +99,53 @@ export default function ConnectionIndicator({ status, isLan, serverName }: Props
     navigate('/');
   };
 
+  const onPickCluster = async (cluster: ServerCluster) => {
+    if (cluster.id === activeClusterId) {
+      setMenuOpen(false);
+      return;
+    }
+    setSwitchingId(cluster.id);
+    const ok = await switchActiveCluster(cluster.id);
+    setSwitchingId(null);
+    setMenuOpen(false);
+    if (!ok) {
+      showToast(t('connection.switchFailed'), 5000, 'error');
+      return;
+    }
+    navigate('/');
+  };
+
   const label = isLan ? 'LAN' : t('connection.extern');
   const tooltip = multi
-    ? t('connection.switchServerHint')
+    ? t('connection.switchScopeHint')
     : status === 'connected'
       ? t('connection.connectedTo', { server: serverName })
       : status === 'disconnected'
         ? t('connection.disconnectedFrom', { server: serverName })
         : t('connection.checking');
+
+  const renderMenuItem = (id: string, labelText: string, active: boolean, onClick: () => void, icon?: React.ReactNode) => (
+    <button
+      key={id}
+      type="button"
+      role="menuitem"
+      className={`nav-library-dropdown-item${active ? ' nav-library-dropdown-item--selected' : ''}`}
+      disabled={switchingId === id}
+      onClick={onClick}
+    >
+      <span className="nav-library-dropdown-item-label" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+        {icon}
+        {labelText}
+      </span>
+      {switchingId === id ? (
+        <div className="spinner" style={{ width: 14, height: 14, flexShrink: 0 }} aria-hidden />
+      ) : active ? (
+        <Check size={16} className="nav-library-dropdown-check" aria-hidden />
+      ) : (
+        <span className="nav-library-dropdown-check-spacer" aria-hidden />
+      )}
+    </button>
+  );
 
   return (
     <div className="connection-indicator-host" ref={hostRef}>
@@ -136,7 +178,7 @@ export default function ConnectionIndicator({ status, isLan, serverName }: Props
             ref={menuPanelRef}
             className="nav-library-dropdown-panel connection-indicator-dropdown-panel"
             role="menu"
-            aria-label={t('connection.switchServerTitle')}
+            aria-label={t('connection.switchScopeTitle')}
             style={{
               position: 'fixed',
               top: menuFixed.top,
@@ -146,6 +188,38 @@ export default function ConnectionIndicator({ status, isLan, serverName }: Props
               zIndex: 10050,
             }}
           >
+            {clusters.length > 0 && (
+              <>
+                <div
+                  style={{
+                    fontSize: 10,
+                    fontWeight: 600,
+                    letterSpacing: '0.08em',
+                    textTransform: 'uppercase',
+                    color: 'var(--text-muted)',
+                    padding: '6px 10px 4px',
+                  }}
+                >
+                  {t('connection.switchClusterTitle')}
+                </div>
+                {clusters.map(cluster =>
+                  renderMenuItem(
+                    cluster.id,
+                    cluster.name,
+                    activeClusterId === cluster.id,
+                    () => void onPickCluster(cluster),
+                    <Layers size={14} style={{ flexShrink: 0, opacity: 0.85 }} aria-hidden />,
+                  ),
+                )}
+                <div
+                  style={{
+                    borderTop: '1px solid color-mix(in srgb, var(--text-muted) 15%, transparent)',
+                    marginTop: 2,
+                    paddingTop: 2,
+                  }}
+                />
+              </>
+            )}
             <div
               style={{
                 fontSize: 10,
@@ -158,30 +232,14 @@ export default function ConnectionIndicator({ status, isLan, serverName }: Props
             >
               {t('connection.switchServerTitle')}
             </div>
-            {servers.map(srv => {
-              const active = srv.id === activeServerId;
-              const busy = switchingId === srv.id;
-              const labelText = serverListDisplayLabel(srv, servers);
-              return (
-                <button
-                  key={srv.id}
-                  type="button"
-                  role="menuitem"
-                  className={`nav-library-dropdown-item${active ? ' nav-library-dropdown-item--selected' : ''}`}
-                  disabled={busy}
-                  onClick={() => onPickServer(srv)}
-                >
-                  <span className="nav-library-dropdown-item-label">{labelText}</span>
-                  {switchingId === srv.id ? (
-                    <div className="spinner" style={{ width: 14, height: 14, flexShrink: 0 }} aria-hidden />
-                  ) : active ? (
-                    <Check size={16} className="nav-library-dropdown-check" aria-hidden />
-                  ) : (
-                    <span className="nav-library-dropdown-check-spacer" aria-hidden />
-                  )}
-                </button>
-              );
-            })}
+            {servers.map(srv =>
+              renderMenuItem(
+                srv.id,
+                serverListDisplayLabel(srv, servers),
+                !activeClusterId && srv.id === activeServerId,
+                () => void onPickServer(srv),
+              ),
+            )}
             <div
               style={{
                 borderTop: '1px solid color-mix(in srgb, var(--text-muted) 15%, transparent)',

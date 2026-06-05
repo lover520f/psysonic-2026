@@ -19,17 +19,25 @@ export async function recomputeClusterRepresentative(clusterId: string): Promise
   for (const server of members) {
     if (!isServerLikelyReachable(server.id)) continue;
     if (!(await libraryIsReady(server.id))) continue;
-    const { activeServerId, setActiveServer } = useAuthStore.getState();
+    const { activeServerId, setActiveServer, activeClusterId } = useAuthStore.getState();
     if (activeServerId !== server.id) {
-      setActiveServer(server.id);
+      if (activeClusterId) {
+        useAuthStore.setState({ activeServerId: server.id });
+      } else {
+        setActiveServer(server.id);
+      }
     }
     return;
   }
   const fallback = members[0];
   if (fallback) {
-    const { activeServerId, setActiveServer } = useAuthStore.getState();
+    const { activeServerId, setActiveServer, activeClusterId } = useAuthStore.getState();
     if (activeServerId !== fallback.id) {
-      setActiveServer(fallback.id);
+      if (activeClusterId) {
+        useAuthStore.setState({ activeServerId: fallback.id });
+      } else {
+        setActiveServer(fallback.id);
+      }
     }
   }
 }

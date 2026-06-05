@@ -8,33 +8,59 @@ import { useAuthStore } from '../../store/authStore';
 import { useOrbitStore } from '../../store/orbitStore';
 import { endOrbitSession, leaveOrbitSession } from '../orbit';
 import { ensureConnectUrlResolved } from './serverEndpoint';
+import { recomputeClusterRepresentative } from '../serverCluster/representative';
+
+async function teardownOrbitIfNeeded(): Promise<void> {
+  const role = useOrbitStore.getState().role;
+  if (role !== 'host' && role !== 'guest') return;
+  const teardown = role === 'host' ? endOrbitSession() : leaveOrbitSession();
+  await Promise.race([
+    teardown.catch(() => {}),
+    new Promise<void>(r => setTimeout(r, 1500)),
+  ]);
+  useOrbitStore.getState().reset();
+}
+
+export async function switchActiveCluster(clusterId: string): Promise<boolean> {
+  coverTrafficBeginServerSwitch();
+  try {
+    const auth = useAuthStore.getState();
+    const cluster = auth.clusters.find(c => c.id === clusterId);
+    if (!cluster) return false;
+
+    await teardownOrbitIfNeeded();
+    auth.setActiveCluster(clusterId);
+    await recomputeClusterRepresentative(clusterId);
+
+    const rep = useAuthStore.getState().getActiveServer();
+    if (!rep) return false;
+
+    const probe = await ensureConnectUrlResolved(rep);
+    if (!probe.ok) return false;
+
+    const identity = {
+      type: probe.ping.type,
+      serverVersion: probe.ping.serverVersion,
+      openSubsonic: probe.ping.openSubsonic,
+    };
+    auth.setSubsonicServerIdentity(rep.id, identity);
+    scheduleInstantMixProbeForServer(rep.id, probe.baseUrl, rep.username, rep.password, identity);
+    auth.setLoggedIn(true);
+    return true;
+  } catch {
+    return false;
+  } finally {
+    coverTrafficEndServerSwitch();
+  }
+}
 
 export async function switchActiveServer(server: ServerProfile): Promise<boolean> {
   coverTrafficBeginServerSwitch();
   try {
-    // Resolve the reachable endpoint (LAN-first, sticky cached); this also
-    // populates the connect cache so the sync `getBaseUrl()` lookup serves the
-    // probed URL on the very next read. Single-address profiles fall through
-    // to one ping, identical to the legacy behaviour.
     const probe = await ensureConnectUrlResolved(server);
     if (!probe.ok) return false;
 
-    // Tear down any active Orbit session before we actually switch. The
-    // session's playlists live on the *old* server — once we flip the
-    // active server, every API call from the orbit hooks would hit the
-    // wrong backend, heartbeats would silently fail, and the next
-    // app-start cleanup would prune the still-live session as stale.
-    // Capped at 1.5 s so a slow network doesn't freeze the UI.
-    const role = useOrbitStore.getState().role;
-    if (role === 'host' || role === 'guest') {
-      const teardown = role === 'host' ? endOrbitSession() : leaveOrbitSession();
-      await Promise.race([
-        teardown.catch(() => {}),
-        new Promise<void>(r => setTimeout(r, 1500)),
-      ]);
-      // Ensure local store is idle even if the remote call timed out.
-      useOrbitStore.getState().reset();
-    }
+    await teardownOrbitIfNeeded();
 
     const identity = {
       type: probe.ping.type,

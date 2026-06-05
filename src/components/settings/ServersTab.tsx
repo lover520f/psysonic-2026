@@ -30,6 +30,8 @@ import { serverIndexKeyForProfile } from '../../utils/server/serverIndexKey';
 import { switchActiveServer } from '../../utils/server/switchActiveServer';
 import { AddServerForm } from './AddServerForm';
 import { ServerGripHandle } from './ServerGripHandle';
+import { ServerClustersSection } from './ServerClustersSection';
+import { clustersContainingServer } from '../../utils/serverCluster/clusterScope';
 
 const AUDIOMUSE_NV_PLUGIN_URL = 'https://github.com/NeptuneHub/AudioMuse-AI-NV-plugin';
 
@@ -464,7 +466,12 @@ export function ServersTab({
                         className="btn btn-ghost"
                         style={{ color: 'var(--danger)', padding: '4px 8px' }}
                         onClick={() => void deleteServer(srv)}
-                        data-tooltip={t('settings.deleteServer')}
+                        disabled={clustersContainingServer(srv.id).length > 0}
+                        data-tooltip={
+                          clustersContainingServer(srv.id).length > 0
+                            ? t('settings.deleteServerInCluster')
+                            : t('settings.deleteServer')
+                        }
                         id={`settings-delete-server-${srv.id}`}
                       >
                         <Trash2 size={14} />
@@ -567,6 +574,8 @@ export function ServersTab({
           )}
         </div>
       </section>
+
+      <ServerClustersSection />
 
       <section className="settings-section">
         <button className="btn btn-danger" onClick={handleLogout} id="settings-logout-btn">
