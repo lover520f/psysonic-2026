@@ -148,15 +148,27 @@ pub fn list_merged_favorite_albums(
              AND t.server_id IN ({in_placeholders})
              AND t.album_id IS NOT NULL AND t.album_id != ''
          ),
-         partitioned AS (
-           SELECT c.tid,
-             CASE
-               WHEN c.album_key IS NULL THEN 'solo:' || c.server_id || ':' || c.album_id
-               ELSE c.album_key
-             END AS merge_key,
-             c.priority_rank,
-             c.starred_at
+         album_rollup AS (
+           SELECT
+             c.server_id,
+             c.album_id,
+             MIN(c.tid) AS tid,
+             MIN(c.priority_rank) AS priority_rank,
+             MAX(c.album_key) AS album_key,
+             MAX(c.starred_at) AS starred_at
            FROM candidates c
+           GROUP BY c.server_id, c.album_id
+         ),
+         partitioned AS (
+           SELECT
+             r.tid,
+             CASE
+               WHEN r.album_key IS NOT NULL THEN r.album_key
+               ELSE 'solo:' || r.server_id || ':' || r.album_id
+             END AS merge_key,
+             r.priority_rank,
+             r.starred_at
+           FROM album_rollup r
          ),
          starred_merge AS (
            SELECT DISTINCT merge_key

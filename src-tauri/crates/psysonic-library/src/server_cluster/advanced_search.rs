@@ -369,6 +369,41 @@ mod tests {
     }
 
     #[test]
+    fn merges_albums_by_album_key_with_priority() {
+        let store = LibraryStore::open_in_memory();
+        TrackRepository::new(&store)
+            .upsert_batch(&[
+                track("s1", "t1", "Band", "art-1", "LP", "alb-1"),
+                track("s2", "t2", "Band", "art-2", "LP", "alb-2"),
+            ])
+            .unwrap();
+        rebuild_all_cluster_keys(&store).unwrap();
+
+        let resp = run_cluster_advanced_search(
+            &store,
+            LibraryClusterAdvancedSearchRequest {
+                servers_ordered: vec!["s1".into(), "s2".into()],
+                query: None,
+                entity_types: vec![EntityKind::Album],
+                filters: Vec::new(),
+                starred_only: None,
+                restrict_album_ids: None,
+                restrict_album_scopes: HashMap::new(),
+                query_album_title_only: None,
+                sort: Vec::new(),
+                limit: 50,
+                offset: 0,
+                skip_totals: false,
+                library_scopes: HashMap::new(),
+            },
+        )
+        .unwrap();
+
+        assert_eq!(resp.albums.len(), 1);
+        assert_eq!(resp.albums[0].server_id, "s1");
+    }
+
+    #[test]
     fn applies_offset_after_merge() {
         let store = LibraryStore::open_in_memory();
         TrackRepository::new(&store)

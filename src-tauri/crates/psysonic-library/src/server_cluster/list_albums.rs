@@ -9,6 +9,7 @@ use crate::store::LibraryStore;
 
 use super::db::ATTACH_ALIAS;
 use super::library_scope::scope_filter_sql_and_params;
+use super::merge::ALBUM_ROLLUP_AND_PARTITION_CTE;
 use super::priority::{in_list_sql, priority_case_sql};
 
 pub fn list_merged_albums(
@@ -45,15 +46,7 @@ pub fn list_merged_albums(
              AND t.server_id IN ({in_placeholders})
              AND t.album_id IS NOT NULL AND t.album_id != ''{scope_sql}
          ),
-         partitioned AS (
-           SELECT c.tid,
-             CASE
-               WHEN c.album_key IS NULL THEN 'solo:' || c.server_id || ':' || c.album_id
-               ELSE c.album_key
-             END AS merge_key,
-             c.priority_rank
-           FROM candidates c
-         ),
+         {ALBUM_ROLLUP_AND_PARTITION_CTE}
          winners AS (
            SELECT tid,
              ROW_NUMBER() OVER (PARTITION BY merge_key ORDER BY priority_rank) AS rn
@@ -185,6 +178,95 @@ mod tests {
             .upsert_batch(&[
                 track("s1", "t1", "A", "Band", "LP", "alb1"),
                 track("s2", "t2", "B", "Band", "LP", "alb2"),
+            ])
+            .unwrap();
+        rebuild_all_cluster_keys(&store).unwrap();
+
+        let resp = list_merged_albums(
+            &store,
+            &["s1".into(), "s2".into()],
+            50,
+            0,
+            &std::collections::HashMap::new(),
+        )
+        .unwrap();
+        assert_eq!(resp.albums.len(), 1);
+        assert_eq!(resp.albums[0].server_id, "s1");
+    }
+
+    #[test]
+    fn rollup_collapses_multiple_tracks_per_server_album() {
+        let store = LibraryStore::open_in_memory();
+        TrackRepository::new(&store)
+            .upsert_batch(&[
+                track("s1", "t1", "A", "Band", "LP", "alb1"),
+                track("s1", "t2", "B", "Band", "LP", "alb1"),
+                track("s1", "t3", "C", "Band", "LP", "alb1"),
+            ])
+            .unwrap();
+        rebuild_all_cluster_keys(&store).unwrap();
+
+        let resp = list_merged_albums(
+            &store,
+            &["s1".into()],
+            50,
+            0,
+            &std::collections::HashMap::new(),
+        )
+        .unwrap();
+        assert_eq!(resp.albums.len(), 1);
+        assert_eq!(resp.albums[0].id, "alb1");
+    }
+
+    fn track_no_key(server: &str, id: &str, album_id: &str) -> TrackRow {
+        TrackRow {
+            server_id: server.into(),
+            id: id.into(),
+            title: "".into(),
+            title_sort: None,
+            artist: Some("Band".into()),
+            artist_id: Some(format!("art-{server}")),
+            album: "LP".into(),
+            album_id: Some(album_id.into()),
+            album_artist: Some("Band".into()),
+            duration_sec: 200,
+            track_number: Some(1),
+            disc_number: Some(1),
+            year: Some(2020),
+            genre: None,
+            suffix: None,
+            bit_rate: None,
+            size_bytes: None,
+            cover_art_id: None,
+            starred_at: None,
+            user_rating: None,
+            play_count: None,
+            played_at: None,
+            server_path: None,
+            library_id: None,
+            isrc: None,
+            mbid_recording: None,
+            bpm: None,
+            replay_gain_track_db: None,
+            replay_gain_album_db: None,
+            content_hash: None,
+            server_updated_at: None,
+            server_created_at: None,
+            deleted: false,
+            synced_at: 1,
+            raw_json: "{}".into(),
+        }
+    }
+
+    #[test]
+    fn rollup_uses_album_key_when_some_tracks_lack_keys() {
+        let store = LibraryStore::open_in_memory();
+        TrackRepository::new(&store)
+            .upsert_batch(&[
+                track("s1", "t1", "A", "Band", "LP", "alb1"),
+                track_no_key("s1", "t2", "alb1"),
+                track("s2", "t3", "B", "Band", "LP", "alb2"),
+                track_no_key("s2", "t4", "alb2"),
             ])
             .unwrap();
         rebuild_all_cluster_keys(&store).unwrap();

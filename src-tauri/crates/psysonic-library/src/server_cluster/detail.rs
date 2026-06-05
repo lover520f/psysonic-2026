@@ -15,6 +15,7 @@ use crate::store::LibraryStore;
 use super::db::ATTACH_ALIAS;
 use super::keys::artist_key_from_display_name;
 use super::list_albums::list_merged_albums;
+use super::merge::ALBUM_ROLLUP_AND_PARTITION_CTE;
 use super::merge::{solo_partition_key, DURATION_TOLERANCE_SEC};
 use super::priority::{in_list_sql, priority_case_sql};
 
@@ -548,15 +549,7 @@ fn merged_albums_for_artist_key(
              AND k.artist_key = ?
              AND t.album_id IS NOT NULL AND t.album_id != ''
          ),
-         partitioned AS (
-           SELECT c.tid,
-             CASE
-               WHEN c.album_key IS NULL THEN 'solo:' || c.server_id || ':' || c.album_id
-               ELSE c.album_key
-             END AS merge_key,
-             c.priority_rank
-           FROM candidates c
-         ),
+         {ALBUM_ROLLUP_AND_PARTITION_CTE}
          winners AS (
            SELECT tid,
              ROW_NUMBER() OVER (PARTITION BY merge_key ORDER BY priority_rank) AS rn
