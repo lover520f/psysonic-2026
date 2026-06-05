@@ -23,9 +23,64 @@ use crate::repos;
 use crate::search::{
     aliased_track_columns, aliased_track_columns_resolved_bpm, bpm_resolved_expr,
     fts_album_prefix_match_query, fts_album_title_prefix_match_query, fts_column_prefix_query, fts_query_meets_min_len,
-    fts_track_prefix_match_query, library_scope_equals_sql, like_contains, PAGE_LIMIT_MAX,
+    fts_track_prefix_match_query, library_scope_filter_sql, like_contains, PAGE_LIMIT_MAX,
 };
 use crate::store::LibraryStore;
+
+fn effective_library_scope_ids(req: &LibraryAdvancedSearchRequest) -> Vec<String> {
+    if let Some(ids) = &req.library_scope_ids {
+        let trimmed: Vec<_> = ids
+            .iter()
+            .filter(|s| !s.trim().is_empty())
+            .cloned()
+            .collect();
+        if !trimmed.is_empty() {
+            return trimmed;
+        }
+    }
+    trimmed_nonempty(req.library_scope.as_deref())
+        .map(|s| vec![s.to_string()])
+        .unwrap_or_default()
+}
+
+fn push_library_scope_where(w: &mut WhereBuilder, table: &str, scope_ids: &[String]) {
+    if scope_ids.is_empty() {
+        return;
+    }
+    let (sql, params) = library_scope_filter_sql(table, scope_ids);
+    if let Some(clause) = sql {
+        if params.len() == 1 {
+            w.push_param(&clause, params[0].clone());
+        } else {
+            w.push_params(&clause, params);
+        }
+    }
+}
+
+/// `album` rows have no `library_id`; scope is enforced via matching tracks.
+fn push_album_table_library_scope(
+    w: &mut WhereBuilder,
+    album_alias: &str,
+    scope_ids: &[String],
+) {
+    if scope_ids.is_empty() {
+        return;
+    }
+    let (clause, params) = library_scope_filter_sql("t_scope", scope_ids);
+    let Some(scope_clause) = clause else {
+        return;
+    };
+    w.push_params(
+        &format!(
+            "EXISTS (SELECT 1 FROM track t_scope \
+             WHERE t_scope.server_id = {album_alias}.server_id \
+               AND t_scope.album_id = {album_alias}.id \
+               AND t_scope.deleted = 0 \
+               AND {scope_clause})"
+        ),
+        params,
+    );
+}
 
 /// `bpm` dual-storage resolution (§5.13.4): prefer analysis `track_fact(bpm)`,
 /// then hot `track.bpm` tag, then other fact sources.
@@ -61,8 +116,8 @@ fn fts_candidate_pool_size(limit: u32, offset: u32) -> i64 {
     need.saturating_mul(20).clamp(256, 10_000)
 }
 
-/// FTS rowid pick scoped to the active server (and optional library folder).
-fn scoped_fts_rowid_subquery_sql(pool: i64, library_scope: Option<&str>) -> String {
+/// FTS rowid pick scoped to the active server (and optional library folders).
+fn scoped_fts_rowid_subquery_sql(pool: i64, scope_ids: &[String]) -> String {
     let alias = "t_fts";
     let mut sql = format!(
         "SELECT f.rowid FROM track_fts f \
@@ -71,20 +126,21 @@ fn scoped_fts_rowid_subquery_sql(pool: i64, library_scope: Option<&str>) -> Stri
            AND {alias}.server_id = ? \
            AND {alias}.deleted = 0"
     );
-    if library_scope.is_some() {
+    if let (Some(clause), _) = library_scope_filter_sql(alias, scope_ids) {
         sql.push_str(" AND ");
-        sql.push_str(&library_scope_equals_sql(alias));
+        sql.push_str(&clause);
     }
     sql.push_str(&format!(" ORDER BY bm25(track_fts) LIMIT {pool}"));
     sql
 }
 
-fn scoped_fts_pick_join_sql(pool: i64, library_scope: Option<&str>) -> String {
+fn scoped_fts_pick_join_sql(pool: i64, scope_ids: &[String]) -> String {
     let alias = "t_fts";
-    let mut scope_sql = String::new();
-    if library_scope.is_some() {
-        scope_sql = format!(" AND {}", library_scope_equals_sql(alias));
-    }
+    let scope_sql = if let (Some(clause), _) = library_scope_filter_sql(alias, scope_ids) {
+        format!(" AND {clause}")
+    } else {
+        String::new()
+    };
     format!(
         "track t INNER JOIN (\
            SELECT f.rowid, bm25(track_fts) AS fts_rank \
@@ -99,14 +155,10 @@ fn scoped_fts_pick_join_sql(pool: i64, library_scope: Option<&str>) -> String {
     )
 }
 
-fn scoped_fts_subquery_bind(
-    server_id: &str,
-    library_scope: Option<&str>,
-) -> Vec<SqlValue> {
+fn scoped_fts_subquery_bind(server_id: &str, scope_ids: &[String]) -> Vec<SqlValue> {
     let mut params = vec![SqlValue::Text(server_id.to_string())];
-    if let Some(scope) = library_scope.filter(|s| !s.trim().is_empty()) {
-        params.push(SqlValue::Text(scope.to_string()));
-    }
+    let (_, scope_params) = library_scope_filter_sql("t_fts", scope_ids);
+    params.extend(scope_params);
     params
 }
 
@@ -217,10 +269,7 @@ fn build_track(
     let mut w = WhereBuilder::new();
     w.push_raw("t.deleted = 0");
     w.push_param("t.server_id = ?", SqlValue::Text(req.server_id.clone()));
-    if let Some(scope) = trimmed_nonempty(req.library_scope.as_deref()) {
-        let clause = library_scope_equals_sql("t");
-        w.push_param(&clause, SqlValue::Text(scope));
-    }
+    push_library_scope_where(&mut w, "t", &effective_library_scope_ids(req));
     for c in scalar {
         if let Some(frag) = resolve_clause(c, EntityKind::Track)? {
             applied.insert(c.field.clone());
@@ -246,8 +295,8 @@ fn build_track(
     if let Some(q) = text.and_then(fts_track_prefix_match_query) {
         applied.insert("text".to_string());
         let pool = fts_candidate_pool_size(limit, offset);
-        let scope = trimmed_nonempty(req.library_scope.as_deref());
-        let from = scoped_fts_pick_join_sql(pool, scope.as_deref());
+        let scope_ids = effective_library_scope_ids(req);
+        let from = scoped_fts_pick_join_sql(pool, &scope_ids);
         let order = order_clause(&req.sort, EntityKind::Track)
             .unwrap_or_else(|| "ORDER BY fts_pick.fts_rank".to_string());
         return query_rows_fts(
@@ -255,7 +304,7 @@ fn build_track(
             &cols,
             &from,
             &q,
-            &scoped_fts_subquery_bind(&req.server_id, scope.as_deref()),
+            &scoped_fts_subquery_bind(&req.server_id, &scope_ids),
             &w,
             &order,
             limit,
@@ -367,10 +416,10 @@ fn build_album_from_table(
     skip_totals: bool,
     applied: &mut BTreeSet<String>,
 ) -> Result<(Vec<LibraryAlbumDto>, u32), String> {
-    // `album` has no `library_id` / `deleted` columns, so `libraryScope` is
-    // a track-only filter (P20) and does not narrow album-table results.
+    // `album` has no `library_id`; scope is enforced via EXISTS on `track`.
     let mut w = WhereBuilder::new();
     w.push_param("a.server_id = ?", SqlValue::Text(req.server_id.clone()));
+    push_album_table_library_scope(&mut w, "a", &effective_library_scope_ids(req));
     if let Some(t) = text {
         w.push_param("a.name LIKE ? ESCAPE '\\'", SqlValue::Text(like_contains(t)));
         applied.insert("text".to_string());
@@ -434,10 +483,7 @@ fn build_album_from_tracks(
              AND a.id = t.album_id AND a.song_count IS NOT NULL)",
         );
     }
-    if let Some(scope) = trimmed_nonempty(req.library_scope.as_deref()) {
-        let clause = library_scope_equals_sql("t");
-        w.push_param(&clause, SqlValue::Text(scope));
-    }
+    push_library_scope_where(&mut w, "t", &effective_library_scope_ids(req));
     if let Some(t) = text {
         w.push_param("t.album LIKE ? ESCAPE '\\'", SqlValue::Text(like_contains(t)));
         applied.insert("text".to_string());
@@ -558,10 +604,7 @@ fn build_artist_from_tracks(
     w.push_raw(
         "NOT EXISTS (SELECT 1 FROM artist ar WHERE ar.server_id = t.server_id AND ar.id = t.artist_id)",
     );
-    if let Some(scope) = trimmed_nonempty(req.library_scope.as_deref()) {
-        let clause = library_scope_equals_sql("t");
-        w.push_param(&clause, SqlValue::Text(scope));
-    }
+    push_library_scope_where(&mut w, "t", &effective_library_scope_ids(req));
     if let Some(t) = text {
         w.push_param("t.artist LIKE ? ESCAPE '\\'", SqlValue::Text(like_contains(t)));
         applied.insert("text".to_string());
@@ -607,27 +650,24 @@ fn build_album_from_fts(
     applied.insert("text".to_string());
     let need = limit.saturating_add(offset) as i64;
     let pool = (need.saturating_mul(8)).clamp(64, 2_000);
-    let scope = trimmed_nonempty(req.library_scope.as_deref());
+    let scope_ids = effective_library_scope_ids(req);
 
     let mut w = WhereBuilder::new();
     w.push_params(
         &format!(
             "t.rowid IN ({})",
-            scoped_fts_rowid_subquery_sql(pool, scope.as_deref())
+            scoped_fts_rowid_subquery_sql(pool, &scope_ids)
         ),
         {
             let mut p = vec![SqlValue::Text(fts.to_string())];
-            p.extend(scoped_fts_subquery_bind(&req.server_id, scope.as_deref()));
+            p.extend(scoped_fts_subquery_bind(&req.server_id, &scope_ids));
             p
         },
     );
     w.push_raw("t.deleted = 0");
     w.push_param("t.server_id = ?", SqlValue::Text(req.server_id.clone()));
     w.push_raw("t.album_id IS NOT NULL AND t.album_id != ''");
-    if let Some(scope) = scope {
-        let clause = library_scope_equals_sql("t");
-        w.push_param(&clause, SqlValue::Text(scope));
-    }
+    push_library_scope_where(&mut w, "t", &scope_ids);
     for c in scalar {
         if let Some(frag) = resolve_clause(c, EntityKind::Track)? {
             applied.insert(c.field.clone());
@@ -727,27 +767,24 @@ fn build_artist_from_fts(
     applied.insert("text".to_string());
     let need = limit.saturating_add(offset) as i64;
     let pool = (need.saturating_mul(8)).clamp(64, 2_000);
-    let scope = trimmed_nonempty(req.library_scope.as_deref());
+    let scope_ids = effective_library_scope_ids(req);
 
     let mut w = WhereBuilder::new();
     w.push_params(
         &format!(
             "t.rowid IN ({})",
-            scoped_fts_rowid_subquery_sql(pool, scope.as_deref())
+            scoped_fts_rowid_subquery_sql(pool, &scope_ids)
         ),
         {
             let mut p = vec![SqlValue::Text(fts.to_string())];
-            p.extend(scoped_fts_subquery_bind(&req.server_id, scope.as_deref()));
+            p.extend(scoped_fts_subquery_bind(&req.server_id, &scope_ids));
             p
         },
     );
     w.push_raw("t.deleted = 0");
     w.push_param("t.server_id = ?", SqlValue::Text(req.server_id.clone()));
     w.push_raw("t.artist_id IS NOT NULL AND t.artist_id != ''");
-    if let Some(scope) = scope {
-        let clause = library_scope_equals_sql("t");
-        w.push_param(&clause, SqlValue::Text(scope));
-    }
+    push_library_scope_where(&mut w, "t", &scope_ids);
     for c in scalar {
         if let Some(frag) = resolve_clause(c, EntityKind::Track)? {
             applied.insert(c.field.clone());
@@ -1411,6 +1448,7 @@ mod tests {
         LibraryAdvancedSearchRequest {
             server_id: server.into(),
             library_scope: None,
+            library_scope_ids: None,
             query: None,
             entity_types: entities.to_vec(),
             filters: Vec::new(),

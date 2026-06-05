@@ -226,6 +226,35 @@ pub(crate) fn library_scope_equals_sql(table_alias: &str) -> String {
     format!("{} = ?", library_scope_match_sql(table_alias))
 }
 
+/// `library_id` filter for one or more Navidrome music-folder scopes.
+pub(crate) fn library_scope_filter_sql(
+    table_alias: &str,
+    scope_ids: &[String],
+) -> (Option<String>, Vec<rusqlite::types::Value>) {
+    use rusqlite::types::Value as SqlValue;
+    if scope_ids.is_empty() {
+        return (None, Vec::new());
+    }
+    if scope_ids.len() == 1 {
+        return (
+            Some(library_scope_equals_sql(table_alias)),
+            vec![SqlValue::Text(scope_ids[0].clone())],
+        );
+    }
+    let match_sql = library_scope_match_sql(table_alias);
+    let placeholders = (0..scope_ids.len())
+        .map(|_| "?")
+        .collect::<Vec<_>>()
+        .join(", ");
+    (
+        Some(format!("{match_sql} IN ({placeholders})")),
+        scope_ids
+            .iter()
+            .map(|s| SqlValue::Text(s.clone()))
+            .collect(),
+    )
+}
+
 pub(crate) fn aliased_track_columns(alias: &str) -> String {
     crate::repos::track_columns()
         .split(',')

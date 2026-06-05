@@ -6,7 +6,7 @@ import type { SidebarItemConfig } from '../../store/sidebarStore';
 import { ALL_NAV_ITEMS } from '../../config/navItems';
 import WhatsNewBanner from '../WhatsNewBanner';
 import { displayPlaylistName, isSmartPlaylistName } from '../../utils/componentHelpers/sidebarHelpers';
-import SidebarLibraryPicker from './SidebarLibraryPicker';
+import SidebarLibraryPicker, { type LibraryPickerFolder } from './SidebarLibraryPicker';
 import SidebarActiveJobs from './SidebarActiveJobs';
 
 interface NavDndState {
@@ -14,19 +14,20 @@ interface NavDndState {
   fromIdx: number;
 }
 
-interface MusicFolder { id: string; name: string }
-
 interface Props {
   isCollapsed: boolean;
   showLibraryPicker: boolean;
-  filterId: string;
+  allLibrariesSelected: boolean;
   selectedFolderName: string | null;
   libraryDropdownOpen: boolean;
   setLibraryDropdownOpen: (open: boolean) => void;
   dropdownRect: { top: number; left: number; width: number };
   libraryTriggerRef: React.RefObject<HTMLButtonElement | null>;
-  musicFolders: MusicFolder[];
-  pickLibrary: (id: 'all' | string) => void;
+  musicFolders: LibraryPickerFolder[];
+  isFolderSelected: (serverId: string, folderId: string) => boolean;
+  onSelectAll: () => void;
+  onExclusiveSelect: (serverId: string, folderId: string) => void;
+  onToggleFolder: (serverId: string, folderId: string) => void;
   visibleLibraryConfigs: SidebarItemConfig[];
   libraryItemsForReorder: SidebarItemConfig[];
   visibleSystemConfigs: SidebarItemConfig[];
@@ -54,9 +55,9 @@ interface Props {
 
 export default function SidebarNavBody(props: Props) {
   const {
-    isCollapsed, showLibraryPicker, filterId, selectedFolderName,
+    isCollapsed, showLibraryPicker, allLibrariesSelected, selectedFolderName,
     libraryDropdownOpen, setLibraryDropdownOpen, dropdownRect, libraryTriggerRef,
-    musicFolders, pickLibrary,
+    musicFolders, isFolderSelected, onSelectAll, onExclusiveSelect, onToggleFolder,
     visibleLibraryConfigs, libraryItemsForReorder,
     visibleSystemConfigs, systemItemsForReorder,
     playlistsExpanded, setPlaylistsExpanded, playlists, playlistsLoading,
@@ -89,14 +90,17 @@ export default function SidebarNavBody(props: Props) {
         {nowPlayingAtTop && nowPlayingLink}
         {!isCollapsed && (showLibraryPicker ? (
           <SidebarLibraryPicker
-            filterId={filterId}
+            allLibrariesSelected={allLibrariesSelected}
             selectedFolderName={selectedFolderName}
             libraryDropdownOpen={libraryDropdownOpen}
             setLibraryDropdownOpen={setLibraryDropdownOpen}
             dropdownRect={dropdownRect}
             libraryTriggerRef={libraryTriggerRef}
             musicFolders={musicFolders}
-            pickLibrary={pickLibrary}
+            isFolderSelected={isFolderSelected}
+            onSelectAll={onSelectAll}
+            onExclusiveSelect={onExclusiveSelect}
+            onToggleFolder={onToggleFolder}
           />
         ) : (
           <span className="nav-section-label">{t('sidebar.library')}</span>

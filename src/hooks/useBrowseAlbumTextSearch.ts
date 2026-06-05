@@ -18,6 +18,7 @@ export function useBrowseAlbumTextSearch(
   indexEnabled: boolean,
   serverId: string | null | undefined,
   losslessOnly = false,
+  musicLibraryFilterVersion = 0,
 ) {
   const [debouncedFilter, setDebouncedFilter] = useState('');
   const [textSearchAlbums, setTextSearchAlbums] = useState<SubsonicAlbum[] | null>(null);
@@ -66,7 +67,7 @@ export function useBrowseAlbumTextSearch(
       setTextSearchAlbums(outcome?.result ?? null);
       setTextSearchLoading(false);
     })();
-  }, [debouncedFilter, indexEnabled, serverId, losslessOnly]);
+  }, [debouncedFilter, indexEnabled, serverId, losslessOnly, musicLibraryFilterVersion]);
 
   const effectiveFilter = textSearchAlbums != null ? '' : filter;
   return { textSearchAlbums, textSearchLoading, effectiveFilter };

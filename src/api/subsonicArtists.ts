@@ -8,6 +8,7 @@ import type {
   SubsonicArtistInfo,
   SubsonicSong,
 } from './subsonicTypes';
+import { isAllLibrariesFilter, normalizeMusicLibraryFilter } from '../utils/musicLibraryFilter';
 import { isClusterMode } from '../utils/serverCluster/clusterScope';
 import { resolveClusterBrowseMembers } from '../utils/serverCluster/clusterBrowse';
 import { libraryClusterResolveCandidates } from './library';
@@ -75,7 +76,7 @@ export async function getTopSongs(artist: string): Promise<SubsonicSong[]> {
 export async function getTopSongsForServer(serverId: string, artist: string): Promise<SubsonicSong[]> {
   try {
     const { musicLibraryFilterByServer } = useAuthStore.getState();
-    const scoped = musicLibraryFilterByServer[serverId] && musicLibraryFilterByServer[serverId] !== 'all';
+    const scoped = !isAllLibrariesFilter(normalizeMusicLibraryFilter(musicLibraryFilterByServer[serverId]));
     const topCount = scoped ? 20 : 5;
     const data = await apiForServer<{ topSongs: { song: SubsonicSong[] } }>(
       serverId,

@@ -22,6 +22,11 @@ vi.mock('./representative', () => ({
   getClusterMergeMemberIds: (...args: unknown[]) => mockGetMembers(...args),
 }));
 
+vi.mock('./clusterLibraryScopes', () => ({
+  buildClusterLibraryScopes: vi.fn(() => undefined),
+  isClusterLibraryScopeNarrowed: vi.fn(() => false),
+}));
+
 vi.mock('../library/advancedSearchLocal', () => ({
   trackToSong: (t: { id: string }) => ({ id: t.id, title: t.id }),
   albumToAlbum: (a: { id: string }) => ({ id: a.id, name: a.id }),
@@ -30,8 +35,10 @@ vi.mock('../library/advancedSearchLocal', () => ({
 
 import {
   canUseClusterAlbumBrowse,
+  clusterAlbumBrowseNeedsAdvanced,
   clusterBrowseTracksPage,
 } from './clusterBrowse';
+import { isClusterLibraryScopeNarrowed } from './clusterLibraryScopes';
 
 describe('clusterBrowse', () => {
   beforeEach(() => {
@@ -66,5 +73,20 @@ describe('clusterBrowse', () => {
         undefined,
       ),
     ).toBe(false);
+  });
+
+  it('clusterAlbumBrowseNeedsAdvanced covers comp-only and scoped plain browse', () => {
+    const plain = {
+      genres: [] as string[],
+      losslessOnly: false,
+      starredOnly: false,
+      compFilter: 'all' as const,
+      sort: 'alphabeticalByName' as const,
+    };
+    expect(clusterAlbumBrowseNeedsAdvanced(plain)).toBe(false);
+    expect(clusterAlbumBrowseNeedsAdvanced({ ...plain, compFilter: 'only' })).toBe(true);
+    expect(clusterAlbumBrowseNeedsAdvanced({ ...plain, genres: ['Rock'] })).toBe(true);
+    vi.mocked(isClusterLibraryScopeNarrowed).mockReturnValueOnce(true);
+    expect(clusterAlbumBrowseNeedsAdvanced(plain)).toBe(true);
   });
 });

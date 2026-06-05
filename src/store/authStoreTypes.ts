@@ -239,11 +239,8 @@ export interface AuthState {
 
   /** Subsonic music folders for the active server (not persisted; refetched on login / server change). */
   musicFolders: Array<{ id: string; name: string }>;
-  /**
-   * Per server: `all` = no musicFolderId param; otherwise a single folder id.
-   * Only one library or all — no multi-folder merge.
-   */
-  musicLibraryFilterByServer: Record<string, 'all' | string>;
+  /** Per server: `all` or selected music-folder ids (multi-select). */
+  musicLibraryFilterByServer: Record<string, import('../utils/musicLibraryFilter').MusicLibraryFilter>;
   /** Bumps when `setMusicLibraryFilter` runs so pages refetch catalog data. */
   musicLibraryFilterVersion: number;
 
@@ -372,6 +369,7 @@ export interface AuthState {
   setShowLuckyMixMenu: (v: boolean) => void;
   setMusicFolders: (folders: Array<{ id: string; name: string }>) => void;
   setMusicLibraryFilter: (folderId: 'all' | string, serverId?: string) => void;
+  toggleMusicLibraryFolder: (folderId: string, serverId?: string) => void;
 
   /** Navigation style for Mix pages: single hub ('hub') or separate sidebar entries ('separate'). */
   randomNavMode: 'hub' | 'separate';

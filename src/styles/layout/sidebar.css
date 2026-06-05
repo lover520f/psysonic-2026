@@ -179,10 +179,10 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-3);
+  gap: var(--space-2);
   width: 100%;
   margin: 0;
-  padding: var(--space-2) var(--space-3);
+  padding: var(--space-1) var(--space-1) var(--space-1) var(--space-2);
   border: none;
   border-radius: var(--radius-sm);
   background: transparent;
@@ -190,8 +190,68 @@
   font-size: 13px;
   font-weight: 500;
   text-align: left;
-  cursor: pointer;
   transition: background var(--transition-fast);
+}
+
+.nav-library-dropdown-item-main {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  padding: var(--space-1) var(--space-2);
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.nav-library-dropdown-item-main:hover {
+  background: var(--bg-hover);
+}
+
+.nav-library-dropdown-item-toggle {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--accent);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity var(--transition-fast), background var(--transition-fast);
+}
+
+.nav-library-dropdown-item:hover .nav-library-dropdown-item-toggle,
+.nav-library-dropdown-item-toggle--on {
+  opacity: 1;
+}
+
+/* «Все библиотеки»: пустой слот той же ширины, без hover-чекбокса */
+.nav-library-dropdown-item-toggle--align-only {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.nav-library-dropdown-item-toggle:hover {
+  background: var(--bg-hover);
+}
+
+.nav-library-dropdown-item-toggle-box {
+  display: block;
+  width: 14px;
+  height: 14px;
+  border: 1.5px solid var(--text-muted);
+  border-radius: 3px;
+  box-sizing: border-box;
 }
 
 .nav-library-dropdown-item:hover {

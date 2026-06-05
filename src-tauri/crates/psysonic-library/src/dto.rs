@@ -408,6 +408,8 @@ pub struct LibraryGenreAlbumsRequest {
     #[serde(default)]
     pub library_scope: Option<String>,
     #[serde(default)]
+    pub library_scope_ids: Option<Vec<String>>,
+    #[serde(default)]
     pub sort: Vec<LibrarySortClause>,
     #[serde(default = "default_genre_album_limit")]
     pub limit: u32,
@@ -529,6 +531,9 @@ pub struct LibraryAdvancedSearchRequest {
     pub server_id: String,
     #[serde(default)]
     pub library_scope: Option<String>,
+    /// Multiple music-folder ids (OR). Takes precedence over `library_scope` when non-empty.
+    #[serde(default)]
+    pub library_scope_ids: Option<Vec<String>>,
     #[serde(default)]
     pub query: Option<String>,
     pub entity_types: Vec<EntityKind>,
@@ -688,9 +693,9 @@ pub struct LibraryClusterListTracksRequest {
     pub limit: Option<u32>,
     #[serde(default)]
     pub offset: Option<u32>,
-    /// Per-member music-folder scope (`server_id` → folder id). Omitted members = all libraries.
+    /// Per-member music-folder scopes (`server_id` → folder ids). Omitted members = all libraries.
     #[serde(default)]
-    pub library_scopes: HashMap<String, String>,
+    pub library_scopes: HashMap<String, Vec<String>>,
 }
 
 /// `library_cluster_advanced_search` request.
@@ -717,9 +722,9 @@ pub struct LibraryClusterAdvancedSearchRequest {
     pub offset: u32,
     #[serde(default)]
     pub skip_totals: bool,
-    /// Per-member music-folder scope (`server_id` → folder id). Omitted members = all libraries.
+    /// Per-member music-folder scopes (`server_id` → folder ids). Omitted members = all libraries.
     #[serde(default)]
-    pub library_scopes: HashMap<String, String>,
+    pub library_scopes: HashMap<String, Vec<String>>,
 }
 
 /// Merged album browse response for cluster scope.

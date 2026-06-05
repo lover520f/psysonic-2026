@@ -16,7 +16,7 @@ pub fn list_merged_artists(
     servers_ordered: &[String],
     limit: u32,
     offset: u32,
-    library_scopes: &std::collections::HashMap<String, String>,
+    library_scopes: &std::collections::HashMap<String, Vec<String>>,
 ) -> Result<LibraryClusterArtistsResponse, String> {
     if servers_ordered.is_empty() {
         return Ok(LibraryClusterArtistsResponse {

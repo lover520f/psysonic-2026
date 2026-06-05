@@ -18,6 +18,8 @@ import type { AlbumCompFilter } from '../utils/library/albumCompilation';
 import {
   albumBrowseHasGenreFilter,
   albumBrowseHasServerFilters,
+  albumBrowseMultiGenreBrowse,
+  albumBrowseUseSliceCatalog,
   fetchAlbumBrowseGenreOptions,
   fetchAlbumBrowsePage,
   fetchLocalAlbumCatalogChunk,
@@ -26,7 +28,7 @@ import {
   type AlbumBrowseQuery,
   type GenreFilterOption,
 } from '../utils/library/albumBrowseLoad';
-import { libraryScopeForServer } from '../api/subsonicClient';
+import { libraryScopeIdsForServer } from '../api/subsonicClient';
 import {
   ALBUM_YEAR_FILTER_DEBOUNCE_MS,
   resolveAlbumYearBounds,
@@ -167,8 +169,9 @@ export function useAlbumBrowseData({
   }, [browseMode, visibleAlbums, visibleCount]);
 
   const genreFiltered = albumBrowseHasGenreFilter(browseQuery);
+  const multiGenreBrowse = albumBrowseMultiGenreBrowse(browseQuery);
   const serverFilterActive = albumBrowseHasServerFilters(browseQuery);
-  const libraryScopeActive = libraryScopeForServer(serverId) != null;
+  const libraryScopeActive = libraryScopeIdsForServer(serverId) != null;
   const narrowGenreList = yearFilterActive || losslessOnly || starredOnly || compFilterActive;
   /** When true, GenreFilterBar uses `genreCatalogOptions` instead of server `getGenres()`. */
   const genreCatalogActive = narrowGenreList || (indexEnabled && libraryScopeActive);
@@ -184,7 +187,7 @@ export function useAlbumBrowseData({
 
   const gridHasMore = browseMode === 'slice'
     ? visibleCount < visibleAlbums.length || catalogHasMore
-    : hasMore && !genreFiltered;
+    : hasMore && !multiGenreBrowse;
 
   const gridLoadingMore = browseMode === 'slice'
     ? sliceLoadingMore || catalogLoadingMore
@@ -333,6 +336,13 @@ export function useAlbumBrowseData({
           );
           if (cancelled || generation !== loadGenerationRef.current) return;
           if (first != null) {
+            if (!albumBrowseUseSliceCatalog(browseQuery)) {
+              setBrowseMode('page');
+              setAlbums(first.albums);
+              setHasMore(first.hasMore);
+              setLoading(false);
+              return;
+            }
             setBrowseMode('slice');
             setAlbums(first.albums);
             catalogOffsetRef.current = first.albums.length;
@@ -376,7 +386,7 @@ export function useAlbumBrowseData({
   ]);
 
   const loadMorePage = useCallback(() => {
-    if (loadingRef.current || loadPendingRef.current || !hasMore || genreFiltered) return;
+    if (loadingRef.current || loadPendingRef.current || !hasMore || multiGenreBrowse) return;
     if (coverEnsureQueueBacklog() > LOAD_MORE_COVER_BACKLOG_MAX) return;
     if (compFilterClientOnly && visibleAlbums.length === 0
       && albumBrowseCompScanComplete(albums, compFilter, hasMore)) {
@@ -390,7 +400,7 @@ export function useAlbumBrowseData({
     hasMore,
     browseQuery,
     loadBrowse,
-    genreFiltered,
+    multiGenreBrowse,
     compFilterClientOnly,
     visibleAlbums.length,
     albums,

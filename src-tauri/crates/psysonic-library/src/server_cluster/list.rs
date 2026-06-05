@@ -19,7 +19,7 @@ pub fn list_merged_tracks(
     servers_ordered: &[String],
     limit: u32,
     offset: u32,
-    library_scopes: &std::collections::HashMap<String, String>,
+    library_scopes: &std::collections::HashMap<String, Vec<String>>,
 ) -> Result<LibraryTracksEnvelope, String> {
     if servers_ordered.is_empty() {
         return Ok(LibraryTracksEnvelope {

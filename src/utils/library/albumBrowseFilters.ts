@@ -17,6 +17,16 @@ export function albumBrowseHasServerFilters(query: AlbumBrowseQuery): boolean {
   );
 }
 
+/** Multi-genre OR union is loaded in one shot — no SQL offset pagination. */
+export function albumBrowseMultiGenreBrowse(query: AlbumBrowseQuery): boolean {
+  return query.genres.length > 1;
+}
+
+/** Lazy catalog slice mode — plain unfiltered browse (comp/year/genre/starred via server path). */
+export function albumBrowseUseSliceCatalog(query: AlbumBrowseQuery): boolean {
+  return !albumBrowseHasServerFilters(query);
+}
+
 /** Favorites need the local index when combined with lossless or genre (AND). */
 export function albumBrowseStarredNeedsLocalIntersect(
   query: AlbumBrowseQuery,

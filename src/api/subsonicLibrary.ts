@@ -1,3 +1,8 @@
+import {
+  isAllLibrariesFilter,
+  musicLibraryFilterForServer,
+  musicLibraryFilterStorageKey,
+} from '../utils/musicLibraryFilter';
 import { useAuthStore } from '../store/authStore';
 import { api, apiForServer, libraryFilterParams, libraryFilterParamsForServer } from './subsonicClient';
 import type {
@@ -94,36 +99,46 @@ let scopedLibraryAlbumIdCache: {
   ids: Set<string>;
 } | null = null;
 
-async function albumIdsInLibraryScope(serverId: string): Promise<Set<string> | null> {
-  const { musicLibraryFilterByServer, musicLibraryFilterVersion } = useAuthStore.getState();
+/** Union of album ids across selected music folders (network scope filter). */
+export async function albumIdsInLibraryScope(serverId: string): Promise<Set<string> | null> {
+  const { musicLibraryFilterVersion } = useAuthStore.getState();
   if (!serverId) return null;
-  const folder = musicLibraryFilterByServer[serverId];
-  if (folder === undefined || folder === 'all') {
+  const filter = musicLibraryFilterForServer(serverId);
+  if (filter === 'all') {
     scopedLibraryAlbumIdCache = null;
     return null;
   }
+  const cacheKey = musicLibraryFilterStorageKey(serverId);
   const hit = scopedLibraryAlbumIdCache;
   if (
     hit &&
     hit.serverId === serverId &&
-    hit.folderId === folder &&
+    hit.folderId === cacheKey &&
     hit.filterVersion === musicLibraryFilterVersion
   ) {
     return hit.ids;
   }
   const ids = new Set<string>();
   const pageSize = 500;
-  let offset = 0;
-  for (;;) {
-    const albums = await getAlbumListForServer(serverId, 'alphabeticalByName', pageSize, offset);
-    for (const a of albums) ids.add(a.id);
-    if (albums.length < pageSize) break;
-    offset += pageSize;
-    if (offset > 500_000) break;
+  for (const folderId of filter) {
+    let offset = 0;
+    for (;;) {
+      const albums = await getAlbumListForServer(
+        serverId,
+        'alphabeticalByName',
+        pageSize,
+        offset,
+        { musicFolderId: folderId },
+      );
+      for (const a of albums) ids.add(a.id);
+      if (albums.length < pageSize) break;
+      offset += pageSize;
+      if (offset > 500_000) break;
+    }
   }
   scopedLibraryAlbumIdCache = {
     serverId,
-    folderId: folder,
+    folderId: cacheKey,
     filterVersion: musicLibraryFilterVersion,
     ids,
   };
@@ -175,9 +190,9 @@ export async function filterAlbumsToActiveLibrary(albums: SubsonicAlbum[]): Prom
 
 /** When scoped to one library, ask the server for more similar tracks — many will be filtered out client-side. */
 export function similarSongsRequestCount(desired: number): number {
-  const { activeServerId, musicLibraryFilterByServer } = useAuthStore.getState();
-  const f = activeServerId ? musicLibraryFilterByServer[activeServerId] : undefined;
-  if (f === undefined || f === 'all') return desired;
+  const { activeServerId } = useAuthStore.getState();
+  const f = activeServerId ? musicLibraryFilterForServer(activeServerId) : 'all';
+  if (isAllLibrariesFilter(f)) return desired;
   return Math.min(300, Math.max(desired, desired * 4));
 }
 

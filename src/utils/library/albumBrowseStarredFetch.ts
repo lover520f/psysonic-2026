@@ -6,6 +6,7 @@ import {
   filterAlbumsByCompilation,
   filterAlbumsByYearBounds,
 } from './albumBrowseFilters';
+import { filterAlbumsToServerLibraryScope } from './albumBrowseLibraryScope';
 import { runLocalAlbumBrowse } from './albumBrowseLocal';
 import { sortSubsonicAlbums } from './albumBrowseSort';
 import type {
@@ -18,24 +19,26 @@ function markServerStarredAlbums(albums: SubsonicAlbum[]): SubsonicAlbum[] {
   return albums.map(a => ({ ...a, starred: a.starred ?? 'true' }));
 }
 
-function applyStarredNetworkPostFilters(
+async function applyStarredNetworkPostFilters(
   albums: SubsonicAlbum[],
   query: AlbumBrowseQuery,
-): SubsonicAlbum[] {
-  let out = albums;
+  serverId: string,
+): Promise<SubsonicAlbum[]> {
+  let out = await filterAlbumsToServerLibraryScope(serverId, albums);
   if (query.year) out = filterAlbumsByYearBounds(out, query.year);
   out = filterAlbumsByCompilation(out, query.compFilter);
   if (query.starredOnly) out = out.filter(a => !!a.starred);
   return sortSubsonicAlbums(out, query.sort);
 }
 
-function paginateStarredAlbums(
+async function paginateStarredAlbums(
   all: SubsonicAlbum[],
   query: AlbumBrowseQuery,
+  serverId: string,
   offset: number,
   pageSize: number,
-): AlbumBrowsePageResult {
-  const filtered = applyStarredNetworkPostFilters(all, query);
+): Promise<AlbumBrowsePageResult> {
+  const filtered = await applyStarredNetworkPostFilters(all, query, serverId);
   const page = filtered.slice(offset, offset + pageSize);
   return { albums: page, hasMore: offset + pageSize < filtered.length };
 }
@@ -67,7 +70,7 @@ export async function fetchStarredAlbumBrowse(
         );
         emitPartial(fromCache);
       } else {
-        emitPartial(paginateStarredAlbums(cached, query, 0, pageSize));
+        emitPartial(await paginateStarredAlbums(cached, query, serverId, 0, pageSize));
       }
     }
   }
@@ -81,5 +84,5 @@ export async function fetchStarredAlbumBrowse(
     if (query.losslessOnly) return { albums: [], hasMore: false };
   }
 
-  return paginateStarredAlbums(serverAlbums, query, offset, pageSize);
+  return paginateStarredAlbums(serverAlbums, query, serverId, offset, pageSize);
 }

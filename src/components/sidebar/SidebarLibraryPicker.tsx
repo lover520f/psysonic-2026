@@ -3,25 +3,42 @@ import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { Check, ChevronDown, Music2 } from 'lucide-react';
 
-interface MusicFolder { id: string; name: string }
+export interface LibraryPickerFolder {
+  id: string;
+  name: string;
+  serverId: string;
+  folderId: string;
+}
 
 interface Props {
-  filterId: string;
+  allLibrariesSelected: boolean;
   selectedFolderName: string | null;
   libraryDropdownOpen: boolean;
   setLibraryDropdownOpen: (open: boolean) => void;
   dropdownRect: { top: number; left: number; width: number };
   libraryTriggerRef: React.RefObject<HTMLButtonElement | null>;
-  musicFolders: MusicFolder[];
-  pickLibrary: (id: 'all' | string) => void;
+  musicFolders: LibraryPickerFolder[];
+  isFolderSelected: (serverId: string, folderId: string) => boolean;
+  onSelectAll: () => void;
+  onExclusiveSelect: (serverId: string, folderId: string) => void;
+  onToggleFolder: (serverId: string, folderId: string) => void;
 }
 
 export default function SidebarLibraryPicker({
-  filterId, selectedFolderName, libraryDropdownOpen, setLibraryDropdownOpen,
-  dropdownRect, libraryTriggerRef, musicFolders, pickLibrary,
+  allLibrariesSelected,
+  selectedFolderName,
+  libraryDropdownOpen,
+  setLibraryDropdownOpen,
+  dropdownRect,
+  libraryTriggerRef,
+  musicFolders,
+  isFolderSelected,
+  onSelectAll,
+  onExclusiveSelect,
+  onToggleFolder,
 }: Props) {
   const { t } = useTranslation();
-  const libraryTriggerPlain = filterId === 'all';
+  const libraryTriggerPlain = allLibrariesSelected;
   const panelRef = useRef<HTMLDivElement>(null);
   const [panelWidth, setPanelWidth] = useState<number | null>(null);
   const allLibrariesLabel = t('sidebar.allLibraries');
@@ -98,29 +115,66 @@ export default function SidebarLibraryPicker({
               boxSizing: 'border-box',
             }}
           >
-            <button
-              type="button"
+            <div
               role="option"
-              aria-selected={filterId === 'all'}
-              className={`nav-library-dropdown-item ${filterId === 'all' ? 'nav-library-dropdown-item--selected' : ''}`}
-              onClick={() => pickLibrary('all')}
+              aria-selected={allLibrariesSelected}
+              className={`nav-library-dropdown-item ${allLibrariesSelected ? 'nav-library-dropdown-item--selected' : ''}`}
             >
-              <span className="nav-library-dropdown-item-label">{t('sidebar.allLibraries')}</span>
-              {filterId === 'all' ? <Check size={16} className="nav-library-dropdown-check" strokeWidth={2.5} /> : <span className="nav-library-dropdown-check-spacer" />}
-            </button>
-            {musicFolders.map(f => (
               <button
-                key={f.id}
                 type="button"
-                role="option"
-                aria-selected={filterId === f.id}
-                className={`nav-library-dropdown-item ${filterId === f.id ? 'nav-library-dropdown-item--selected' : ''}`}
-                onClick={() => pickLibrary(f.id)}
+                className="nav-library-dropdown-item-main"
+                onClick={() => {
+                  onSelectAll();
+                  setLibraryDropdownOpen(false);
+                }}
               >
-                <span className="nav-library-dropdown-item-label">{f.name}</span>
-                {filterId === f.id ? <Check size={16} className="nav-library-dropdown-check" strokeWidth={2.5} /> : <span className="nav-library-dropdown-check-spacer" />}
+                <span className="nav-library-dropdown-item-label">{allLibrariesLabel}</span>
               </button>
-            ))}
+              <span
+                className={`nav-library-dropdown-item-toggle ${allLibrariesSelected ? 'nav-library-dropdown-item-toggle--on' : 'nav-library-dropdown-item-toggle--align-only'}`}
+                aria-hidden
+              >
+                {allLibrariesSelected ? <Check size={16} strokeWidth={2.5} /> : null}
+              </span>
+            </div>
+            {musicFolders.map(f => {
+              const selected = isFolderSelected(f.serverId, f.folderId);
+              return (
+                <div
+                  key={f.id}
+                  role="option"
+                  aria-selected={selected}
+                  className={`nav-library-dropdown-item ${selected ? 'nav-library-dropdown-item--selected' : ''}`}
+                >
+                  <button
+                    type="button"
+                    className="nav-library-dropdown-item-main"
+                    onClick={() => {
+                      onExclusiveSelect(f.serverId, f.folderId);
+                      setLibraryDropdownOpen(false);
+                    }}
+                  >
+                    <span className="nav-library-dropdown-item-label">{f.name}</span>
+                  </button>
+                  <button
+                    type="button"
+                    className={`nav-library-dropdown-item-toggle ${selected ? 'nav-library-dropdown-item-toggle--on' : ''}`}
+                    aria-label={selected ? t('sidebar.libraryDeselect', { name: f.name }) : t('sidebar.librarySelect', { name: f.name })}
+                    aria-pressed={selected}
+                    onClick={e => {
+                      e.stopPropagation();
+                      onToggleFolder(f.serverId, f.folderId);
+                    }}
+                  >
+                    {selected ? (
+                      <Check size={16} strokeWidth={2.5} />
+                    ) : (
+                      <span className="nav-library-dropdown-item-toggle-box" aria-hidden />
+                    )}
+                  </button>
+                </div>
+              );
+            })}
           </div>,
           document.body
         )}

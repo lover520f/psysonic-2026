@@ -7,7 +7,7 @@ use crate::dto::{
     LibraryAlbumDto, LibraryGenreAlbumsRequest, LibraryGenreAlbumsResponse, LibrarySortClause,
     SortDir,
 };
-use crate::search::library_scope_equals_sql;
+use crate::search::library_scope_filter_sql;
 use crate::store::LibraryStore;
 use rusqlite::types::Value as SqlValue;
 use serde_json::Value;
@@ -16,6 +16,22 @@ fn trimmed_nonempty(s: Option<&str>) -> Option<String> {
     s.map(str::trim)
         .filter(|s| !s.is_empty())
         .map(String::from)
+}
+
+fn effective_genre_scope_ids(req: &LibraryGenreAlbumsRequest) -> Vec<String> {
+    if let Some(ids) = &req.library_scope_ids {
+        let trimmed: Vec<_> = ids
+            .iter()
+            .filter(|s| !s.trim().is_empty())
+            .cloned()
+            .collect();
+        if !trimmed.is_empty() {
+            return trimmed;
+        }
+    }
+    trimmed_nonempty(req.library_scope.as_deref())
+        .map(|s| vec![s])
+        .unwrap_or_default()
 }
 
 fn genre_album_order_sql(sort: &[LibrarySortClause]) -> String {
@@ -117,9 +133,10 @@ pub fn list_albums_by_genre(
         SqlValue::Text(genre.to_string()),
     ];
 
-    if let Some(scope) = trimmed_nonempty(req.library_scope.as_deref()) {
-        where_clauses.push(library_scope_equals_sql("t"));
-        params.push(SqlValue::Text(scope));
+    let scope_ids = effective_genre_scope_ids(req);
+    if let (Some(clause), scope_params) = library_scope_filter_sql("t", &scope_ids) {
+        where_clauses.push(clause);
+        params.extend(scope_params);
     }
 
     let where_sql = where_clauses.join(" AND ");
@@ -253,6 +270,7 @@ mod tests {
                 server_id: "s1".into(),
                 genre: "Rock".into(),
                 library_scope: Some("lib1".into()),
+                library_scope_ids: None,
                 sort: vec![LibrarySortClause {
                     field: "name".into(),
                     dir: SortDir::Asc,
@@ -272,6 +290,7 @@ mod tests {
                 server_id: "s1".into(),
                 genre: "Rock".into(),
                 library_scope: None,
+                library_scope_ids: None,
                 sort: vec![],
                 limit: 1,
                 offset: 0,

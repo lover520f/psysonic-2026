@@ -15,7 +15,7 @@ import { dedupeById } from '../dedupeById';
 import { albumToAlbum, artistToArtist, trackToSong } from '../library/advancedSearchLocal';
 import { albumBrowseHasServerFilters } from '../library/albumBrowseFilters';
 import type { AlbumBrowsePageResult, AlbumBrowseQuery } from '../library/albumBrowseTypes';
-import { buildClusterLibraryScopes } from './clusterLibraryScopes';
+import { buildClusterLibraryScopes, isClusterLibraryScopeNarrowed } from './clusterLibraryScopes';
 import { getActiveClusterId, isClusterMode } from './clusterScope';
 import { getClusterMergeMemberIds } from './representative';
 
@@ -27,6 +27,14 @@ export async function resolveClusterBrowseMembers(): Promise<string[] | null> {
   return ids.length > 0 ? ids : null;
 }
 
+/** Cluster merged list or per-member advanced search (not the fast `list_albums` path). */
+export function clusterAlbumBrowseNeedsAdvanced(query: AlbumBrowseQuery): boolean {
+  if (albumBrowseHasServerFilters(query)) return true;
+  if (query.compFilter !== 'all') return true;
+  if (isClusterLibraryScopeNarrowed()) return true;
+  return false;
+}
+
 export function canUseClusterAlbumBrowse(
   query: AlbumBrowseQuery,
   restrictAlbumIds?: string[],
@@ -35,6 +43,8 @@ export function canUseClusterAlbumBrowse(
   if (restrictAlbumIds != null) return false;
   if (albumBrowseHasServerFilters(query)) return false;
   if (query.compFilter !== 'all') return false;
+  // Merged list_tracks SQL ignores library_id on many indexes — use advanced search.
+  if (isClusterLibraryScopeNarrowed()) return false;
   return true;
 }
 

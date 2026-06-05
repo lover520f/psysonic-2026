@@ -12,6 +12,8 @@ export type {
 export {
   albumBrowseHasGenreFilter,
   albumBrowseHasServerFilters,
+  albumBrowseMultiGenreBrowse,
+  albumBrowseUseSliceCatalog,
   filterAlbumsByCompilation,
   filterAlbumsByStarred,
 } from './albumBrowseFilters';
@@ -22,7 +24,7 @@ import { runLocalAlbumBrowse } from './albumBrowseLocal';
 import { fetchAlbumBrowseNetwork } from './albumBrowseNetwork';
 import { fetchStarredAlbumBrowse } from './albumBrowseStarredFetch';
 import { libraryGetGenreAlbumCounts } from '../../api/library';
-import { libraryScopeForServer } from '../../api/subsonicClient';
+import { libraryScopeInvokeArgs } from '../musicLibraryFilter';
 import { libraryIsReady } from './libraryReady';
 import type {
   AlbumBrowseFetchCallbacks,
@@ -58,17 +60,23 @@ export async function fetchAlbumBrowseGenreOptions(
   query: AlbumBrowseQuery,
 ): Promise<GenreFilterOption[]> {
   const withoutGenre: AlbumBrowseQuery = { ...query, genres: [] };
-  const scope = libraryScopeForServer(serverId);
+  const scopeArgs = libraryScopeInvokeArgs(serverId);
   const hasCombinedFilters =
     albumBrowseHasServerFilters(withoutGenre) || query.compFilter !== 'all';
 
   // Sidebar library scope only: use the full scoped genre catalog from the local
   // index instead of getGenres() (server-wide) or a 500-album sample.
-  if (indexEnabled && serverId && scope && !hasCombinedFilters && (await libraryIsReady(serverId))) {
+  if (
+    indexEnabled
+    && serverId
+    && scopeArgs.libraryScopeIds?.length
+    && !hasCombinedFilters
+    && (await libraryIsReady(serverId))
+  ) {
     try {
       const rows = await libraryGetGenreAlbumCounts({
         serverId,
-        libraryScope: scope,
+        ...scopeArgs,
       });
       return rows.map(row => ({ genre: row.value, count: row.albumCount }));
     } catch {

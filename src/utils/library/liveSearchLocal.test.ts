@@ -82,7 +82,7 @@ describe('runLocalLiveSearch', () => {
   });
 
   it('passes libraryScope from the sidebar music library filter', async () => {
-    useAuthStore.setState({ musicLibraryFilterByServer: { s1: 'lib7' } });
+    useAuthStore.setState({ musicLibraryFilterByServer: { s1: ['lib7'] } });
     let captured: unknown;
     onInvoke('library_live_search', (args) => {
       captured = args;

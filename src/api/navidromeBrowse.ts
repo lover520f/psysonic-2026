@@ -1,6 +1,7 @@
 import type { SubsonicAlbum, SubsonicArtist, SubsonicSong } from './subsonicTypes';
 import { invoke } from '@tauri-apps/api/core';
 import { useAuthStore } from '../store/authStore';
+import { libraryScopeForServer } from './subsonicClient';
 import { ndLogin } from './navidromeAdmin';
 /** Server-keyed Bearer token cache. Cheap to keep — Navidrome tokens are long-lived. */
 let cachedToken: { serverUrl: string; token: string } | null = null;
@@ -24,10 +25,9 @@ function asString(v: unknown, fallback = ''): string {
  *  Mirrors the Subsonic `musicFolderId` we pipe through `libraryFilterParams()` — Navidrome
  *  uses the same id space, so the same value is valid for the native API's `library_id` filter. */
 function currentLibraryId(): string | null {
-  const { activeServerId, musicLibraryFilterByServer } = useAuthStore.getState();
+  const { activeServerId } = useAuthStore.getState();
   if (!activeServerId) return null;
-  const f = musicLibraryFilterByServer[activeServerId];
-  return !f || f === 'all' ? null : f;
+  return libraryScopeForServer(activeServerId) ?? null;
 }
 
 function asNumber(v: unknown): number | undefined {

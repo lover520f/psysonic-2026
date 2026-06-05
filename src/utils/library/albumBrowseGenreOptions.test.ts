@@ -3,7 +3,7 @@ import type { AlbumBrowseQuery } from './albumBrowseTypes';
 
 const libraryGetGenreAlbumCounts = vi.fn();
 const libraryIsReady = vi.fn();
-const libraryScopeForServer = vi.fn();
+const libraryScopeInvokeArgs = vi.fn();
 const runLocalAlbumBrowse = vi.fn();
 
 vi.mock('../../api/library', () => ({
@@ -14,8 +14,8 @@ vi.mock('./libraryReady', () => ({
   libraryIsReady: (...args: unknown[]) => libraryIsReady(...args),
 }));
 
-vi.mock('../../api/subsonicClient', () => ({
-  libraryScopeForServer: (...args: unknown[]) => libraryScopeForServer(...args),
+vi.mock('../musicLibraryFilter', () => ({
+  libraryScopeInvokeArgs: (...args: unknown[]) => libraryScopeInvokeArgs(...args),
 }));
 
 vi.mock('./albumBrowseLocal', () => ({
@@ -35,7 +35,10 @@ const baseQuery: AlbumBrowseQuery = {
 beforeEach(() => {
   vi.clearAllMocks();
   libraryIsReady.mockResolvedValue(true);
-  libraryScopeForServer.mockReturnValue('lib-a');
+  libraryScopeInvokeArgs.mockReturnValue({
+    libraryScope: 'lib-a',
+    libraryScopeIds: ['lib-a'],
+  });
 });
 
 describe('fetchAlbumBrowseGenreOptions', () => {
@@ -53,6 +56,7 @@ describe('fetchAlbumBrowseGenreOptions', () => {
     expect(libraryGetGenreAlbumCounts).toHaveBeenCalledWith({
       serverId: 'srv-1',
       libraryScope: 'lib-a',
+      libraryScopeIds: ['lib-a'],
     });
     expect(runLocalAlbumBrowse).not.toHaveBeenCalled();
   });

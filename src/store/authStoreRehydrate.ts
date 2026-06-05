@@ -12,6 +12,7 @@ import {
   sanitizeLoudnessPreAnalysisFromStorage,
   sanitizeSkipStarCounts,
 } from './authStoreHelpers';
+import { normalizeMusicLibraryFilter } from '../utils/musicLibraryFilter';
 import type {
   AuthState,
   DiscordCoverSource,
@@ -152,7 +153,15 @@ export function computeAuthStoreRehydration(state: AuthState): Partial<AuthState
     discordCoverSourceMigrated = { discordCoverSource: 'apple' };
   }
 
+  const musicLibraryFilterByServer: AuthState['musicLibraryFilterByServer'] = {};
+  for (const [sid, raw] of Object.entries(state.musicLibraryFilterByServer ?? {})) {
+    musicLibraryFilterByServer[sid] = normalizeMusicLibraryFilter(
+      raw as Parameters<typeof normalizeMusicLibraryFilter>[0],
+    );
+  }
+
   return {
+    musicLibraryFilterByServer,
     mixMinRatingSong: clampMixFilterMinStars(state.mixMinRatingSong as number),
     mixMinRatingAlbum: clampMixFilterMinStars(state.mixMinRatingAlbum as number),
     mixMinRatingArtist: clampMixFilterMinStars(state.mixMinRatingArtist as number),

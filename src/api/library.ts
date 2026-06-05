@@ -202,6 +202,8 @@ export interface LibrarySortClause {
 export interface LibraryAdvancedSearchRequest {
   serverId: string;
   libraryScope?: string | null;
+  /** Multiple music-folder ids (OR). Preferred over `libraryScope` when length > 1. */
+  libraryScopeIds?: string[] | null;
   query?: string | null; // shorthand → fts clause on text fields
   entityTypes: LibraryEntityType[];
   filters?: LibraryFilterClause[];
@@ -482,12 +484,12 @@ function mapServersOrderedToIndexKeys(serverIds: string[]): string[] {
 }
 
 function mapClusterLibraryScopesToIndexKeys(
-  scopes: Record<string, string> | undefined,
-): Record<string, string> | undefined {
+  scopes: Record<string, string[]> | undefined,
+): Record<string, string[]> | undefined {
   if (!scopes) return undefined;
-  const out: Record<string, string> = {};
-  for (const [sid, scope] of Object.entries(scopes)) {
-    out[serverIndexKeyForId(sid)] = scope;
+  const out: Record<string, string[]> = {};
+  for (const [sid, scopeIds] of Object.entries(scopes)) {
+    if (scopeIds.length > 0) out[serverIndexKeyForId(sid)] = scopeIds;
   }
   return Object.keys(out).length > 0 ? out : undefined;
 }
@@ -497,7 +499,7 @@ export function libraryClusterListTracks(args: {
   serversOrdered: string[];
   limit?: number;
   offset?: number;
-  libraryScopes?: Record<string, string>;
+  libraryScopes?: Record<string, string[]>;
 }): Promise<LibraryTracksEnvelope> {
   return invoke<LibraryTracksEnvelope>('library_cluster_list_tracks', {
     request: {
@@ -526,7 +528,7 @@ export function libraryClusterListAlbums(args: {
   serversOrdered: string[];
   limit?: number;
   offset?: number;
-  libraryScopes?: Record<string, string>;
+  libraryScopes?: Record<string, string[]>;
 }): Promise<LibraryClusterAlbumsResponse> {
   return invoke<LibraryClusterAlbumsResponse>('library_cluster_list_albums', {
     request: {
@@ -545,7 +547,7 @@ export function libraryClusterListArtists(args: {
   serversOrdered: string[];
   limit?: number;
   offset?: number;
-  libraryScopes?: Record<string, string>;
+  libraryScopes?: Record<string, string[]>;
 }): Promise<LibraryClusterArtistsResponse> {
   return invoke<LibraryClusterArtistsResponse>('library_cluster_list_artists', {
     request: {
@@ -713,7 +715,7 @@ export interface LibraryClusterAdvancedSearchRequest {
   limit: number;
   offset?: number;
   skipTotals?: boolean;
-  libraryScopes?: Record<string, string>;
+  libraryScopes?: Record<string, string[]>;
 }
 
 export function libraryClusterAdvancedSearch(
@@ -1042,11 +1044,13 @@ export function libraryGetCatalogYearBounds(args: { serverId: string }): Promise
 export function libraryGetGenreAlbumCounts(args: {
   serverId: string;
   libraryScope?: string;
+  libraryScopeIds?: string[];
 }): Promise<GenreAlbumCountRow[]> {
   const indexKey = serverIndexKeyForId(args.serverId);
   return invoke<GenreAlbumCountRow[]>('library_get_genre_album_counts', {
     serverId: indexKey,
     libraryScope: args.libraryScope,
+    libraryScopeIds: args.libraryScopeIds,
   });
 }
 
@@ -1054,6 +1058,7 @@ export type LibraryGenreAlbumsRequest = {
   serverId: string;
   genre: string;
   libraryScope?: string | null;
+  libraryScopeIds?: string[] | null;
   sort?: LibrarySortClause[];
   limit?: number;
   offset?: number;
@@ -1077,6 +1082,7 @@ export function libraryListAlbumsByGenre(
       serverId: indexKey,
       genre: request.genre,
       libraryScope: request.libraryScope ?? undefined,
+      libraryScopeIds: request.libraryScopeIds ?? undefined,
       sort: request.sort ?? [],
       limit: request.limit ?? 50,
       offset: request.offset ?? 0,

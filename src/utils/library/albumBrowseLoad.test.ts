@@ -3,7 +3,9 @@ import type { SubsonicAlbum } from '../../api/subsonicTypes';
 import {
   albumBrowseHasGenreFilter,
   albumBrowseHasServerFilters,
+  albumBrowseMultiGenreBrowse,
   albumBrowseStarredNeedsLocalIntersect,
+  albumBrowseUseSliceCatalog,
   compilationFilterClauses,
   countGenresFromAlbums,
   filterAlbumsByNameTextQuery,
@@ -39,6 +41,20 @@ describe('albumBrowseLoad', () => {
 
   it('genre filter disables pagination path', () => {
     expect(albumBrowseHasGenreFilter({ ...base, genres: ['Rock'] })).toBe(true);
+  });
+
+  it('slice catalog only for plain browse', () => {
+    expect(albumBrowseUseSliceCatalog(base)).toBe(true);
+    expect(albumBrowseUseSliceCatalog({ ...base, compFilter: 'only' })).toBe(true);
+    expect(albumBrowseUseSliceCatalog({ ...base, genres: ['Rock'] })).toBe(false);
+    expect(albumBrowseUseSliceCatalog({ ...base, year: { from: 1990 } })).toBe(false);
+    expect(albumBrowseUseSliceCatalog({ ...base, losslessOnly: true })).toBe(false);
+    expect(albumBrowseUseSliceCatalog({ ...base, starredOnly: true })).toBe(false);
+  });
+
+  it('multi-genre disables offset pagination', () => {
+    expect(albumBrowseMultiGenreBrowse({ ...base, genres: ['Rock'] })).toBe(false);
+    expect(albumBrowseMultiGenreBrowse({ ...base, genres: ['Rock', 'Jazz'] })).toBe(true);
   });
 
   it('starred + lossless uses local intersect when index is on', () => {

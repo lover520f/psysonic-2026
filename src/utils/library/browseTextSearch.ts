@@ -5,7 +5,7 @@ import { getStarred } from '../../api/subsonicStarRating';
 import { search, searchSongsPaged } from '../../api/subsonicSearch';
 import type { SearchResults, SubsonicAlbum, SubsonicArtist, SubsonicSong } from '../../api/subsonicTypes';
 import { libraryAdvancedSearch, libraryGetArtistLosslessBrowse, libraryListLosslessAlbums } from '../../api/library';
-import { libraryScopeForServer } from '../../api/subsonicClient';
+import { libraryScopeInvokeArgs } from '../musicLibraryFilter';
 import {
   LIVE_SEARCH_DEBOUNCE_NETWORK_MS,
   LIVE_SEARCH_DEBOUNCE_RACE_MS,
@@ -312,7 +312,7 @@ export async function runLocalBrowseSongPage(
   try {
     const resp = await libraryAdvancedSearch({
       serverId,
-      libraryScope: libraryScopeForServer(serverId) ?? undefined,
+      ...libraryScopeInvokeArgs(serverId),
       query: q,
       entityTypes: ['track'],
       limit: pageSize,
@@ -414,7 +414,7 @@ export async function runLocalRandomSongs(
   try {
     const resp = await libraryAdvancedSearch({
       serverId,
-      libraryScope: libraryScopeForServer(serverId) ?? undefined,
+      ...libraryScopeInvokeArgs(serverId),
       entityTypes: ['track'],
       sort: [{ field: 'random', dir: 'asc' }],
       limit,
@@ -438,7 +438,7 @@ export async function runLocalLosslessAlbums(
   try {
     const resp = await libraryListLosslessAlbums({
       serverId,
-      libraryScope: libraryScopeForServer(serverId) ?? undefined,
+      ...libraryScopeInvokeArgs(serverId),
       limit,
       offset,
     });
@@ -462,7 +462,7 @@ export async function runLocalArtistLosslessBrowse(
     const resp = await libraryGetArtistLosslessBrowse({
       serverId,
       artistId,
-      libraryScope: libraryScopeForServer(serverId) ?? undefined,
+      ...libraryScopeInvokeArgs(serverId),
     });
     if (resp.source !== 'local') return null;
     return {
@@ -486,7 +486,7 @@ export async function runLocalRandomAlbums(
   try {
     const resp = await libraryAdvancedSearch({
       serverId,
-      libraryScope: libraryScopeForServer(serverId) ?? undefined,
+      ...libraryScopeInvokeArgs(serverId),
       entityTypes: ['album'],
       sort: [{ field: 'random', dir: 'asc' }],
       limit,
@@ -551,7 +551,7 @@ export async function runLocalBrowseAllArtists(
   try {
     const resp = await libraryAdvancedSearch({
       serverId,
-      libraryScope: libraryScopeForServer(serverId) ?? undefined,
+      ...libraryScopeInvokeArgs(serverId),
       entityTypes: ['artist'],
       limit,
       offset: 0,
@@ -581,7 +581,7 @@ export async function fetchLocalArtistCatalogChunk(
   try {
     const resp = await libraryAdvancedSearch({
       serverId,
-      libraryScope: libraryScopeForServer(serverId) ?? undefined,
+      ...libraryScopeInvokeArgs(serverId),
       entityTypes: ['artist'],
       sort: [{ field: 'name', dir: 'asc' }],
       limit: chunkSize,

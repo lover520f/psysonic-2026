@@ -4,6 +4,7 @@ import { version } from '../../package.json';
 import { useAuthStore } from '../store/authStore';
 import type { ServerProfile } from '../store/authStoreTypes';
 import { connectBaseUrlForServer } from '../utils/server/serverEndpoint';
+import { libraryScopeForServer as scopeForServer } from '../utils/musicLibraryFilter';
 import { findServerByIdOrIndexKey, resolveServerIdForIndexKey } from '../utils/server/serverLookup';
 
 export const SUBSONIC_CLIENT = `psysonic/${version}`;
@@ -106,17 +107,16 @@ export function libraryFilterParams(): Record<string, string | number> {
   return activeServerId ? libraryFilterParamsForServer(activeServerId) : {};
 }
 
-/** Navidrome/Subsonic music folder id for the local library index, or undefined for all libraries. */
-export function libraryScopeForServer(serverId: string): string | undefined {
-  const resolved = resolveServerIdForIndexKey(serverId);
-  const f = useAuthStore.getState().musicLibraryFilterByServer[resolved];
-  if (f === undefined || f === 'all') return undefined;
-  return f;
-}
+export {
+  libraryScopeForServer,
+  libraryScopeIdsForServer,
+  libraryScopeInvokeArgs,
+  musicLibraryFilterForServer,
+} from '../utils/musicLibraryFilter';
 
 /** Library folder filter for an explicit saved server (e.g. Now Playing while browsing another). */
 export function libraryFilterParamsForServer(serverId: string): Record<string, string | number> {
-  const scope = libraryScopeForServer(serverId);
+  const scope = scopeForServer(serverId);
   if (!scope) return {};
   return { musicFolderId: scope };
 }

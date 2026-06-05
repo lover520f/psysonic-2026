@@ -30,12 +30,21 @@ import SidebarPerfProbeModal from './sidebar/SidebarPerfProbeModal';
 import SidebarNavBody from './sidebar/SidebarNavBody';
 import { getActiveClusterMemberIds, isClusterMode } from '../utils/serverCluster/clusterScope';
 import {
+  clusterLibraryFilterStorageKey,
   clusterLibraryPickerEntryId,
   clusterLibraryScopeSubtitle,
-  clusterPickerFilterId,
-  parseClusterLibraryPickerEntryId,
+  isClusterAllLibrariesSelected,
+  isClusterLibraryFolderSelected,
 } from '../utils/serverCluster/clusterLibraryScopes';
 import { getCachedMusicFolders } from '../utils/musicFoldersCache';
+import {
+  isAllLibrariesFilter,
+  isLibraryFolderSelected,
+  libraryScopeSubtitleFromFolders,
+  musicLibraryFilterForServer,
+  musicLibraryFilterStorageKey,
+  normalizeMusicLibraryFilter,
+} from '../utils/musicLibraryFilter';
 
 
 export default function Sidebar({
@@ -64,6 +73,7 @@ export default function Sidebar({
   const musicFolders = useAuthStore(s => s.musicFolders);
   const musicLibraryFilterByServer = useAuthStore(s => s.musicLibraryFilterByServer);
   const setMusicLibraryFilter = useAuthStore(s => s.setMusicLibraryFilter);
+  const toggleMusicLibraryFolder = useAuthStore(s => s.toggleMusicLibraryFolder);
   const hotCacheEnabled = useAuthStore(s => s.hotCacheEnabled);
   const setHotCacheEnabled = useAuthStore(s => s.setHotCacheEnabled);
   const normalizationEngine = useAuthStore(s => s.normalizationEngine);
@@ -100,22 +110,37 @@ export default function Sidebar({
     ? clusterMusicFolders.map(e => ({
         id: clusterLibraryPickerEntryId(e.serverId, e.folderId),
         name: `${e.serverLabel} — ${e.folderName}`,
+        serverId: e.serverId,
+        folderId: e.folderId,
       }))
-    : effectiveMusicFolders;
+    : effectiveMusicFolders.map(f => ({
+        id: f.id,
+        name: f.name,
+        serverId,
+        folderId: f.id,
+      }));
   const showLibraryPicker = !isCollapsed && isLoggedIn && (
     clusterMode ? clusterMusicFolders.length > 0 : effectiveMusicFolders.length > 1
   );
 
-  const filterId = clusterMode
-    ? clusterPickerFilterId(clusterMemberIds, clusterMusicFolders)
+  const allLibrariesSelected = clusterMode
+    ? isClusterAllLibrariesSelected(clusterMemberIds)
     : serverId
-      ? (musicLibraryFilterByServer[serverId] ?? 'all')
+      ? isAllLibrariesFilter(normalizeMusicLibraryFilter(musicLibraryFilterByServer[serverId]))
+      : true;
+  const filterStorageKey = clusterMode
+    ? clusterLibraryFilterStorageKey(clusterMemberIds)
+    : serverId
+      ? musicLibraryFilterStorageKey(serverId)
       : 'all';
+  const multiLibrariesLabel = (count: number) => t('sidebar.librariesCount', { count });
   const selectedFolderName = clusterMode
-    ? clusterLibraryScopeSubtitle(clusterMemberIds, clusterMusicFolders)
-    : filterId === 'all'
-      ? null
-      : effectiveMusicFolders.find(f => f.id === filterId)?.name ?? null;
+    ? clusterLibraryScopeSubtitle(clusterMemberIds, clusterMusicFolders, multiLibrariesLabel)
+    : libraryScopeSubtitleFromFolders(
+        effectiveMusicFolders,
+        serverId ? musicLibraryFilterForServer(serverId) : 'all',
+        multiLibrariesLabel,
+      );
 
   const libraryItemsForReorder = useMemo(
     () => getLibraryItemsForReorder(sidebarItems, randomNavMode),
@@ -158,7 +183,7 @@ export default function Sidebar({
   });
   const newReleasesUnreadCount = useSidebarNewReleasesUnread({
     serverId,
-    filterId,
+    filterId: filterStorageKey,
     isLoggedIn,
     pathname: location.pathname,
   });
@@ -168,18 +193,10 @@ export default function Sidebar({
 
 
 
-  const pickLibrary = (id: 'all' | string) => {
-    if (clusterMode && id !== 'all') {
-      const parsed = parseClusterLibraryPickerEntryId(id);
-      if (parsed) {
-        setMusicLibraryFilter(parsed.folderId, parsed.serverId);
-        setLibraryDropdownOpen(false);
-        return;
-      }
-    }
-    setMusicLibraryFilter(id);
-    setLibraryDropdownOpen(false);
-  };
+  const isFolderSelected = (sid: string, folderId: string) =>
+    clusterMode
+      ? isClusterLibraryFolderSelected(sid, folderId)
+      : isLibraryFolderSelected(sid, folderId);
 
   // Fetch playlists when expanded
   useEffect(() => {
@@ -232,7 +249,7 @@ export default function Sidebar({
             playlists.length,
             isLoggedIn,
             randomNavMode,
-            filterId,
+            filterStorageKey,
             hasOfflineContent,
             activeJobs.length,
             isSyncing,
@@ -243,14 +260,17 @@ export default function Sidebar({
         <SidebarNavBody
           isCollapsed={isCollapsed}
           showLibraryPicker={showLibraryPicker}
-          filterId={filterId}
+          allLibrariesSelected={allLibrariesSelected}
           selectedFolderName={selectedFolderName}
           libraryDropdownOpen={libraryDropdownOpen}
           setLibraryDropdownOpen={setLibraryDropdownOpen}
           dropdownRect={dropdownRect}
           libraryTriggerRef={libraryTriggerRef}
           musicFolders={pickerFolders}
-          pickLibrary={pickLibrary}
+          isFolderSelected={isFolderSelected}
+          onSelectAll={() => setMusicLibraryFilter('all')}
+          onExclusiveSelect={(sid, folderId) => setMusicLibraryFilter(folderId, sid)}
+          onToggleFolder={(sid, folderId) => toggleMusicLibraryFolder(folderId, sid)}
           visibleLibraryConfigs={visibleLibraryConfigs}
           libraryItemsForReorder={libraryItemsForReorder}
           visibleSystemConfigs={visibleSystemConfigs}

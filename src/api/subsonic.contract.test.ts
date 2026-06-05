@@ -72,7 +72,7 @@ describe('libraryFilterParams', () => {
   it('returns { musicFolderId } when the active server has a specific filter', () => {
     const serverId = setUpServer();
     useAuthStore.setState({
-      musicLibraryFilterByServer: { [serverId]: 'mf-7' },
+      musicLibraryFilterByServer: { [serverId]: ['mf-7'] },
     });
     expect(libraryFilterParams()).toEqual({ musicFolderId: 'mf-7' });
   });
@@ -91,7 +91,7 @@ describe('libraryScopeForServer', () => {
   it('returns the folder id when scoped', () => {
     const serverId = setUpServer();
     useAuthStore.setState({
-      musicLibraryFilterByServer: { [serverId]: 'mf-7' },
+      musicLibraryFilterByServer: { [serverId]: ['mf-7'] },
     });
     expect(libraryScopeForServer(serverId)).toBe('mf-7');
   });

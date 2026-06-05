@@ -38,7 +38,12 @@ pub fn run_cluster_advanced_search(
     for server_id in &req.servers_ordered {
         let server_req = LibraryAdvancedSearchRequest {
             server_id: server_id.clone(),
-            library_scope: req.library_scopes.get(server_id).cloned(),
+            library_scope: None,
+            library_scope_ids: req
+                .library_scopes
+                .get(server_id)
+                .filter(|ids| !ids.is_empty())
+                .cloned(),
             query: req.query.clone(),
             entity_types: req.entity_types.clone(),
             filters: req.filters.clone(),

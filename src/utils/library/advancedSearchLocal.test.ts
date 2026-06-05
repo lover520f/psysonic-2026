@@ -53,7 +53,7 @@ describe('runLocalAdvancedSearch', () => {
   });
 
   it('passes libraryScope from the sidebar music library filter', async () => {
-    useAuthStore.setState({ musicLibraryFilterByServer: { s1: 'lib7' } });
+    useAuthStore.setState({ musicLibraryFilterByServer: { s1: ['lib7'] } });
     ready();
     let captured: unknown;
     onInvoke('library_advanced_search', (args) => {

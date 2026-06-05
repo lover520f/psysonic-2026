@@ -6,7 +6,7 @@ use tauri::State;
 use crate::dto::CatalogYearBoundsDto;
 use crate::dto::GenreAlbumCountDto;
 use crate::runtime::LibraryRuntime;
-use crate::search::library_scope_equals_sql;
+use crate::search::library_scope_filter_sql;
 use crate::store::LibraryStore;
 
 #[derive(Debug, Clone, serde::Deserialize)]
@@ -106,11 +106,34 @@ pub fn library_get_catalog_year_bounds(
     catalog_year_bounds_for_server(&runtime.store, &server_id)
 }
 
+fn effective_genre_count_scope_ids(
+    library_scope: Option<&str>,
+    library_scope_ids: Option<&[String]>,
+) -> Vec<String> {
+    if let Some(ids) = library_scope_ids {
+        let trimmed: Vec<_> = ids
+            .iter()
+            .filter(|s| !s.trim().is_empty())
+            .cloned()
+            .collect();
+        if !trimmed.is_empty() {
+            return trimmed;
+        }
+    }
+    library_scope
+        .map(str::trim)
+        .filter(|s| !s.is_empty())
+        .map(|s| vec![s.to_string()])
+        .unwrap_or_default()
+}
+
 pub(crate) fn genre_album_counts_for_server(
     store: &LibraryStore,
     server_id: &str,
     library_scope: Option<&str>,
+    library_scope_ids: Option<&[String]>,
 ) -> Result<Vec<GenreAlbumCountDto>, String> {
+    let scope_ids = effective_genre_count_scope_ids(library_scope, library_scope_ids);
     store
         .with_read_conn(|conn| {
             let mut sql = String::from(
@@ -122,9 +145,9 @@ pub(crate) fn genre_album_counts_for_server(
             );
             let mut params: Vec<rusqlite::types::Value> =
                 vec![rusqlite::types::Value::Text(server_id.to_string())];
-            if let Some(scope) = library_scope.filter(|s| !s.trim().is_empty()) {
-                sql.push_str(&format!(" AND {}", library_scope_equals_sql("t")));
-                params.push(rusqlite::types::Value::Text(scope.to_string()));
+            if let (Some(clause), scope_params) = library_scope_filter_sql("t", &scope_ids) {
+                sql.push_str(&format!(" AND {clause}"));
+                params.extend(scope_params);
             }
             sql.push_str(
                 " GROUP BY t.genre COLLATE NOCASE \
@@ -151,11 +174,13 @@ pub fn library_get_genre_album_counts(
     runtime: State<'_, LibraryRuntime>,
     server_id: String,
     library_scope: Option<String>,
+    library_scope_ids: Option<Vec<String>>,
 ) -> Result<Vec<GenreAlbumCountDto>, String> {
     genre_album_counts_for_server(
         &runtime.store,
         &server_id,
         library_scope.as_deref(),
+        library_scope_ids.as_deref(),
     )
 }
 
@@ -307,7 +332,7 @@ mod tests {
             .upsert_batch(&rock_one)
             .unwrap();
 
-        let counts = genre_album_counts_for_server(&store, "s1", None).unwrap();
+        let counts = genre_album_counts_for_server(&store, "s1", None, None).unwrap();
         assert_eq!(counts.len(), 2);
         assert_eq!(counts[0].value, "Rock");
         assert_eq!(counts[0].album_count, 2);
@@ -330,7 +355,7 @@ mod tests {
             .upsert_batch(&[scoped, other])
             .unwrap();
 
-        let counts = genre_album_counts_for_server(&store, "s1", Some("lib1")).unwrap();
+        let counts = genre_album_counts_for_server(&store, "s1", Some("lib1"), None).unwrap();
         assert_eq!(counts.len(), 1);
         assert_eq!(counts[0].value, "Rock");
         assert_eq!(counts[0].album_count, 1);

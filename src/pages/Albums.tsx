@@ -97,6 +97,7 @@ export default function Albums() {
     indexEnabled,
     serverId,
     losslessOnly,
+    musicLibraryFilterVersion,
   );
 
   const {
