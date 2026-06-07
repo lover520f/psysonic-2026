@@ -8,8 +8,6 @@ import { playListenSessionFinalize } from '../../store/playListenSession';
 import { getPlaybackProgressSnapshot } from '../../store/playbackProgress';
 import { usePlayerStore } from '../../store/playerStore';
 import { useAuthStore } from '../../store/authStore';
-import { useOrbitStore } from '../../store/orbitStore';
-import { endOrbitSession, leaveOrbitSession } from '../../utils/orbit';
 import {
   canRunShortcutActionInMiniWindow,
   executeRuntimeAction,
@@ -116,14 +114,12 @@ export function useMediaAndWindowBridge(navigate: NavigateFunction) {
           flushPlayQueuePosition(),
           new Promise(r => setTimeout(r, 1500)),
         ]);
-        const role = useOrbitStore.getState().role;
-        if (role === 'host' || role === 'guest') {
-          const teardown = role === 'host' ? endOrbitSession() : leaveOrbitSession();
-          await Promise.race([
-            teardown.catch(() => {}),
-            new Promise(r => setTimeout(r, 1500)),
-          ]);
-        }
+        // Orbit: do NOT tear the session down on quit. Leave it alive on the
+        // server (and the breadcrumb in place) so the next launch can offer to
+        // reconnect — the host resumes hosting, a guest rejoins. Deliberately
+        // ending a session is the session bar's "End" button; quitting only
+        // suspends it. Orphaned playlists are reaped by the app-start sweep
+        // once the session goes stale.
         await invoke('exit_app');
       };
 
