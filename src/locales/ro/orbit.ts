@@ -1,4 +1,14 @@
 export const orbit = {
+  reconnect: {
+    title: 'Reintri în sesiunea Orbit?',
+    bodyHost: 'Găzduiai „{{name}}". Reiei sesiunea de unde ai rămas?',
+    bodyGuest: '{{host}} găzduiește „{{name}}". Reintri în sesiune?',
+    autoIn: 'Reconectare automată în {{seconds}} s',
+    rejoin: 'Reintră',
+    stayOut: 'Rămâi afară',
+    reconnecting: 'Se reconectează…',
+    failed: 'Nu s-a putut reintra — sesiunea s-ar putea să se fi încheiat.',
+  },
   triggerLabel: 'Orbit',
   triggerTooltip: 'Pornește sau intră în o sesiune de ascultare distribuită',
   launchCreate: 'Crează o sesiune',

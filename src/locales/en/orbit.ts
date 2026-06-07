@@ -1,4 +1,14 @@
 export const orbit = {
+  reconnect: {
+    title: 'Rejoin your Orbit session?',
+    bodyHost: 'You were hosting "{{name}}". Pick the session back up where you left off?',
+    bodyGuest: '{{host}} is hosting "{{name}}". Rejoin the session?',
+    autoIn: 'Auto-rejoin in {{seconds}}s',
+    rejoin: 'Rejoin',
+    stayOut: 'Stay out',
+    reconnecting: 'Rejoining…',
+    failed: "Couldn't rejoin — the session may have ended.",
+  },
   triggerLabel: 'Orbit',
   triggerTooltip: 'Start or join a shared listening session',
   launchCreate: 'Create a session',

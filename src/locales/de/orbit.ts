@@ -1,4 +1,14 @@
 export const orbit = {
+  reconnect: {
+    title: 'Wieder in deine Orbit-Session?',
+    bodyHost: 'Du hast „{{name}}" gehostet. Dort weitermachen, wo du aufgehört hast?',
+    bodyGuest: '{{host}} hostet „{{name}}". Wieder beitreten?',
+    autoIn: 'Automatisch in {{seconds}}s',
+    rejoin: 'Wieder rein',
+    stayOut: 'Draußen bleiben',
+    reconnecting: 'Trete bei…',
+    failed: 'Wiedereinstieg fehlgeschlagen — die Session ist vielleicht beendet.',
+  },
   triggerLabel: 'Orbit',
   triggerTooltip: 'Gemeinsame Hör-Session starten oder beitreten',
   launchCreate: 'Session erstellen',

@@ -1,4 +1,14 @@
 export const orbit = {
+  reconnect: {
+    title: 'Weer in je Orbit-sessie?',
+    bodyHost: 'Je hostte "{{name}}". De sessie hervatten waar je was gebleven?',
+    bodyGuest: '{{host}} host "{{name}}". Weer deelnemen?',
+    autoIn: 'Automatisch over {{seconds}} s',
+    rejoin: 'Opnieuw deelnemen',
+    stayOut: 'Erbuiten blijven',
+    reconnecting: 'Deelnemen…',
+    failed: 'Kon niet opnieuw deelnemen — de sessie is mogelijk beëindigd.',
+  },
   triggerLabel: 'Orbit',
   triggerTooltip: 'Een gedeelde luistersessie starten of eraan deelnemen',
   launchCreate: 'Sessie aanmaken',

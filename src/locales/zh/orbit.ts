@@ -1,4 +1,14 @@
 export const orbit = {
+  reconnect: {
+    title: '重新加入你的 Orbit 会话？',
+    bodyHost: '你之前在主持「{{name}}」。从上次离开的地方继续会话吗？',
+    bodyGuest: '{{host}} 正在主持「{{name}}」。重新加入会话吗？',
+    autoIn: '{{seconds}} 秒后自动重连',
+    rejoin: '重新加入',
+    stayOut: '不加入',
+    reconnecting: '正在加入…',
+    failed: '无法重新加入——会话可能已结束。',
+  },
   triggerLabel: 'Orbit',
   triggerTooltip: '开始或加入共享收听会话',
   launchCreate: '创建会话',

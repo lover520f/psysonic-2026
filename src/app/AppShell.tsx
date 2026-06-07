@@ -23,6 +23,7 @@ import GlobalConfirmModal from '../components/GlobalConfirmModal';
 import ThemeMigrationNotice from '../components/ThemeMigrationNotice';
 import OrbitAccountPicker from '../components/OrbitAccountPicker';
 import OrbitHelpModal from '../components/OrbitHelpModal';
+import OrbitReconnectModal from '../components/OrbitReconnectModal';
 import TooltipPortal from '../components/TooltipPortal';
 import OverlayScrollArea from '../components/OverlayScrollArea';
 import {
@@ -322,6 +323,7 @@ export function AppShell() {
       <ThemeMigrationNotice />
       <OrbitAccountPicker />
       <OrbitHelpModal />
+      <OrbitReconnectModal />
       {!perfFlags.disableTooltipPortal && <TooltipPortal />}
       <AppUpdater />
     </div>

@@ -1,4 +1,14 @@
 export const orbit = {
+  reconnect: {
+    title: '¿Volver a tu sesión de Orbit?',
+    bodyHost: 'Estabas alojando «{{name}}». ¿Retomar la sesión donde la dejaste?',
+    bodyGuest: '{{host}} está alojando «{{name}}». ¿Volver a unirte?',
+    autoIn: 'Reconexión automática en {{seconds}} s',
+    rejoin: 'Volver a unirse',
+    stayOut: 'Quedarse fuera',
+    reconnecting: 'Uniéndose…',
+    failed: 'No se pudo volver a unir: puede que la sesión haya terminado.',
+  },
   triggerLabel: 'Orbit',
   triggerTooltip: 'Iniciar o unirse a una sesión de escucha compartida',
   launchCreate: 'Crear una sesión',

@@ -1,4 +1,14 @@
 export const orbit = {
+  reconnect: {
+    title: 'Вернуться в сессию Orbit?',
+    bodyHost: 'Вы вели «{{name}}». Продолжить с того места, где остановились?',
+    bodyGuest: '{{host}} ведёт «{{name}}». Снова присоединиться?',
+    autoIn: 'Автоматически через {{seconds}} с',
+    rejoin: 'Вернуться',
+    stayOut: 'Остаться',
+    reconnecting: 'Подключение…',
+    failed: 'Не удалось вернуться — возможно, сессия завершена.',
+  },
   triggerLabel: 'Orbit',
   triggerTooltip: 'Начать или присоединиться к совместной сессии прослушивания',
   launchCreate: 'Создать сессию',

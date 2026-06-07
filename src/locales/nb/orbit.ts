@@ -1,4 +1,14 @@
 export const orbit = {
+  reconnect: {
+    title: 'Bli med i Orbit-økten igjen?',
+    bodyHost: 'Du var vert for «{{name}}». Fortsette økten der du slapp?',
+    bodyGuest: '{{host}} er vert for «{{name}}». Bli med igjen?',
+    autoIn: 'Kobler til automatisk om {{seconds}} s',
+    rejoin: 'Bli med igjen',
+    stayOut: 'Hold deg utenfor',
+    reconnecting: 'Kobler til…',
+    failed: 'Kunne ikke bli med igjen – økten kan være avsluttet.',
+  },
   triggerLabel: 'Orbit',
   triggerTooltip: 'Start eller bli med i en delt lytteøkt',
   launchCreate: 'Opprett en økt',
