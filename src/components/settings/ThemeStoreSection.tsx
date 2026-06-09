@@ -6,7 +6,8 @@ import CoverLightbox from '../CoverLightbox';
 import { useThemeAnimationRisk } from '../../hooks/useThemeAnimationRisk';
 import { AnimatedThemeBadge } from './AnimatedThemeBadge';
 import { PopularityBar } from './PopularityBar';
-import { fetchThemeStats, type ThemeStat } from '../../utils/themes/themeStats';
+import { fetchThemeStats, postInstall, postRating, type ThemeStat } from '../../utils/themes/themeStats';
+import StarRating from '../StarRating';
 import CustomSelect from '../CustomSelect';
 import { formatRelativeTime } from '../../utils/format/relativeTime';
 import { useThemeStore } from '../../store/themeStore';
@@ -55,6 +56,9 @@ export function ThemeStoreSection() {
   const installed = useInstalledThemesStore(s => s.themes);
   const themeStoreStatsEnabled = useAuthStore(s => s.themeStoreStatsEnabled);
   const setThemeStoreStatsEnabled = useAuthStore(s => s.setThemeStoreStatsEnabled);
+  const ensureThemeStoreClientKey = useAuthStore(s => s.ensureThemeStoreClientKey);
+  const myRatings = useAuthStore(s => s.themeStoreMyRatings);
+  const setThemeStoreRating = useAuthStore(s => s.setThemeStoreRating);
   const animRisk = useThemeAnimationRisk();
 
   const [themes, setThemes] = useState<RegistryTheme[] | null>(null);
@@ -155,12 +159,19 @@ export function ThemeStoreSection() {
     topRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
-  const handleInstall = async (th: RegistryTheme) => {
+  const handleInstall = async (th: RegistryTheme, isUpdate = false) => {
     setBusyId(th.id);
     setFailedId(null);
     const result = await installThemeFromRegistry(th);
-    if (result !== 'ok') setFailedId(th.id);
+    if (result !== 'ok') { setFailedId(th.id); setBusyId(null); return; }
+    // Count genuine installs only — updates re-use this path but must not inflate.
+    if (!isUpdate) void postInstall(th.id, ensureThemeStoreClientKey());
     setBusyId(null);
+  };
+
+  const handleRate = (themeId: string, rating: number) => {
+    setThemeStoreRating(themeId, rating);
+    void postRating(themeId, ensureThemeStoreClientKey(), rating);
   };
 
 
@@ -323,6 +334,8 @@ export function ThemeStoreSection() {
             const updateAvailable = isInstalled && isNewer(th.version, inst!.version);
             const isActive = activeTheme === th.id;
             const busy = busyId === th.id;
+            const stat = stats.get(th.id);
+            const myRating = myRatings[th.id] ?? 0;
             return (
               <div
                 key={th.id}
@@ -371,7 +384,20 @@ export function ThemeStoreSection() {
                   <div style={{ fontSize: 12.5, color: 'var(--text-secondary)', lineHeight: 1.4, marginTop: 10 }}>
                     {th.description}
                   </div>
-                  {/* Rating slot reserved — see Theme Store roadmap (deferred). */}
+                  {/* Global rating + this client's own pick (opt-in is on in this branch). */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 14, flexWrap: 'wrap' }}>
+                    <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{t('settings.themeStoreYourRating')}</span>
+                    <StarRating
+                      value={myRating}
+                      onChange={r => handleRate(th.id, r)}
+                      ariaLabel={t('settings.themeStoreYourRating')}
+                    />
+                    <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+                      {stat && stat.ratingAvg != null && stat.ratingCount > 0
+                        ? `${stat.ratingAvg.toFixed(1)} ★ · ${t('settings.themeStoreRatingCount', { count: stat.ratingCount })}`
+                        : t('settings.themeStoreNoRatings')}
+                    </span>
+                  </div>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 18 }}>
                     {!isInstalled && (
                       <button
@@ -396,7 +422,7 @@ export function ThemeStoreSection() {
                       <button
                         className="btn btn-primary"
                         style={{ fontSize: 12, padding: '4px 12px' }}
-                        onClick={() => handleInstall(th)}
+                        onClick={() => handleInstall(th, true)}
                         disabled={busy}
                       >
                         {busy ? t('settings.themeStoreUpdating') : t('settings.themeStoreUpdate')}

@@ -87,3 +87,29 @@ export async function fetchThemeStats(opts?: { force?: boolean }): Promise<Map<s
     return cached ? toMap(cached.stats) : new Map();
   }
 }
+
+/** Report an install (best-effort, anonymous). Dedupe is server-side per client. */
+export async function postInstall(themeId: string, clientKey: string): Promise<void> {
+  try {
+    await fetch(`${STATS_BASE}/install`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ themeId, clientKey }),
+    });
+  } catch {
+    // Best-effort telemetry — never block or surface to the user.
+  }
+}
+
+/** Submit a 1–5 rating (best-effort, anonymous). One rating per client per theme. */
+export async function postRating(themeId: string, clientKey: string, rating: number): Promise<void> {
+  try {
+    await fetch(`${STATS_BASE}/rate`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ themeId, clientKey, rating }),
+    });
+  } catch {
+    // Best-effort — never block or surface to the user.
+  }
+}

@@ -15,14 +15,21 @@ vi.mock('@/utils/themes/themeRegistry', () => ({
 // Stats come from the theme-stats service; mock it so install counts/sort are deterministic.
 vi.mock('@/utils/themes/themeStats', () => ({
   fetchThemeStats: vi.fn(async () => new Map()),
+  postInstall: vi.fn(async () => {}),
+  postRating: vi.fn(async () => {}),
+}));
+vi.mock('@/utils/themes/installThemeFromRegistry', () => ({
+  installThemeFromRegistry: vi.fn(async () => 'ok'),
 }));
 
 import { fetchRegistry } from '@/utils/themes/themeRegistry';
-import { fetchThemeStats, type ThemeStat } from '@/utils/themes/themeStats';
+import { fetchThemeStats, postInstall, postRating, type ThemeStat } from '@/utils/themes/themeStats';
 import { useAuthStore } from '@/store/authStore';
 
 const fetchRegistryMock = vi.mocked(fetchRegistry);
 const fetchThemeStatsMock = vi.mocked(fetchThemeStats);
+const postInstallMock = vi.mocked(postInstall);
+const postRatingMock = vi.mocked(postRating);
 
 const statsOf = (entries: Record<string, number>) =>
   new Map<string, ThemeStat>(
@@ -271,5 +278,36 @@ describe('ThemeStoreSection — opt-in gate', () => {
 
     await screen.findByText('Theme 01');
     expect(fetchRegistryMock).toHaveBeenCalled();
+  });
+});
+
+describe('ThemeStoreSection — install + rating pings', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    fetchThemeStatsMock.mockResolvedValue(new Map());
+    useAuthStore.setState({ themeStoreStatsEnabled: true, themeStoreClientKey: '', themeStoreMyRatings: {} });
+    Element.prototype.scrollIntoView = vi.fn();
+  });
+
+  it('reports an install after a successful install', async () => {
+    fetchRegistryMock.mockResolvedValue({ registry: registryOf([mkTheme('a', 'Alpha')]), stale: false });
+    renderWithProviders(<ThemeStoreSection />);
+    const user = userEvent.setup();
+
+    await screen.findByText('Alpha');
+    await user.click(screen.getByRole('button', { name: /install/i }));
+    await waitFor(() => expect(postInstallMock).toHaveBeenCalledWith('a', expect.any(String)));
+  });
+
+  it('submits a rating when a star is clicked', async () => {
+    fetchRegistryMock.mockResolvedValue({ registry: registryOf([mkTheme('a', 'Alpha')]), stale: false });
+    renderWithProviders(<ThemeStoreSection />);
+    const user = userEvent.setup();
+
+    await screen.findByText('Alpha');
+    await user.click(screen.getByRole('radio', { name: '4' }));
+    await waitFor(() => expect(postRatingMock).toHaveBeenCalledWith('a', expect.any(String), 4));
+    // The client's own rating is remembered.
+    expect(useAuthStore.getState().themeStoreMyRatings.a).toBe(4);
   });
 });

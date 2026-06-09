@@ -142,6 +142,10 @@ export interface AuthState {
    * only built-in and already-installed themes are shown.
    */
   themeStoreStatsEnabled: boolean;
+  /** Anonymous client id for theme install/rating dedupe (no PII). Empty until first use. */
+  themeStoreClientKey: string;
+  /** This client's own rating per theme id (1–5), for showing the user's pick. */
+  themeStoreMyRatings: Record<string, number>;
   discordTemplateDetails: string;
   discordTemplateState: string;
   discordTemplateLargeText: string;
@@ -339,6 +343,9 @@ export interface AuthState {
   setDiscordCoverSource: (v: DiscordCoverSource) => void;
   setEnableBandsintown: (v: boolean) => void;
   setThemeStoreStatsEnabled: (v: boolean) => void;
+  /** Return the anonymous client id, creating + persisting it on first call. */
+  ensureThemeStoreClientKey: () => string;
+  setThemeStoreRating: (themeId: string, rating: number) => void;
   setDiscordTemplateDetails: (v: string) => void;
   setDiscordTemplateState: (v: string) => void;
   setDiscordTemplateLargeText: (v: string) => void;
