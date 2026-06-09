@@ -68,7 +68,12 @@ export async function fetchThemeStats(opts?: { force?: boolean }): Promise<Map<s
     return toMap(cached.stats);
   }
   try {
-    const res = await fetch(STATS_URL, { headers: { accept: 'application/json' } });
+    // On force (manual refresh, or right after the user installs/rates) bypass
+    // the browser HTTP cache too, so the user's own action shows up immediately.
+    const res = await fetch(STATS_URL, {
+      headers: { accept: 'application/json' },
+      cache: opts?.force ? 'no-store' : 'default',
+    });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const raw = (await res.json()) as RawStat[];
     if (!Array.isArray(raw)) throw new Error('unexpected payload');

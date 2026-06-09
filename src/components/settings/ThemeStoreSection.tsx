@@ -164,13 +164,19 @@ export function ThemeStoreSection() {
     const result = await installThemeFromRegistry(th);
     if (result !== 'ok') { setFailedId(th.id); setBusyId(null); return; }
     // Count genuine installs only — updates re-use this path but must not inflate.
-    if (!isUpdate) void postInstall(th.id, ensureThemeStoreClientKey());
+    if (!isUpdate) {
+      await postInstall(th.id, ensureThemeStoreClientKey());
+      // Pull fresh stats so the new count shows immediately (no manual refresh).
+      void fetchThemeStats({ force: true }).then(setStats);
+    }
     setBusyId(null);
   };
 
-  const handleRate = (themeId: string, rating: number) => {
+  const handleRate = async (themeId: string, rating: number) => {
     setThemeStoreRating(themeId, rating);
-    void postRating(themeId, ensureThemeStoreClientKey(), rating);
+    await postRating(themeId, ensureThemeStoreClientKey(), rating);
+    // Refresh so the new average + "highest rated" sort reflect the vote at once.
+    void fetchThemeStats({ force: true }).then(setStats);
   };
 
 
