@@ -12,10 +12,22 @@ vi.mock('@/utils/themes/themeRegistry', () => ({
   cdnUrl: (p: string) => `https://cdn.example/${p}`,
 }));
 
+// Stats come from the theme-stats service; mock it so install counts/sort are deterministic.
+vi.mock('@/utils/themes/themeStats', () => ({
+  fetchThemeStats: vi.fn(async () => new Map()),
+}));
+
 import { fetchRegistry } from '@/utils/themes/themeRegistry';
+import { fetchThemeStats, type ThemeStat } from '@/utils/themes/themeStats';
 import { useAuthStore } from '@/store/authStore';
 
 const fetchRegistryMock = vi.mocked(fetchRegistry);
+const fetchThemeStatsMock = vi.mocked(fetchThemeStats);
+
+const statsOf = (entries: Record<string, number>) =>
+  new Map<string, ThemeStat>(
+    Object.entries(entries).map(([id, installs]) => [id, { installs, ratingAvg: null, ratingCount: 0 }]),
+  );
 
 /** A registry with `n` themes named `Theme 01`…`Theme NN` (zero-padded so the
  *  component's alphabetical sort matches numeric order). */
@@ -76,6 +88,7 @@ async function selectSort(
 describe('ThemeStoreSection — pagination & refresh', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    fetchThemeStatsMock.mockResolvedValue(new Map());
     // The catalogue only loads with the opt-in on; these tests browse it.
     useAuthStore.setState({ themeStoreStatsEnabled: true });
     // jsdom has no layout engine; goToPage() scrolls the list back up.
@@ -199,6 +212,7 @@ describe('ThemeStoreSection — pagination & refresh', () => {
       mkTheme('c', 'Charlie', { installs: 0, updatedAt: '2026-06-03T00:00:00Z' }),
     ];
     fetchRegistryMock.mockResolvedValue({ registry: registryOf(themes), stale: false });
+    fetchThemeStatsMock.mockResolvedValue(statsOf({ a: 10, b: 500, c: 0 }));
     const { container } = renderWithProviders(<ThemeStoreSection />);
     const user = userEvent.setup();
 
@@ -235,6 +249,7 @@ describe('ThemeStoreSection — pagination & refresh', () => {
 describe('ThemeStoreSection — opt-in gate', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    fetchThemeStatsMock.mockResolvedValue(new Map());
     Element.prototype.scrollIntoView = vi.fn();
   });
 

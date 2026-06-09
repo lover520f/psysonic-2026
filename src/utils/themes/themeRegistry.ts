@@ -28,7 +28,11 @@ export interface RegistryTheme {
   css: string;
   /** Repo-relative path to the thumbnail. */
   thumbnail: string;
-  /** All-time CDN downloads of the theme's CSS (≈ installs); 0 until any land. */
+  /**
+   * @deprecated jsDelivr-derived count, unreliable (the stats API caps at the
+   * top 100 files). The app now reads real install counts from the theme-stats
+   * service — see `themeStats.ts`. Kept only for older registry payloads.
+   */
   installs?: number;
   /** ISO date of the last commit touching the theme in the registry repo. */
   updatedAt?: string;

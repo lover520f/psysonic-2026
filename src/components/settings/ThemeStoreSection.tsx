@@ -6,6 +6,7 @@ import CoverLightbox from '../CoverLightbox';
 import { useThemeAnimationRisk } from '../../hooks/useThemeAnimationRisk';
 import { AnimatedThemeBadge } from './AnimatedThemeBadge';
 import { PopularityBar } from './PopularityBar';
+import { fetchThemeStats, type ThemeStat } from '../../utils/themes/themeStats';
 import CustomSelect from '../CustomSelect';
 import { formatRelativeTime } from '../../utils/format/relativeTime';
 import { useThemeStore } from '../../store/themeStore';
@@ -69,6 +70,8 @@ export function ThemeStoreSection() {
   const [busyId, setBusyId] = useState<string | null>(null);
   const [failedId, setFailedId] = useState<string | null>(null);
   const [lightbox, setLightbox] = useState<{ src: string; name: string } | null>(null);
+  // Global install/rating stats from the theme-stats service, keyed by theme id.
+  const [stats, setStats] = useState<Map<string, ThemeStat>>(new Map());
   const topRef = useRef<HTMLDivElement>(null);
 
   // A manual refresh must not unmount the list: blanking it collapses the
@@ -84,6 +87,9 @@ export function ThemeStoreSection() {
       .then(r => { setThemes(r.registry.themes); setGeneratedAt(r.registry.generatedAt); setStale(r.stale); })
       .catch(() => { if (force) setStale(true); else setError(true); })
       .finally(() => { setLoading(false); setRefreshing(false); });
+    // Stats load independently and never block the catalogue — fetchThemeStats
+    // resolves to the cached copy (or an empty map) if the service is down.
+    fetchThemeStats({ force }).then(setStats);
   };
 
   // Thumbnails live at a stable CDN path, so the webview caches them hard
@@ -106,8 +112,8 @@ export function ThemeStoreSection() {
   // catalogue (not the filtered view) so the bar means the same thing regardless
   // of search/filter.
   const maxInstalls = useMemo(
-    () => Math.max(1, ...(themes || []).map(th => th.installs ?? 0)),
-    [themes],
+    () => Math.max(1, ...(themes || []).map(th => stats.get(th.id)?.installs ?? 0)),
+    [themes, stats],
   );
 
   const filtered = useMemo(() => {
@@ -130,8 +136,8 @@ export function ThemeStoreSection() {
     if (sortMode === 'newest') {
       return matched.sort((a, b) => (b.updatedAt || '').localeCompare(a.updatedAt || '') || byName(a, b));
     }
-    return matched.sort((a, b) => (b.installs ?? 0) - (a.installs ?? 0) || byName(a, b));
-  }, [themes, query, mode, sortMode]);
+    return matched.sort((a, b) => ((stats.get(b.id)?.installs ?? 0) - (stats.get(a.id)?.installs ?? 0)) || byName(a, b));
+  }, [themes, query, mode, sortMode, stats]);
 
   // A changed filter can shrink the result set below the current page; reset to
   // the first page whenever the query or mode filter changes.
@@ -423,11 +429,11 @@ export function ThemeStoreSection() {
                   <div style={{ marginTop: 4, display: 'flex', flexDirection: 'column', gap: 6 }}>
                     <div>
                       <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 4 }}>{t('settings.themeStorePopularity')}</div>
-                      <PopularityBar value={th.installs ?? 0} max={maxInstalls} />
+                      <PopularityBar value={stats.get(th.id)?.installs ?? 0} max={maxInstalls} />
                     </div>
                     <div>
                       <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{t('settings.themeStoreDownloads')}</div>
-                      <div style={{ fontSize: 13, color: 'var(--text-secondary)', fontWeight: 600 }}>{(th.installs ?? 0).toLocaleString(i18n.language)}</div>
+                      <div style={{ fontSize: 13, color: 'var(--text-secondary)', fontWeight: 600 }}>{(stats.get(th.id)?.installs ?? 0).toLocaleString(i18n.language)}</div>
                     </div>
                     {th.updatedAt && (
                       <div>
