@@ -227,8 +227,9 @@ describe('ThemeStoreSection — pagination & refresh', () => {
     const user = userEvent.setup();
 
     await screen.findByText('Bravo');
-    // Default sort is most-downloaded first: Bravo (500) > Alpha (10) > Charlie (0).
-    expect(rowNames(container)).toEqual(['Bravo', 'Alpha', 'Charlie']);
+    // Most downloads: Bravo (500) > Alpha (10) > Charlie (0).
+    await selectSort(user, container, 'Most downloads');
+    await waitFor(() => expect(rowNames(container)).toEqual(['Bravo', 'Alpha', 'Charlie']));
     // The download count renders in the meta panel.
     expect(screen.getByText('500')).toBeInTheDocument();
 
@@ -241,16 +242,14 @@ describe('ThemeStoreSection — pagination & refresh', () => {
     await waitFor(() => expect(rowNames(container)).toEqual(['Alpha', 'Bravo', 'Charlie']));
   });
 
-  it('sorts by highest rated', async () => {
+  it('defaults to highest rated', async () => {
     const themes = [mkTheme('a', 'Alpha'), mkTheme('b', 'Bravo'), mkTheme('c', 'Charlie')];
     fetchRegistryMock.mockResolvedValue({ registry: registryOf(themes), stale: false });
     fetchThemeStatsMock.mockResolvedValue(statsOf({ a: 0, b: 0, c: 0 }, { a: 3, b: 5, c: 1 }));
     const { container } = renderWithProviders(<ThemeStoreSection />);
-    const user = userEvent.setup();
 
     await screen.findByText('Bravo');
-    await selectSort(user, container, 'Highest rated');
-    // Bravo (5) > Alpha (3) > Charlie (1).
+    // No sort selected → 'Highest rated' is the default: Bravo (5) > Alpha (3) > Charlie (1).
     await waitFor(() => expect(rowNames(container)).toEqual(['Bravo', 'Alpha', 'Charlie']));
   });
 

@@ -72,7 +72,7 @@ export function ThemeStoreSection() {
   const [stale, setStale] = useState(false);
   const [query, setQuery] = useState('');
   const [mode, setMode] = useState<ModeFilter>('all');
-  const [sortMode, setSortMode] = useState<SortMode>('downloads');
+  const [sortMode, setSortMode] = useState<SortMode>('rated');
   const [page, setPage] = useState(1);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [failedId, setFailedId] = useState<string | null>(null);
