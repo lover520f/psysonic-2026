@@ -7,6 +7,12 @@
   width: 100%;
 }
 
+/* Compact, right-aligned variant for tight meta rows (Theme Store cards). */
+.star-rating--compact {
+  width: auto;
+  justify-content: flex-end;
+}
+
 .star-rating .star.filled {
   color: var(--highlight);
 }

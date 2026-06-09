@@ -31,9 +31,12 @@ const fetchThemeStatsMock = vi.mocked(fetchThemeStats);
 const postInstallMock = vi.mocked(postInstall);
 const postRatingMock = vi.mocked(postRating);
 
-const statsOf = (entries: Record<string, number>) =>
+const statsOf = (entries: Record<string, number>, ratings: Record<string, number> = {}) =>
   new Map<string, ThemeStat>(
-    Object.entries(entries).map(([id, installs]) => [id, { installs, ratingAvg: null, ratingCount: 0 }]),
+    Object.entries(entries).map(([id, installs]) => [
+      id,
+      { installs, ratingAvg: ratings[id] ?? null, ratingCount: ratings[id] != null ? 1 : 0 },
+    ]),
   );
 
 /** A registry with `n` themes named `Theme 01`…`Theme NN` (zero-padded so the
@@ -236,6 +239,19 @@ describe('ThemeStoreSection — pagination & refresh', () => {
     // Alphabetical.
     await selectSort(user, container, 'Alphabetical');
     await waitFor(() => expect(rowNames(container)).toEqual(['Alpha', 'Bravo', 'Charlie']));
+  });
+
+  it('sorts by highest rated', async () => {
+    const themes = [mkTheme('a', 'Alpha'), mkTheme('b', 'Bravo'), mkTheme('c', 'Charlie')];
+    fetchRegistryMock.mockResolvedValue({ registry: registryOf(themes), stale: false });
+    fetchThemeStatsMock.mockResolvedValue(statsOf({ a: 0, b: 0, c: 0 }, { a: 3, b: 5, c: 1 }));
+    const { container } = renderWithProviders(<ThemeStoreSection />);
+    const user = userEvent.setup();
+
+    await screen.findByText('Bravo');
+    await selectSort(user, container, 'Highest rated');
+    // Bravo (5) > Alpha (3) > Charlie (1).
+    await waitFor(() => expect(rowNames(container)).toEqual(['Bravo', 'Alpha', 'Charlie']));
   });
 
   it('jumps directly to a page via the numbered pager', async () => {

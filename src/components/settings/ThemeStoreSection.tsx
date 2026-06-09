@@ -1,11 +1,10 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Check, ChevronLeft, ChevronRight, Download, Info, RefreshCw, Trash2, WifiOff } from 'lucide-react';
 import { open as openUrl } from '@tauri-apps/plugin-shell';
 import CoverLightbox from '../CoverLightbox';
 import { useThemeAnimationRisk } from '../../hooks/useThemeAnimationRisk';
 import { AnimatedThemeBadge } from './AnimatedThemeBadge';
-import { PopularityBar } from './PopularityBar';
 import { fetchThemeStats, postInstall, postRating, type ThemeStat } from '../../utils/themes/themeStats';
 import StarRating from '../StarRating';
 import CustomSelect from '../CustomSelect';
@@ -23,7 +22,11 @@ import { uninstallTheme } from '../../utils/themes/uninstallTheme';
 import { isNewer } from '../../utils/componentHelpers/appUpdaterHelpers';
 
 type ModeFilter = 'all' | 'dark' | 'light';
-type SortMode = 'popular' | 'newest' | 'name';
+type SortMode = 'downloads' | 'rated' | 'newest' | 'name';
+
+// Meta-box rows: label (category) is bolder than the value, same size/colour.
+const META_LABEL: CSSProperties = { fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', flexShrink: 0 };
+const META_VALUE: CSSProperties = { fontSize: 12, fontWeight: 400, color: 'var(--text-secondary)', textAlign: 'right', minWidth: 0 };
 
 const THEMES_REPO_URL = 'https://github.com/Psysonic/psysonic-themes';
 
@@ -69,7 +72,7 @@ export function ThemeStoreSection() {
   const [stale, setStale] = useState(false);
   const [query, setQuery] = useState('');
   const [mode, setMode] = useState<ModeFilter>('all');
-  const [sortMode, setSortMode] = useState<SortMode>('popular');
+  const [sortMode, setSortMode] = useState<SortMode>('downloads');
   const [page, setPage] = useState(1);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [failedId, setFailedId] = useState<string | null>(null);
@@ -112,14 +115,6 @@ export function ThemeStoreSection() {
     return m;
   }, [installed]);
 
-  // Scale the popularity bar against the most-downloaded theme across the whole
-  // catalogue (not the filtered view) so the bar means the same thing regardless
-  // of search/filter.
-  const maxInstalls = useMemo(
-    () => Math.max(1, ...(themes || []).map(th => stats.get(th.id)?.installs ?? 0)),
-    [themes, stats],
-  );
-
   const filtered = useMemo(() => {
     if (!themes) return [];
     const q = query.trim().toLowerCase();
@@ -140,6 +135,10 @@ export function ThemeStoreSection() {
     if (sortMode === 'newest') {
       return matched.sort((a, b) => (b.updatedAt || '').localeCompare(a.updatedAt || '') || byName(a, b));
     }
+    if (sortMode === 'rated') {
+      return matched.sort((a, b) => ((stats.get(b.id)?.ratingAvg ?? 0) - (stats.get(a.id)?.ratingAvg ?? 0)) || byName(a, b));
+    }
+    // default: 'downloads'
     return matched.sort((a, b) => ((stats.get(b.id)?.installs ?? 0) - (stats.get(a.id)?.installs ?? 0)) || byName(a, b));
   }, [themes, query, mode, sortMode, stats]);
 
@@ -182,7 +181,8 @@ export function ThemeStoreSection() {
   ];
 
   const sortOptions = [
-    { value: 'popular', label: t('settings.themeStoreSortPopular') },
+    { value: 'downloads', label: t('settings.themeStoreSortDownloads') },
+    { value: 'rated', label: t('settings.themeStoreSortRated') },
     { value: 'newest', label: t('settings.themeStoreSortNewest') },
     { value: 'name', label: t('settings.themeStoreSortName') },
   ];
@@ -384,20 +384,6 @@ export function ThemeStoreSection() {
                   <div style={{ fontSize: 12.5, color: 'var(--text-secondary)', lineHeight: 1.4, marginTop: 10 }}>
                     {th.description}
                   </div>
-                  {/* Global rating + this client's own pick (opt-in is on in this branch). */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 14, flexWrap: 'wrap' }}>
-                    <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{t('settings.themeStoreYourRating')}</span>
-                    <StarRating
-                      value={myRating}
-                      onChange={r => handleRate(th.id, r)}
-                      ariaLabel={t('settings.themeStoreYourRating')}
-                    />
-                    <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>
-                      {stat && stat.ratingAvg != null && stat.ratingCount > 0
-                        ? `${stat.ratingAvg.toFixed(1)} ★ · ${t('settings.themeStoreRatingCount', { count: stat.ratingCount })}`
-                        : t('settings.themeStoreNoRatings')}
-                    </span>
-                  </div>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 18 }}>
                     {!isInstalled && (
                       <button
@@ -446,28 +432,39 @@ export function ThemeStoreSection() {
                 </div>
                 <div
                   className="theme-store-meta"
-                  style={{ flexShrink: 0, width: 190, display: 'flex', flexDirection: 'column', gap: 6, padding: '10px 12px', background: 'var(--bg-deep, var(--bg-elevated))', border: '1px solid var(--border)', borderRadius: 'var(--radius-md, 10px)' }}
+                  style={{ flexShrink: 0, width: 232, display: 'flex', flexDirection: 'column', gap: 8, padding: '10px 12px', background: 'var(--bg-deep, var(--bg-elevated))', border: '1px solid var(--border)', borderRadius: 'var(--radius-md, 10px)' }}
                 >
-                  <div>
-                    <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{t('settings.themeStoreAuthor')}</div>
-                    <div style={{ fontSize: 12.5, color: 'var(--text-secondary)', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{th.author}</div>
+                  {/* Author */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 10 }}>
+                    <span style={META_LABEL}>{t('settings.themeStoreAuthor')}</span>
+                    <span style={{ ...META_VALUE, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{th.author}</span>
                   </div>
-                  <div style={{ marginTop: 4, display: 'flex', flexDirection: 'column', gap: 6 }}>
-                    <div>
-                      <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 4 }}>{t('settings.themeStorePopularity')}</div>
-                      <PopularityBar value={stats.get(th.id)?.installs ?? 0} max={maxInstalls} />
-                    </div>
-                    <div>
-                      <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{t('settings.themeStoreDownloads')}</div>
-                      <div style={{ fontSize: 13, color: 'var(--text-secondary)', fontWeight: 600 }}>{(stats.get(th.id)?.installs ?? 0).toLocaleString(i18n.language)}</div>
-                    </div>
-                    {th.updatedAt && (
-                      <div>
-                        <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{t('settings.themeStoreLastChanged')}</div>
-                        <div style={{ fontSize: 12.5, color: 'var(--text-secondary)' }}>{formatRelativeTime(th.updatedAt, i18n.language)}</div>
-                      </div>
-                    )}
+                  {/* Your rating — interactive stars, right-aligned */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
+                    <span style={META_LABEL}>{t('settings.themeStoreYourRating')}</span>
+                    <StarRating className="star-rating--compact" value={myRating} onChange={r => handleRate(th.id, r)} ariaLabel={t('settings.themeStoreYourRating')} />
                   </div>
+                  {/* Global rating — average + count */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 10 }}>
+                    <span style={META_LABEL}>{t('settings.themeStoreRating')}</span>
+                    <span style={META_VALUE}>
+                      {stat && stat.ratingAvg != null && stat.ratingCount > 0
+                        ? `${stat.ratingAvg.toFixed(1)} ★ · ${t('settings.themeStoreRatingCount', { count: stat.ratingCount })}`
+                        : t('settings.themeStoreNoRatings')}
+                    </span>
+                  </div>
+                  {/* Downloads */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 10 }}>
+                    <span style={META_LABEL}>{t('settings.themeStoreDownloads')}</span>
+                    <span style={META_VALUE}>{(stats.get(th.id)?.installs ?? 0).toLocaleString(i18n.language)}</span>
+                  </div>
+                  {/* Last changed */}
+                  {th.updatedAt && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 10 }}>
+                      <span style={META_LABEL}>{t('settings.themeStoreLastChanged')}</span>
+                      <span style={META_VALUE}>{formatRelativeTime(th.updatedAt, i18n.language)}</span>
+                    </div>
+                  )}
                 </div>
               </div>
             );
