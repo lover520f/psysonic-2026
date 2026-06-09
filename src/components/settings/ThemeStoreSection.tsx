@@ -194,7 +194,7 @@ export function ThemeStoreSection() {
   ];
 
   const optInToggle = (
-    <div className="settings-toggle-row" style={{ marginBottom: '1rem' }}>
+    <div className="settings-toggle-row">
       <div>
         <div style={{ fontWeight: 500, display: 'flex', alignItems: 'center', gap: 6 }}>
           {t('settings.themeStoreOptInTitle')}
@@ -222,7 +222,7 @@ export function ThemeStoreSection() {
 
   return (
     <div className="settings-card">
-      {optInToggle}
+      <div style={{ marginBottom: '1rem' }}>{optInToggle}</div>
       {/* Submit-your-own-theme hint */}
       <div className="settings-hint settings-hint-info" style={{ marginBottom: '1rem' }}>
         {t('settings.themeStoreSubmitText')}{' '}
