@@ -136,6 +136,12 @@ export interface AuthState {
   discordCoverSource: DiscordCoverSource;
   /** Opt-in: fetch upcoming tour dates from Bandsintown for the Now-Playing info panel. */
   enableBandsintown: boolean;
+  /**
+   * Opt-in (default off): browse the online theme catalogue and load/contribute
+   * global install counts + ratings. Off → no calls to the theme-stats service,
+   * only built-in and already-installed themes are shown.
+   */
+  themeStoreStatsEnabled: boolean;
   discordTemplateDetails: string;
   discordTemplateState: string;
   discordTemplateLargeText: string;
@@ -332,6 +338,7 @@ export interface AuthState {
   setDiscordRichPresence: (v: boolean) => void;
   setDiscordCoverSource: (v: DiscordCoverSource) => void;
   setEnableBandsintown: (v: boolean) => void;
+  setThemeStoreStatsEnabled: (v: boolean) => void;
   setDiscordTemplateDetails: (v: string) => void;
   setDiscordTemplateState: (v: string) => void;
   setDiscordTemplateLargeText: (v: string) => void;

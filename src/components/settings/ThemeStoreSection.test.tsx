@@ -13,6 +13,7 @@ vi.mock('@/utils/themes/themeRegistry', () => ({
 }));
 
 import { fetchRegistry } from '@/utils/themes/themeRegistry';
+import { useAuthStore } from '@/store/authStore';
 
 const fetchRegistryMock = vi.mocked(fetchRegistry);
 
@@ -75,6 +76,8 @@ async function selectSort(
 describe('ThemeStoreSection — pagination & refresh', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // The catalogue only loads with the opt-in on; these tests browse it.
+    useAuthStore.setState({ themeStoreStatsEnabled: true });
     // jsdom has no layout engine; goToPage() scrolls the list back up.
     Element.prototype.scrollIntoView = vi.fn();
   });
@@ -226,5 +229,32 @@ describe('ThemeStoreSection — pagination & refresh', () => {
     expect(screen.getByText('Theme 25')).toBeInTheDocument();
     expect(screen.queryByText('Theme 01')).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: '3', current: 'page' })).toBeInTheDocument();
+  });
+});
+
+describe('ThemeStoreSection — opt-in gate', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    Element.prototype.scrollIntoView = vi.fn();
+  });
+
+  it('does not fetch the catalogue when opt-in is off', async () => {
+    useAuthStore.setState({ themeStoreStatsEnabled: false });
+    fetchRegistryMock.mockResolvedValue({ registry: makeRegistry(5), stale: false });
+    renderWithProviders(<ThemeStoreSection />);
+
+    // Opt-in toggle shown, no catalogue fetched, no themes rendered.
+    expect(screen.getByText('Theme Store & global stats')).toBeInTheDocument();
+    await waitFor(() => expect(fetchRegistryMock).not.toHaveBeenCalled());
+    expect(screen.queryByText('Theme 01')).not.toBeInTheDocument();
+  });
+
+  it('fetches the catalogue once opt-in is on', async () => {
+    useAuthStore.setState({ themeStoreStatsEnabled: true });
+    fetchRegistryMock.mockResolvedValue({ registry: makeRegistry(5), stale: false });
+    renderWithProviders(<ThemeStoreSection />);
+
+    await screen.findByText('Theme 01');
+    expect(fetchRegistryMock).toHaveBeenCalled();
   });
 });

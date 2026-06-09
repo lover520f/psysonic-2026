@@ -58,6 +58,7 @@ describe('trivial pass-through setters', () => {
     ['setShowOrbitTrigger', 'showOrbitTrigger', false],
     ['setDiscordRichPresence', 'discordRichPresence', true],
     ['setEnableBandsintown', 'enableBandsintown', true],
+    ['setThemeStoreStatsEnabled', 'themeStoreStatsEnabled', true],
     ['setUseCustomTitlebar', 'useCustomTitlebar', true],
     ['setPreloadMiniPlayer', 'preloadMiniPlayer', true],
     ['setLinuxWebkitKineticScroll', 'linuxWebkitKineticScroll', false],

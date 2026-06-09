@@ -4,6 +4,7 @@ import { createAudioSettingsActions } from './authAudioSettingsActions';
 import { createAuthLastfmActions } from './authLastfmActions';
 import { createCacheStorageActions } from './authCacheStorageActions';
 import { createDiscordSettingsActions } from './authDiscordSettingsActions';
+import { createThemeStoreActions } from './authThemeStoreActions';
 import { createDiscoveryActions } from './authDiscoveryActions';
 import { createLyricsSettingsActions } from './authLyricsSettingsActions';
 import { createMusicLibraryActions } from './authMusicLibraryActions';
@@ -71,6 +72,7 @@ export const useAuthStore = create<AuthState>()(
       discordRichPresence: false,
       discordCoverSource: 'server',
       enableBandsintown: false,
+      themeStoreStatsEnabled: false,
       discordTemplateDetails: '{artist}',
       discordTemplateState: '{title}',
       discordTemplateLargeText: '{album}',
@@ -133,6 +135,7 @@ export const useAuthStore = create<AuthState>()(
       ...createAudioSettingsActions(set),
       ...createCacheStorageActions(set),
       ...createDiscordSettingsActions(set),
+      ...createThemeStoreActions(set),
       ...createUiAppearanceActions(set),
       ...createLyricsSettingsActions(set),
       ...createTrackPreviewActions(set),

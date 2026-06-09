@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Check, ChevronLeft, ChevronRight, Download, RefreshCw, Trash2, WifiOff } from 'lucide-react';
+import { Check, ChevronLeft, ChevronRight, Download, Info, RefreshCw, Trash2, WifiOff } from 'lucide-react';
 import { open as openUrl } from '@tauri-apps/plugin-shell';
 import CoverLightbox from '../CoverLightbox';
 import { useThemeAnimationRisk } from '../../hooks/useThemeAnimationRisk';
@@ -10,6 +10,7 @@ import CustomSelect from '../CustomSelect';
 import { formatRelativeTime } from '../../utils/format/relativeTime';
 import { useThemeStore } from '../../store/themeStore';
 import { useInstalledThemesStore, type InstalledTheme } from '../../store/installedThemesStore';
+import { useAuthStore } from '../../store/authStore';
 import {
   cdnUrl,
   fetchRegistry,
@@ -51,6 +52,8 @@ export function ThemeStoreSection() {
   const activeTheme = useThemeStore(s => s.theme);
   const setTheme = useThemeStore(s => s.setTheme);
   const installed = useInstalledThemesStore(s => s.themes);
+  const themeStoreStatsEnabled = useAuthStore(s => s.themeStoreStatsEnabled);
+  const setThemeStoreStatsEnabled = useAuthStore(s => s.setThemeStoreStatsEnabled);
   const animRisk = useThemeAnimationRisk();
 
   const [themes, setThemes] = useState<RegistryTheme[] | null>(null);
@@ -90,7 +93,8 @@ export function ThemeStoreSection() {
   const thumbUrl = (rel: string) =>
     generatedAt ? `${cdnUrl(rel)}?v=${encodeURIComponent(generatedAt)}` : cdnUrl(rel);
 
-  useEffect(() => { load(false); }, []);
+  // Opt-in gate: no network call to the catalogue/stats service unless enabled.
+  useEffect(() => { if (themeStoreStatsEnabled) load(false); }, [themeStoreStatsEnabled]);
 
   const installedMap = useMemo(() => {
     const m = new Map<string, InstalledTheme>();
@@ -166,8 +170,36 @@ export function ThemeStoreSection() {
     { value: 'name', label: t('settings.themeStoreSortName') },
   ];
 
+  const optInToggle = (
+    <div className="settings-toggle-row" style={{ marginBottom: '1rem' }}>
+      <div>
+        <div style={{ fontWeight: 500, display: 'flex', alignItems: 'center', gap: 6 }}>
+          {t('settings.themeStoreOptInTitle')}
+          <Info
+            size={14}
+            style={{ color: 'var(--text-muted)', cursor: 'help', flexShrink: 0 }}
+            data-tooltip={t('settings.themeStoreOptInPrivacy')}
+            data-tooltip-wrap=""
+          />
+        </div>
+        <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{t('settings.themeStoreOptInDesc')}</div>
+      </div>
+      <label className="toggle-switch" aria-label={t('settings.themeStoreOptInTitle')}>
+        <input type="checkbox" checked={themeStoreStatsEnabled} onChange={e => setThemeStoreStatsEnabled(e.target.checked)} />
+        <span className="toggle-track" />
+      </label>
+    </div>
+  );
+
+  // Off → no catalogue fetch, just the opt-in toggle (privacy details in its
+  // info tooltip). Built-in and installed themes stay available in the Themes tab.
+  if (!themeStoreStatsEnabled) {
+    return <div className="settings-card">{optInToggle}</div>;
+  }
+
   return (
     <div className="settings-card">
+      {optInToggle}
       {/* Submit-your-own-theme hint */}
       <div className="settings-hint settings-hint-info" style={{ marginBottom: '1rem' }}>
         {t('settings.themeStoreSubmitText')}{' '}
@@ -179,11 +211,6 @@ export function ThemeStoreSection() {
           {t('settings.themeStoreSubmitLink')}
         </button>
       </div>
-
-      {/* Network disclosure — the store reaches external services. */}
-      <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: '0 0 1rem', lineHeight: 1.5 }}>
-        {t('settings.themeStoreNetworkNotice')}{' '}{t('settings.themeStoreStatsNotice')}
-      </p>
 
       {/* Toolbar: search + mode filter + refresh. Hidden when offline with no
           catalogue to browse — the offline banner below stands in for it. */}
