@@ -52,6 +52,8 @@ export const settings = {
   serverConnecting: 'Verbinde…',
   serverConnected: 'Verbunden!',
   serverFailed: 'Verbindung fehlgeschlagen.',
+  serverAddUnreachable: 'Server nicht erreichbar — Adresse, Netzwerk und das TLS-Zertifikat des Servers prüfen. ({{detail}})',
+  serverAddRejected: 'Der Server hat die Verbindung abgelehnt: {{message}}',
   testBtn: 'Verbindung testen',
   testingBtn: 'Teste…',
   serverCompatible: 'Für Navidrome entwickelt. Andere Subsonic-kompatible Server (Gonic, Airsonic, …) funktionieren ggf. eingeschränkt, weil Psysonic viele Navidrome-spezifische API-Endpunkte nutzt.',

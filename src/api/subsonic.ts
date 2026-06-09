@@ -16,11 +16,20 @@ import {
 import { neededProbeIds } from '../serverCapabilities/resolve';
 import {
   SUBSONIC_CLIENT,
+  SUBSONIC_API_VERSION,
   api,
   apiWithCredentials,
   secureRandomSalt,
 } from './subsonicClient';
-import type { PingWithCredentialsResult, SubsonicSong } from './subsonicTypes';
+import type { PingFailure, PingWithCredentialsResult, SubsonicSong } from './subsonicTypes';
+
+/** Map a Subsonic error code to a coarse failure category for the UI. */
+function classifyPingError(code: number | undefined, message: string | undefined): PingFailure {
+  let reason: PingFailure['reason'] = 'server';
+  if (code === 40 || code === 41 || code === 50) reason = 'auth';
+  else if (code === 20 || code === 30) reason = 'version';
+  return { reason, code, message };
+}
 
 export async function ping(): Promise<boolean> {
   try {
@@ -43,21 +52,33 @@ export async function pingWithCredentials(
     const salt = secureRandomSalt();
     const token = md5(password + salt);
     const resp = await axios.get(`${base}/rest/ping.view`, {
-      params: { u: username, t: token, s: salt, v: '1.16.1', c: SUBSONIC_CLIENT, f: 'json' },
+      params: { u: username, t: token, s: salt, v: SUBSONIC_API_VERSION, c: SUBSONIC_CLIENT, f: 'json' },
       paramsSerializer: { indexes: null },
       timeout: 15000,
     });
     const data = resp.data?.['subsonic-response'];
     const ok = data?.status === 'ok';
-    return {
-      ok,
+    const identity = {
       type: typeof data?.type === 'string' ? data.type : undefined,
       serverVersion: typeof data?.serverVersion === 'string' ? data.serverVersion : undefined,
       openSubsonic: data?.openSubsonic === true,
     };
+    if (ok) return { ok: true, ...identity };
+    // Reachable server that rejected the ping — keep the Subsonic reason so the
+    // UI can show a specific message (code 30 = protocol too high, 40 = bad
+    // credentials, …) instead of an opaque failure.
+    const code = typeof data?.error?.code === 'number' ? data.error.code : undefined;
+    const message = typeof data?.error?.message === 'string' ? data.error.message : undefined;
+    console.warn('[psysonic] ping rejected by server:', serverUrl, 'sentVersion=', SUBSONIC_API_VERSION, data?.error ?? data);
+    return { ok: false, failure: classifyPingError(code, message), ...identity };
   } catch (err) {
+    // Never reached the server (DNS, refused, timeout, TLS-cert not trusted, or
+    // a blocked cross-origin request). The WebView hides the exact cause, so
+    // pass the raw detail through for the toast + log.
+    const detail =
+      (err as { message?: string })?.message || (err as { code?: string })?.code || 'network error';
     console.warn('[psysonic] pingWithCredentials failed:', serverUrl, err);
-    return { ok: false };
+    return { ok: false, failure: { reason: 'network', message: String(detail) } };
   }
 }
 

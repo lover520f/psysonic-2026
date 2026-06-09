@@ -201,7 +201,20 @@ export interface SubsonicDirectory {
   child: SubsonicDirectoryEntry[];
 }
 
-export type PingWithCredentialsResult = SubsonicServerIdentity & { ok: boolean };
+export interface PingFailure {
+  /** Coarse category that drives the user-facing message. */
+  reason: 'auth' | 'version' | 'network' | 'server';
+  /** Subsonic error code, when the server returned a structured error. */
+  code?: number;
+  /** Server's error message, or the network/TLS error detail. */
+  message?: string;
+}
+
+export type PingWithCredentialsResult = SubsonicServerIdentity & {
+  ok: boolean;
+  /** Populated when `ok` is false — why the ping was rejected. */
+  failure?: PingFailure;
+};
 
 export interface RandomSongsFilters {
   size?: number;

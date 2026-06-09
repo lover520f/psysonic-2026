@@ -51,6 +51,8 @@ export const settings = {
   serverConnecting: 'Se conectează…',
   serverConnected: 'Conectat!',
   serverFailed: 'Conexiune eșuată.',
+  serverAddUnreachable: 'Serverul nu poate fi accesat — verifică adresa, rețeaua ta și certificatul TLS al serverului. ({{detail}})',
+  serverAddRejected: 'Serverul a refuzat conexiunea: {{message}}',
   testBtn: 'Testează Conexiunea',
   testingBtn: 'Se testează…',
   serverCompatible: 'Făcut pentru Navidrome. Alte servere compatibile cu Subsonic (Gonic, Airsonic, …) pot rula cu funcționalitate redusă, deoarece Psysonic folosește multe endpointuri API specifice Navidrome.',

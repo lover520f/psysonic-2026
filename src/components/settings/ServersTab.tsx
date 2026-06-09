@@ -12,6 +12,7 @@ import { useLibraryIndexSync } from '../../hooks/useLibraryIndexSync';
 import ServerLibraryIndexControls from './ServerLibraryIndexControls';
 import type { ServerProfile } from '../../store/authStoreTypes';
 import { pingWithCredentials, scheduleInstantMixProbeForServer } from '../../api/subsonic';
+import { pingFailureMessage } from '../../utils/server/pingFailureMessage';
 import { useDragDrop } from '../../contexts/DragDropContext';
 import { type ServerMagicPayload } from '../../utils/server/serverMagicString';
 import { ensureConnectUrlResolved, invalidateReachableEndpointCache } from '../../utils/server/serverEndpoint';
@@ -226,8 +227,6 @@ export function ServersTab({
   };
 
   const handleAddServer = async (data: Omit<ServerProfile, 'id'>) => {
-    setShowAddForm(false);
-    setPastedServerInvite(null);
     const tempId = '_new';
     setConnStatus(s => ({ ...s, [tempId]: 'testing' }));
     try {
@@ -241,6 +240,7 @@ export function ServersTab({
           data.password,
         );
         if (!announceVerifyResult(verify)) {
+          // announceVerifyResult already toasts the reason; keep the form open.
           setConnStatus(s => ({ ...s, [tempId]: 'error' }));
           return;
         }
@@ -258,11 +258,22 @@ export function ServersTab({
         setConnStatus(s => ({ ...s, [id]: 'ok' }));
         const added = useAuthStore.getState().servers.find(s => s.id === id);
         if (added) void bootstrapIndexedServer(added);
+        // Close the form only once the server actually landed.
+        setShowAddForm(false);
+        setPastedServerInvite(null);
       } else {
+        // Ping failed (reachable server that rejected us, or a network/TLS
+        // problem). Don't drop the add silently: show a specific reason and
+        // keep the form open so the entered details aren't lost.
         setConnStatus(s => ({ ...s, [tempId]: 'error' }));
+        const { key, vars } = pingFailureMessage(ping.failure);
+        console.warn('[servers] add aborted:', ping.failure?.reason ?? 'unknown', data.url, ping.failure);
+        showToast(t(key, vars), 6000, 'error');
       }
-    } catch {
+    } catch (e) {
       setConnStatus(s => ({ ...s, [tempId]: 'error' }));
+      console.error('[servers] add failed:', data.url, e);
+      showToast(t('settings.serverFailed'), 4000, 'error');
     }
   };
 

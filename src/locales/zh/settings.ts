@@ -51,6 +51,8 @@ export const settings = {
   serverConnecting: '正在连接…',
   serverConnected: '已连接！',
   serverFailed: '连接失败。',
+  serverAddUnreachable: '无法连接服务器 — 请检查地址、网络以及服务器的 TLS 证书。({{detail}})',
+  serverAddRejected: '服务器拒绝了连接：{{message}}',
   testBtn: '测试连接',
   testingBtn: '正在测试…',
   serverCompatible: '专为 Navidrome 构建。其他兼容 Subsonic 的服务器（Gonic、Airsonic 等）可能功能受限，因为 Psysonic 使用了许多 Navidrome 特有的 API 端点。',
