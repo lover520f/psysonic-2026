@@ -4,7 +4,7 @@ import { getNowPlaying } from '../api/subsonicScrobble';
 import type { SubsonicNowPlaying } from '../api/subsonicTypes';
 import React, { useState, useEffect, useRef, useCallback, useLayoutEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { PlayCircle, User, Clock, Radio, RefreshCw } from 'lucide-react';
+import { PlayCircle, Pause, User, Clock, Radio, RefreshCw } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 import { usePlayerStore } from '../store/playerStore';
 import { useTranslation } from 'react-i18next';
@@ -22,7 +22,32 @@ export default function NowPlayingDropdown() {
   const triggerWrapRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const [panelPos, setPanelPos] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
+  // Wall-clock baseline for the last poll: between polls (every 10 s) we
+  // extrapolate the position of `playing` entries locally so the progress bar
+  // glides instead of snapping. The server already extrapolates positionMs at
+  // fetch time, so this just continues from there using the reported speed.
+  const fetchedAtRef = useRef(0);
+  const [, forceTick] = useState(0);
   const PANEL_WIDTH = 340;
+
+  const formatClock = (totalSec: number) => {
+    const s = Math.max(0, Math.floor(totalSec));
+    const m = Math.floor(s / 60);
+    return `${m}:${String(s % 60).padStart(2, '0')}`;
+  };
+
+  // Live position in seconds: advance `playing` entries by elapsed × playbackRate
+  // since the last poll; freeze everything else at the reported position.
+  const livePositionSec = (entry: SubsonicNowPlaying): number | undefined => {
+    if (typeof entry.positionMs !== 'number') return undefined;
+    let ms = entry.positionMs;
+    if (entry.state === 'playing') {
+      const rate = entry.playbackRate && entry.playbackRate > 0 ? entry.playbackRate : 1;
+      ms += (Date.now() - fetchedAtRef.current) * rate;
+    }
+    const maxMs = entry.duration > 0 ? entry.duration * 1000 : ms;
+    return Math.min(ms, maxMs) / 1000;
+  };
 
   const updatePanelPos = useCallback(() => {
     const el = triggerWrapRef.current;
@@ -39,6 +64,7 @@ export default function NowPlayingDropdown() {
     setLoading(true);
     try {
       const data = await getNowPlaying();
+      fetchedAtRef.current = Date.now();
       setNowPlaying(data);
     } catch (e) {
       console.error('Failed to load Now Playing', e);
@@ -63,6 +89,17 @@ export default function NowPlayingDropdown() {
     }, 10000);
     return () => clearInterval(id);
   }, [isOpen]);
+
+  // Re-render once per second while a `playing` entry exposes a position, so the
+  // locally-extrapolated bar advances smoothly between the 10 s polls.
+  const hasLivePosition = nowPlaying.some(
+    e => e.state === 'playing' && typeof e.positionMs === 'number',
+  );
+  useEffect(() => {
+    if (!isOpen || !hasLivePosition) return;
+    const id = setInterval(() => forceTick(v => v + 1), 1000);
+    return () => clearInterval(id);
+  }, [isOpen, hasLivePosition]);
 
   useLayoutEffect(() => {
     if (!isOpen) return;
@@ -193,6 +230,34 @@ export default function NowPlayingDropdown() {
                           <span className="truncate">{t('nowPlaying.minutesAgo', { n: stream.minutesAgo })}</span>
                         </div>
                       )}
+                      {(() => {
+                        const posSec = livePositionSec(stream);
+                        if (posSec === undefined || stream.duration <= 0) return null;
+                        const playing = stream.state === 'playing';
+                        return (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0, marginTop: '1px' }}>
+                            {stream.state === 'paused' && <Pause size={10} style={{ flexShrink: 0 }} />}
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{ height: '3px', borderRadius: '2px', background: 'var(--border-subtle)', overflow: 'hidden' }}>
+                                <div style={{
+                                  width: `${Math.min(100, Math.max(0, (posSec / stream.duration) * 100))}%`,
+                                  height: '100%',
+                                  background: playing ? 'var(--accent)' : 'var(--text-muted)',
+                                  transition: playing ? 'width 1s linear' : 'none',
+                                }} />
+                              </div>
+                            </div>
+                            <span style={{ flexShrink: 0, fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>
+                              {/* ~2ch reserve inside the current-time box (9:59→10:00), not empty gap before the bar. */}
+                              <span style={{ display: 'inline-block', minWidth: '6ch', textAlign: 'right' }}>
+                                {formatClock(posSec)}
+                              </span>
+                              {' / '}
+                              {formatClock(stream.duration)}
+                            </span>
+                          </div>
+                        );
+                      })()}
                     </div>
                   </div>
                 </div>
