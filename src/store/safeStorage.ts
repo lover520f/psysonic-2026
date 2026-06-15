@@ -1,4 +1,5 @@
 import { createJSONStorage, type PersistStorage, type StateStorage } from 'zustand/middleware';
+import { invoke } from '@tauri-apps/api/core'; // [DIAG #1072 — TEMPORARY]
 
 /**
  * `localStorage` wrapped so a failed write never throws.
@@ -29,6 +30,9 @@ const safeLocalStorage: StateStorage = {
     }
   },
   setItem: (name, value) => {
+    // [DIAG #1072 — TEMPORARY] Time the synchronous write. If this is the
+    // skip-freeze, slow writes (large queue under disk load) show up here.
+    const t0 = performance.now();
     try {
       localStorage.setItem(name, value);
       quotaWarned.delete(name);
@@ -40,6 +44,13 @@ const safeLocalStorage: StateStorage = {
           e,
         );
       }
+    }
+    const dt = performance.now() - t0;
+    if (dt > 80) {
+      void invoke('frontend_debug_log', {
+        scope: 'diag1072',
+        message: `SLOW persist write key=${name} ${Math.round(dt)}ms size=${(value.length / 1024).toFixed(1)}KB`,
+      }).catch(() => {});
     }
   },
   removeItem: (name) => {
