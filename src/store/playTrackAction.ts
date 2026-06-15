@@ -36,6 +36,7 @@ import {
 } from './loudnessGainCache';
 import { refreshLoudnessForTrack } from './loudnessRefresh';
 import { deriveNormalizationSnapshot } from './normalizationSnapshot';
+import { markDiag1090 as diag1090 } from './diag1090';
 import { useOrbitStore } from './orbitStore';
 import {
   playbackSourceHintForResolvedUrl,
@@ -93,14 +94,6 @@ type GetState = () => PlayerState;
  * replays first flush the previous play's `stream_completed_cache`
  * to hot disk so `fetch_data` doesn't re-run an HTTP range request.
  */
-// [DIAG #1090 — TEMPORARY] debug-gated marker into the Rust log, to localise
-// where the device-switch playTrack flow freezes the main thread. Remove with
-// the real fix.
-const diag1090 = (m: string) => {
-  if (useAuthStore.getState().loggingMode !== 'debug') return;
-  void invoke('frontend_debug_log', { scope: 'diag1090', message: m }).catch(() => {});
-};
-
 export function runPlayTrack(
   set: SetState,
   get: GetState,
@@ -110,6 +103,7 @@ export function runPlayTrack(
   _orbitConfirmed: boolean,
   targetQueueIndex: number | undefined,
 ): void {
+  diag1090(`runPlayTrack: ENTRY trackId=${track.id} hasQueue=${!!queue}`);
   // Orbit bulk-gate: only gate when the `queue` argument *replaces*
   // the current queue (Play All / Play Album / Play Playlist / Hero
   // play buttons). Navigation calls — queue-row click, next(),

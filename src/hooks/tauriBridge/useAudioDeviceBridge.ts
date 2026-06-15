@@ -1,15 +1,10 @@
 import { useEffect } from 'react';
 import { listen } from '@tauri-apps/api/event';
-import { invoke } from '@tauri-apps/api/core';
 import { usePlayerStore } from '../../store/playerStore';
 import { useAuthStore } from '../../store/authStore';
 import { setSeekFallbackVisualTarget } from '../../store/seekFallbackState';
-
-// [DIAG #1090 — TEMPORARY] Forward a marker to the Rust debug log (only when
-// Settings → Logging = Debug). Used to find where the UI hangs on device switch.
-const diag1090 = (message: string) => {
-  void invoke('frontend_debug_log', { scope: 'diag1090', message }).catch(() => {});
-};
+// [DIAG #1090/#1072 — TEMPORARY] freeze-survivable markers (see diag1090.ts).
+import { markDiag1090 as diag1090, recoverDiag1090 } from '../../store/diag1090';
 
 /** Audio output device lifecycle: device switches (Bluetooth headphones, USB
  * DAC, …) and pinned-device-unplugged fallbacks emitted by the Rust
@@ -21,6 +16,10 @@ const diag1090 = (message: string) => {
  *            must call playTrack and seek to that position.
  */
 export function useAudioDeviceBridge() {
+  // [DIAG #1090/#1072 — TEMPORARY] On mount, surface any marker trail the
+  // previous (frozen, then killed) session left behind.
+  useEffect(() => { recoverDiag1090(); }, []);
+
   useEffect(() => {
     let unlisten: (() => void) | undefined;
     listen('audio:device-changed', (event) => {
