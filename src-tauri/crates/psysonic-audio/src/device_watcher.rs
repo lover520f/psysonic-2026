@@ -267,6 +267,13 @@ pub fn start_device_watcher(engine: &AudioEngine, app: tauri::AppHandle) {
                 (default, available)
             }).await.unwrap_or((None, vec![]));
 
+            // [DIAG #1090 — TEMPORARY] Every poll: what does cpal report as the
+            // current default, and is anything pinned? If `current_default` never
+            // changes when the OS default switches, cpal isn't detecting it (root A).
+            crate::app_eprintln!(
+                "[psysonic] DIAG-1090 poll: pinned={pinned:?} current_default={current_default:?} last_default={last_default:?}"
+            );
+
             // Empty list (only when we actually enumerated for a pinned device)
             // almost always means a transient enumeration failure, not that every
             // output device vanished. Treating it as "pinned missing" caused false
@@ -316,6 +323,13 @@ pub fn start_device_watcher(engine: &AudioEngine, app: tauri::AppHandle) {
             if current_default == last_default {
                 continue;
             }
+
+            // [DIAG #1090 — TEMPORARY] Case 1 fired: cpal saw the default change.
+            // If you see THIS line but audio stays on the old device, the reopen
+            // path opens cpal's stale default (root B).
+            crate::app_eprintln!(
+                "[psysonic] DIAG-1090 Case-1 fired: {last_default:?} -> {current_default:?} — reopening on new default"
+            );
 
             last_default = current_default.clone();
 
