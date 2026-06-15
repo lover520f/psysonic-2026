@@ -61,17 +61,20 @@ pub(crate) async fn try_resume_after_device_change(
     }
     let url = match snap.url.as_deref() {
         Some(u) if !u.is_empty() => u,
-        _ => return false,
+        _ => { crate::app_eprintln!("[psysonic] DIAG-1090 try_resume false: url empty/none"); return false; }
     };
 
     let Some(engine) = app.try_state::<AudioEngine>() else {
+        crate::app_eprintln!("[psysonic] DIAG-1090 try_resume false: no AudioEngine state");
         return false;
     };
 
     // Skip radio — live streams don't have a resume position.
     if engine.radio_state.lock().unwrap().is_some() {
+        crate::app_eprintln!("[psysonic] DIAG-1090 try_resume false: radio active");
         return false;
     }
+    crate::app_eprintln!("[psysonic] DIAG-1090 try_resume: url={url} (kind={})", if url.starts_with("psysonic-local://") { "local" } else { "http" });
 
     // Build a PlayInput without re-downloading:
     //   - psysonic-local://  → seekable file
@@ -118,7 +121,7 @@ pub(crate) async fn try_resume_after_device_change(
                         return false;
                     }
                 },
-                None => return false, // not fully cached yet — frontend will re-fetch
+                None => { crate::app_eprintln!("[psysonic] DIAG-1090 try_resume false: HTTP not fully cached (no RAM cache, no spill) for url={url}"); return false; } // not fully cached yet — frontend will re-fetch
             }
         };
         PlayInput::Bytes(bytes)
@@ -131,6 +134,7 @@ pub(crate) async fn try_resume_after_device_change(
     *engine.current_playback_url.lock().unwrap() = Some(url.to_owned());
 
     if engine.generation.load(Ordering::SeqCst) != gen {
+        crate::app_eprintln!("[psysonic] DIAG-1090 try_resume false: generation race (early, after url/cache build)");
         return false; // raced with another audio_play
     }
 
@@ -169,12 +173,13 @@ pub(crate) async fn try_resume_after_device_change(
     {
         Ok(ps) => ps,
         Err(e) => {
-            crate::app_eprintln!("[device-resume] source build failed: {e}");
+            crate::app_eprintln!("[psysonic] DIAG-1090 try_resume false: source build failed: {e}");
             return false;
         }
     };
 
     if engine.generation.load(Ordering::SeqCst) != gen {
+        crate::app_eprintln!("[psysonic] DIAG-1090 try_resume false: generation race (late, after source build)");
         return false;
     }
 

@@ -93,6 +93,14 @@ type GetState = () => PlayerState;
  * replays first flush the previous play's `stream_completed_cache`
  * to hot disk so `fetch_data` doesn't re-run an HTTP range request.
  */
+// [DIAG #1090 — TEMPORARY] debug-gated marker into the Rust log, to localise
+// where the device-switch playTrack flow freezes the main thread. Remove with
+// the real fix.
+const diag1090 = (m: string) => {
+  if (useAuthStore.getState().loggingMode !== 'debug') return;
+  void invoke('frontend_debug_log', { scope: 'diag1090', message: m }).catch(() => {});
+};
+
 export function runPlayTrack(
   set: SetState,
   get: GetState,
@@ -318,6 +326,7 @@ export function runPlayTrack(
     } else if (queueSid) {
       seedQueueResolver(queueSid, [scopedTrack]);
     }
+    diag1090('runPlayTrack: before set(currentTrack)');
     set({
       currentTrack: scopedTrack,
       currentRadio: null,
@@ -338,6 +347,7 @@ export function runPlayTrack(
       currentPlaybackSource: playbackSourceHint,
       enginePreloadedTrackId: keepPreloadHint ? scopedTrack.id : null,
     });
+    diag1090('runPlayTrack: after set ok');
 
     if (
       prevTrack
@@ -361,6 +371,7 @@ export function runPlayTrack(
       isReplayGainActive(), authStateNow.replayGainMode,
     );
     const replayGainPeak = isReplayGainActive() ? (scopedTrack.replayGainPeak ?? null) : null;
+    diag1090('runPlayTrack: before invoke audio_play');
     invoke('audio_play', {
       url,
       volume: state.volume,
