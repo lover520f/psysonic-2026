@@ -30,6 +30,12 @@ export function markDiag1090(m: string): void {
 // it to the Rust log, then clear it.
 export function recoverDiag1090(): void {
   try {
+    // Build marker: confirms in the log that THIS diagnostic code is running,
+    // so we never again wonder whether the right commit was built.
+    void invoke('frontend_debug_log', {
+      scope: 'diag',
+      message: 'DIAG-BUILD active: persist-timing v2 + always-log-player',
+    }).catch(() => {});
     const trail = localStorage.getItem(KEY);
     if (!trail) return;
     localStorage.removeItem(KEY);

@@ -46,10 +46,12 @@ const safeLocalStorage: StateStorage = {
       }
     }
     const dt = performance.now() - t0;
-    if (dt > 80) {
+    // Always log the player key (the skip path); other keys only when slow. If
+    // these stay small while set() stalls for seconds, the freeze is the render.
+    if (name === 'psysonic-player' || dt > 80) {
       void invoke('frontend_debug_log', {
         scope: 'diag1072',
-        message: `SLOW persist write key=${name} ${Math.round(dt)}ms size=${(value.length / 1024).toFixed(1)}KB`,
+        message: `persist write key=${name} ${Math.round(dt)}ms size=${(value.length / 1024).toFixed(1)}KB`,
       }).catch(() => {});
     }
   },
