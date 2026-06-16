@@ -18,9 +18,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Changing tracks — skipping, or the automatic advance at the end of a song — could freeze the interface for several seconds while audio kept playing (the progress bar and lyrics stopped updating). The queue header recomputed its duration totals on every track change instead of only when the queue itself changes; it now recomputes only on queue changes, so track changes stay instant.
 * This also resolves output-device changes not being applied on Windows: the same freeze was blocking playback from following the newly selected device.
 
-### Paused playback resuming on headphone disconnect (macOS)
+### Paused or stopped playback restarting on headphone disconnect (macOS)
 
-* On macOS, pausing and then disconnecting headphones (or otherwise switching the audio output device) could restart playback on the newly selected device. The system's pause command on a route change was being treated as a play/pause toggle, which un-paused playback; play and pause from the OS media controls are now handled distinctly, so paused playback stays paused across a device change.
+* On macOS, pausing or stopping playback and then disconnecting headphones (or otherwise switching the audio output device) could make playback restart on the newly selected device. Playback now reliably stays paused or stopped across a device change.
 
 
 
