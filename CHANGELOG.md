@@ -28,6 +28,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * Scrubbing the seekbar on an Opus/Ogg file — and then pressing Stop — crashed the whole app (a 1.48 regression from the Symphonia 0.6 migration). The Ogg demuxer recorded its seek bounds only when the source was seekable during the format probe, but probing hid seekability, so the first seek panicked on the audio thread (`Option::unwrap()` on `None`) and took the process down at the audio backend boundary.
 * Local and in-memory Opus/Ogg sources now stay seekable through the probe, so seeking works correctly. As a safety net, any decoder panic during a seek is contained instead of crashing the app; for Opus/Ogg streamed over HTTP, seeking is a no-op for now rather than a crash.
+### Discord Rich Presence cover art missing with two server addresses
+
+* When a server profile had both a local and a public address, Discord Rich Presence showed the placeholder icon instead of the album cover. The cover URL used the local address, which Discord's servers can't reach; it now uses the public address (the same one used for share links).
 
 
 
