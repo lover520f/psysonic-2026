@@ -45,4 +45,25 @@ describe('coverArtUrlForDiscord', () => {
 
     expect(url).toContain('music.example.com');
   });
+
+  it('resolves a playback scope to the active profile (public address)', async () => {
+    // playback scope is the common case for locally-cached tracks; it must
+    // resolve to the active server, not yield a null cover.
+    const server = makeServer({
+      url: 'http://192.168.1.50:4533',
+      alternateUrl: 'https://music.example.com',
+    });
+    useAuthStore.setState({ servers: [server], activeServerId: server.id } as never);
+
+    const ref: CoverArtRef = {
+      cacheKind: 'album',
+      cacheEntityId: 'al-1',
+      fetchCoverArtId: 'al-1',
+      serverScope: { kind: 'playback' },
+    };
+    const url = await coverArtUrlForDiscord(ref);
+
+    expect(url).toContain('music.example.com');
+    expect(url).not.toContain('192.168.1.50');
+  });
 });

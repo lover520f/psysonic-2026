@@ -1,17 +1,7 @@
 import { buildCoverArtUrlForServer } from '../../api/subsonicStreamUrl';
 import { serverShareBaseUrl } from '../../utils/server/serverEndpoint';
-import { getPlaybackServerId } from '../../utils/playback/playbackServer';
 import { useAuthStore } from '../../store/authStore';
-import type { CoverArtRef, CoverServerScope } from '../types';
-
-/** The saved profile id that a cover scope resolves to (active/playback/server). */
-function serverIdForScope(scope: CoverServerScope): string | null {
-  if (scope.kind === 'server') return scope.serverId;
-  if (scope.kind === 'playback') {
-    return getPlaybackServerId() ?? useAuthStore.getState().activeServerId ?? null;
-  }
-  return useAuthStore.getState().activeServerId ?? null;
-}
+import type { CoverArtRef } from '../types';
 
 /**
  * Discord large image — an https:// URL Discord's own servers can reach.
@@ -21,13 +11,21 @@ function serverIdForScope(scope: CoverServerScope): string | null {
  * remotely, so a `http://192.168.x.x` address is unreachable and falls back to
  * the app icon. Discord is an external consumer just like a share link, so use
  * `serverShareBaseUrl` (public address preferred when both are set).
+ *
+ * Resolve the profile straight from the store: a `playback`/`active` scope
+ * always means the active server (a cross-server track gets an explicit
+ * `server` scope), so we never route through `getPlaybackServerId()`, whose
+ * empty-string / index-key returns previously yielded a null cover URL on
+ * locally-cached tracks.
  */
 export async function coverArtUrlForDiscord(ref: CoverArtRef): Promise<string | null> {
   const { serverScope, fetchCoverArtId } = ref;
-  const serverId = serverIdForScope(serverScope);
-  const profile = serverId
-    ? useAuthStore.getState().servers.find(s => s.id === serverId)
-    : undefined;
+  const auth = useAuthStore.getState();
+
+  const profile =
+    serverScope.kind === 'server'
+      ? auth.servers.find(s => s.id === serverScope.serverId)
+      : auth.servers.find(s => s.id === auth.activeServerId);
 
   if (profile) {
     return buildCoverArtUrlForServer(
