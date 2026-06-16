@@ -608,24 +608,15 @@ pub fn run() {
             if let tauri::WindowEvent::CloseRequested { api, .. } = event {
                 if window.label() == "main" {
                     api.prevent_close();
-
-                    #[cfg(target_os = "macos")]
-                    {
-                        // On macOS the red close button quits the app entirely.
-                        // Route through JS so playback position + Orbit state get
-                        // flushed; exit_app on the way back stops the audio engine.
-                        let _ = window.emit("app:force-quit", ());
+                    // All platforms: pause rendering, then let JS decide hide-to-tray
+                    // vs exit based on the minimizeToTray setting. macOS previously
+                    // always force-quit on the red close button, ignoring the setting
+                    // (#1103). The tray "Exit" item still emits app:force-quit for an
+                    // unconditional quit.
+                    if let Some(w) = window.app_handle().get_webview_window("main") {
+                        let _ = w.eval(PAUSE_RENDERING_JS);
                     }
-
-                    #[cfg(not(target_os = "macos"))]
-                    {
-                        // Pause rendering before JS decides whether to hide to tray or exit.
-                        if let Some(w) = window.app_handle().get_webview_window("main") {
-                            let _ = w.eval(PAUSE_RENDERING_JS);
-                        }
-                        // Let JS decide: minimize to tray or exit, based on user setting.
-                        let _ = window.emit("window:close-requested", ());
-                    }
+                    let _ = window.emit("window:close-requested", ());
                 } else if window.label() == "mini" {
                     // Native close on the mini: hide instead of destroying so
                     // state is preserved, and restore the main window.
