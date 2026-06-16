@@ -44,23 +44,31 @@ export function QueueHeader({
   // H1 mitigation: a mass-resolve burst (queue restore, prefetch window slide)
   // bumps `version` dozens of times in one frame; useDeferredValue coalesces
   // the burst into a single low-priority commit so long queues do not block
-  // the main thread on every cache tick. The aggregation itself is a single
-  // pass — one loop produces both totals so a 50k-track queue costs one walk,
-  // not two.
+  // the main thread on every cache tick.
+  //
+  // The O(n) walk is keyed on `queue`/`deferredVersion` only — NOT `queueIndex`.
+  // A skip moves only `queueIndex`, so it must not re-walk the whole queue: that
+  // synchronous O(n) pass on every track change froze the UI for seconds on very
+  // large queues (#1072, and the device-switch fallback in #1090). Instead we
+  // build a cumulative-duration prefix (`cumSecs[i]` = summed duration of tracks
+  // [0, i)) once per queue/cache change, then derive the future total as an O(1)
+  // lookup below. A 50k-track queue costs one walk per queue/cache change, zero
+  // per track change.
   const version = useSyncExternalStore(subscribeQueueResolver, getQueueResolverVersion);
   const deferredVersion = useDeferredValue(version);
-  const { totalSecs, futureTracksDuration } = useMemo(() => {
-    if (queue.length === 0) return { totalSecs: 0, futureTracksDuration: 0 };
-    let total = 0;
-    let future = 0;
+  const { totalSecs, cumSecs } = useMemo(() => {
+    const cum = new Float64Array(queue.length + 1);
     for (let i = 0; i < queue.length; i += 1) {
-      const dur = resolveQueueTrack(queue[i]).duration || 0;
-      total += dur;
-      if (i > queueIndex) future += dur;
+      cum[i + 1] = cum[i] + (resolveQueueTrack(queue[i]).duration || 0);
     }
-    return { totalSecs: total, futureTracksDuration: future };
+    return { totalSecs: cum[queue.length], cumSecs: cum };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [queue, queueIndex, deferredVersion]);
+  }, [queue, deferredVersion]);
+  // Tracks strictly after the current index — O(1) per skip.
+  const futureTracksDuration = Math.max(
+    0,
+    totalSecs - cumSecs[Math.min(queueIndex + 1, queue.length)],
+  );
 
   const currentDuration = queue[queueIndex] ? resolveQueueTrack(queue[queueIndex]).duration : 0;
   const remainingSecs = Math.max(0, (currentDuration ?? 0) - currentTime + futureTracksDuration);

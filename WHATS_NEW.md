@@ -7,6 +7,32 @@ current line before promoting to `next` / `release`. Technical details and PR cr
 Within each section, order by **user impact** (most noticeable first) — not PR merge order.
 `CHANGELOG.md` keeps strict PR order inside Added / Changed / Fixed.
 
+
+## [1.48.1]
+
+## Fixed
+
+### Playback and audio
+
+- Changing tracks — skipping, or the automatic advance at the end of a song — no longer freezes the interface for a few seconds: the progress bar and lyrics keep updating, and on **Windows** a change of output device now takes effect right away.
+- Seeking an **Opus/Ogg** track — and then pressing **Stop** — no longer crashes the app.
+- **macOS:** pausing or stopping playback and then unplugging headphones (or switching the output device) no longer makes playback restart — it stays paused or stopped.
+
+### Offline, Now Playing, and Navidrome
+
+- On large **Navidrome** libraries, background library sync no longer locks up database writes for minutes at a time, so play history, ratings, and other saves go through without long delays.
+
+### Themes and integrations
+
+- **Discord** Rich Presence shows the album cover again when a server profile has both a local and a public address.
+
+### Other
+
+- **Windows:** the system media controls (Quick Settings media tile, lock screen, and third-party flyouts) now show the album cover and display **Psysonic** with its icon instead of "Unknown application".
+- **macOS:** closing the window with the red close button now respects **Minimize to Tray** — with it on, the window hides to the tray instead of quitting.
+
+
+
 ## [1.48.0]
 
 ## Highlights

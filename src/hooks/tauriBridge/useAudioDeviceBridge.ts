@@ -3,6 +3,7 @@ import { listen } from '@tauri-apps/api/event';
 import { usePlayerStore } from '../../store/playerStore';
 import { useAuthStore } from '../../store/authStore';
 import { setSeekFallbackVisualTarget } from '../../store/seekFallbackState';
+import { getIsAudioPaused } from '../../store/engineState';
 
 /** Audio output device lifecycle: device switches (Bluetooth headphones, USB
  * DAC, …) and pinned-device-unplugged fallbacks emitted by the Rust
@@ -23,7 +24,10 @@ export function useAudioDeviceBridge() {
       const resumeAt = typeof event.payload === 'number' ? event.payload : 0;
       const { currentTrack, isPlaying, playTrack, resetAudioPause } = usePlayerStore.getState();
       if (!currentTrack) return;
-      if (isPlaying) {
+      // Only restart playback when transport is *provably* active. `isPlaying`
+      // alone can be stale/desynced on a device change (#1094); the engine-paused
+      // flag is the source of truth — if paused, just reset for the cold path.
+      if (isPlaying && !getIsAudioPaused()) {
         if (resumeAt > 0.5 && currentTrack.duration > 0) {
           setSeekFallbackVisualTarget({
             trackId: currentTrack.id,
@@ -55,7 +59,10 @@ export function useAudioDeviceBridge() {
       const resumeAt = typeof event.payload === 'number' ? event.payload : 0;
       const { currentTrack, isPlaying, playTrack, resetAudioPause } = usePlayerStore.getState();
       if (!currentTrack) return;
-      if (isPlaying) {
+      // Only restart playback when transport is *provably* active. `isPlaying`
+      // alone can be stale/desynced on a device change (#1094); the engine-paused
+      // flag is the source of truth — if paused, just reset for the cold path.
+      if (isPlaying && !getIsAudioPaused()) {
         if (resumeAt > 0.5 && currentTrack.duration > 0) {
           setSeekFallbackVisualTarget({
             trackId: currentTrack.id,

@@ -82,6 +82,15 @@ pub(crate) async fn reopen_output_stream(
     if !opened {
         return false;
     }
+    // When we're not actively playing (paused/stopped), bump the generation
+    // before stopping the old sink so the still-running progress task sees the
+    // mismatch and bails out instead of emitting a spurious `audio:ended` —
+    // which would otherwise trigger a frontend restart of paused playback
+    // (#1094). The active-playback path bumps inside
+    // `try_resume_after_device_change`, so only guard the non-playing case here.
+    if !snapshot.is_playing {
+        engine.generation.fetch_add(1, Ordering::SeqCst);
+    }
     if let Some(s) = current.lock().unwrap().sink.take() {
         s.stop();
     }

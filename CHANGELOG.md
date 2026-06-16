@@ -21,6 +21,62 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * New store filter to show only animated themes or only static ones, next to the existing mode and sort controls.
 
 
+## [1.48.1] - 2026-06-15
+
+## Fixed
+
+### Playback freeze on track changes
+
+**By [@Psychotoxical](https://github.com/Psychotoxical)**
+
+* Changing tracks — skipping, or the automatic advance at the end of a song — could freeze the interface for several seconds while audio kept playing (the progress bar and lyrics stopped updating). The queue header recomputed its duration totals on every track change instead of only when the queue itself changes; it now recomputes only on queue changes, so track changes stay instant.
+* This also resolves output-device changes not being applied on Windows: the same freeze was blocking playback from following the newly selected device.
+
+### Paused or stopped playback restarting on headphone disconnect (macOS)
+
+**By [@Psychotoxical](https://github.com/Psychotoxical)**
+
+* On macOS, pausing or stopping playback and then disconnecting headphones (or otherwise switching the audio output device) could make playback restart on the newly selected device. Playback now reliably stays paused or stopped across a device change.
+
+### Crash when seeking Opus/Ogg files
+
+**By [@cucadmuh](https://github.com/cucadmuh), PR [#1100](https://github.com/Psychotoxical/psysonic/pull/1100)**
+
+* Scrubbing the seekbar on an Opus/Ogg file — and then pressing Stop — crashed the whole app (a 1.48 regression from the Symphonia 0.6 migration). The Ogg demuxer recorded its seek bounds only when the source was seekable during the format probe, but probing hid seekability, so the first seek panicked on the audio thread (`Option::unwrap()` on `None`) and took the process down at the audio backend boundary.
+* Local and in-memory Opus/Ogg sources now stay seekable through the probe, so seeking works correctly. As a safety net, any decoder panic during a seek is contained instead of crashing the app; for Opus/Ogg streamed over HTTP, seeking is a no-op for now rather than a crash.
+
+### Discord Rich Presence cover art missing with two server addresses
+
+**By [@Psychotoxical](https://github.com/Psychotoxical)**
+
+* When a server profile had both a local and a public address, Discord Rich Presence showed the placeholder icon instead of the album cover. The cover URL used the local address, which Discord's servers can't reach; it now uses the public address (the same one used for share links).
+
+### "Minimize to Tray" ignored on the macOS close button
+
+**By [@Psychotoxical](https://github.com/Psychotoxical)**
+
+* On macOS, closing the window with the red close button always quit the app, even with "Minimize to Tray" enabled. The close button now respects the setting — with it on, the window hides to the tray instead of quitting, the same as the tray icon's "Hide".
+
+### Library sync stalling for many seconds on large Navidrome collections
+
+**By [@cucadmuh](https://github.com/cucadmuh), PR [#1105](https://github.com/Psychotoxical/psysonic/pull/1105)**
+
+* On large libraries (reported with ~200,000 tracks on Navidrome), background library sync could lock up database writes for minutes at a time — playback history, ratings and other saves piled up waiting behind it.
+* Root cause: the track id-remap step ran a database lookup that couldn't use its indexes and scanned the entire track table once per incoming track, so the cost grew with the square of the library size. The lookup now uses the proper indexes, bringing it back to a fast, near-instant operation.
+
+### Album cover missing in Windows media controls
+
+**By [@Psychotoxical](https://github.com/Psychotoxical)**
+
+* On Windows, the system media controls (the Quick Settings media tile, the lock screen and third-party media flyouts) showed the track title and artist but no album cover. Windows could not decode the cached WebP cover art for its thumbnail, even with the Store WebP extension installed. The cover is now converted to PNG before it is handed to the media controls, so the artwork shows again. macOS and Linux are unaffected.
+
+### Windows media controls showed "Unknown application"
+
+**By [@Psychotoxical](https://github.com/Psychotoxical)**
+
+* On Windows, the system media controls (the Quick Settings media tile, the lock screen and third-party media flyouts) labelled playback as "Unknown application" with no icon. The app now registers an explicit application identity at startup so Windows shows "Psysonic" and its icon as the playback source.
+
+
 
 ## [1.48.0]
 

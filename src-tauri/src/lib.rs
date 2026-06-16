@@ -64,7 +64,28 @@ fn on_second_instance<R: tauri::Runtime>(
     }
 }
 
+/// Windows: associate this process with an explicit AppUserModelID. Windows uses
+/// it to name the app in taskbar grouping and the SMTC media controls; without it
+/// the media tile reads "Unknown application". Must match the AppUserModelID the
+/// installer sets on the Start-menu shortcut so the name/icon resolve.
+#[cfg(target_os = "windows")]
+fn set_app_user_model_id() {
+    use windows::core::w;
+    use windows::Win32::UI::Shell::SetCurrentProcessExplicitAppUserModelID;
+    // SAFETY: a Win32 call with a static wide string; errors are non-fatal.
+    unsafe {
+        let _ = SetCurrentProcessExplicitAppUserModelID(w!("dev.psysonic.player"));
+    }
+}
+
 pub fn run() {
+    // Windows: bind this process to an explicit AppUserModelID before any window
+    // or the SMTC media controls are created, so the OS can resolve the app
+    // name/icon for taskbar grouping and the media tile (#1102 follow-up: the
+    // Quick-Settings / lock-screen media tile showed "Unknown application").
+    #[cfg(target_os = "windows")]
+    set_app_user_model_id();
+
     // Linux: second `psysonic --player …` forwards over D-Bus before heavy startup.
     #[cfg(target_os = "linux")]
     {
@@ -502,10 +523,19 @@ pub fn run() {
                             let app_handle = app.handle().clone();
                             if let Err(e) = controls.attach(move |event: MediaControlEvent| {
                                 match event {
-                                    MediaControlEvent::Toggle
-                                    | MediaControlEvent::Play
-                                    | MediaControlEvent::Pause => {
+                                    // Keep Play/Pause distinct from Toggle: the OS
+                                    // (notably macOS on audio-route changes, e.g. a
+                                    // headphone disconnect) sends an explicit Pause,
+                                    // and collapsing all three into a toggle would
+                                    // resume paused playback on the new device (#1094).
+                                    MediaControlEvent::Toggle => {
                                         let _ = app_handle.emit("media:play-pause", ());
+                                    }
+                                    MediaControlEvent::Play => {
+                                        let _ = app_handle.emit("media:play", ());
+                                    }
+                                    MediaControlEvent::Pause => {
+                                        let _ = app_handle.emit("media:pause", ());
                                     }
                                     MediaControlEvent::Next => {
                                         let _ = app_handle.emit("media:next", ());
@@ -599,24 +629,15 @@ pub fn run() {
             if let tauri::WindowEvent::CloseRequested { api, .. } = event {
                 if window.label() == "main" {
                     api.prevent_close();
-
-                    #[cfg(target_os = "macos")]
-                    {
-                        // On macOS the red close button quits the app entirely.
-                        // Route through JS so playback position + Orbit state get
-                        // flushed; exit_app on the way back stops the audio engine.
-                        let _ = window.emit("app:force-quit", ());
+                    // All platforms: pause rendering, then let JS decide hide-to-tray
+                    // vs exit based on the minimizeToTray setting. macOS previously
+                    // always force-quit on the red close button, ignoring the setting
+                    // (#1103). The tray "Exit" item still emits app:force-quit for an
+                    // unconditional quit.
+                    if let Some(w) = window.app_handle().get_webview_window("main") {
+                        let _ = w.eval(PAUSE_RENDERING_JS);
                     }
-
-                    #[cfg(not(target_os = "macos"))]
-                    {
-                        // Pause rendering before JS decides whether to hide to tray or exit.
-                        if let Some(w) = window.app_handle().get_webview_window("main") {
-                            let _ = w.eval(PAUSE_RENDERING_JS);
-                        }
-                        // Let JS decide: minimize to tray or exit, based on user setting.
-                        let _ = window.emit("window:close-requested", ());
-                    }
+                    let _ = window.emit("window:close-requested", ());
                 } else if window.label() == "mini" {
                     // Native close on the mini: hide instead of destroying so
                     // state is preserved, and restore the main window.

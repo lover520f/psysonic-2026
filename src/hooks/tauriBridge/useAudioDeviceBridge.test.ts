@@ -18,6 +18,7 @@ import { makeTrack } from '@/test/helpers/factories';
 import { usePlayerStore } from '@/store/playerStore';
 import { useAuthStore } from '@/store/authStore';
 import { getSeekFallbackVisualTarget, setSeekFallbackVisualTarget } from '@/store/seekFallbackState';
+import { setIsAudioPaused } from '@/store/engineState';
 import { useAudioDeviceBridge } from './useAudioDeviceBridge';
 
 const track = makeTrack({ id: 't1', duration: 300 });
@@ -29,6 +30,8 @@ function mountBridge() {
 beforeEach(() => {
   resetAllStores();
   setSeekFallbackVisualTarget(null);
+  // Module-level engine flag isn't covered by resetAllStores — reset explicitly.
+  setIsAudioPaused(false);
   // Default: a track is playing.
   usePlayerStore.setState({ currentTrack: track, isPlaying: true });
 });
@@ -91,6 +94,19 @@ describe('audio:device-changed', () => {
     emitTauriEvent('audio:device-changed', 30.0);
 
     expect(playTrack).not.toHaveBeenCalled();
+  });
+
+  it('does not restart when the engine is paused even if isPlaying is stale-true (#1094)', () => {
+    const playTrack = vi.fn();
+    const resetAudioPause = vi.fn();
+    usePlayerStore.setState({ playTrack, resetAudioPause, isPlaying: true } as never);
+    setIsAudioPaused(true);
+    mountBridge();
+
+    emitTauriEvent('audio:device-changed', 45.0);
+
+    expect(playTrack).not.toHaveBeenCalled();
+    expect(resetAudioPause).toHaveBeenCalled();
   });
 });
 
