@@ -1,12 +1,11 @@
 import { getAlbumList } from '../api/subsonicLibrary';
 import type { SubsonicAlbum } from '../api/subsonicTypes';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
-import { X } from 'lucide-react';
 import { save } from '@tauri-apps/plugin-dialog';
 import { writeFile } from '@tauri-apps/plugin-fs';
 import { showToast } from '../utils/ui/toast';
+import Modal from './Modal';
 import {
   exportAlbumCardBlob,
   renderAlbumCardCanvas,
@@ -113,16 +112,6 @@ export default function StatsExportModal({ open, albums, meta, onClose }: Props)
     };
   }, [open, format, gridSize, effectiveAlbums, enoughAlbums, title, meta]);
 
-  // Esc-to-close.
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [open, onClose]);
-
-  if (!open) return null;
-
   const onSave = async () => {
     if (saving || !enoughAlbums) return;
     setSaving(true);
@@ -151,29 +140,26 @@ export default function StatsExportModal({ open, albums, meta, onClose }: Props)
     }
   };
 
-  return createPortal(
-    <div
-      className="modal-overlay"
-      onClick={onClose}
-      role="dialog"
-      aria-modal="true"
-      style={{ alignItems: 'center', paddingTop: 0 }}
+  return (
+    <Modal
+      open={open}
+      onClose={onClose}
+      title={t('statistics.exportTitle')}
+      subtitle={t('statistics.exportSubtitle')}
+      size="lg"
+      closeLabel={t('statistics.exportCancel')}
+      bodyClassName="ui-modal-body--padded"
+      footer={
+        <>
+          <button className="btn btn-ghost" onClick={onClose} disabled={saving}>
+            {t('statistics.exportCancel')}
+          </button>
+          <button className="btn btn-primary" onClick={onSave} disabled={!enoughAlbums || saving}>
+            {saving ? t('statistics.exportSaving') : t('statistics.exportSave')}
+          </button>
+        </>
+      }
     >
-      <div
-        className="modal-content"
-        onClick={e => e.stopPropagation()}
-        style={{ maxWidth: '720px', width: 'min(720px, 92vw)' }}
-      >
-        <button className="modal-close" onClick={onClose} aria-label={t('statistics.exportCancel')}>
-          <X size={18} />
-        </button>
-        <h3 style={{ marginBottom: '0.25rem', fontFamily: 'var(--font-display)' }}>
-          {t('statistics.exportTitle')}
-        </h3>
-        <p style={{ color: 'var(--text-secondary)', marginBottom: '1rem', fontSize: '0.875rem' }}>
-          {t('statistics.exportSubtitle')}
-        </p>
-
         {/* Format */}
         <div style={{ marginBottom: '0.875rem' }}>
           <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
@@ -265,21 +251,7 @@ export default function StatsExportModal({ open, albums, meta, onClose }: Props)
           </PreviewFrame>
         </div>
 
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
-          <button className="btn btn-ghost" onClick={onClose} disabled={saving}>
-            {t('statistics.exportCancel')}
-          </button>
-          <button
-            className="btn btn-primary"
-            onClick={onSave}
-            disabled={!enoughAlbums || saving}
-          >
-            {saving ? t('statistics.exportSaving') : t('statistics.exportSave')}
-          </button>
-        </div>
-      </div>
-    </div>,
-    document.body,
+    </Modal>
   );
 }
 
