@@ -12,6 +12,14 @@
   white-space: nowrap;
 }
 
+/* Keyboard focus ring. The offset puts a band of the real background between
+   the button and the ring, so it stays visible even on an accent-filled
+   .btn-primary (where ring and fill share the accent colour). */
+.btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
 .btn-primary {
   background: var(--accent);
   color: var(--text-on-accent);
