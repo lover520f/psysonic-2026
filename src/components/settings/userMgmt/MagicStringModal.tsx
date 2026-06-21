@@ -1,6 +1,4 @@
-import React, { useState } from 'react';
-import { createPortal } from 'react-dom';
-import { X } from 'lucide-react';
+import { useState } from 'react';
 import type { TFunction } from 'i18next';
 import { ndUpdateUser, type NdUser } from '../../../api/navidromeAdmin';
 import { showToast } from '../../../utils/ui/toast';
@@ -11,6 +9,7 @@ import {
 } from '../../../utils/server/serverMagicString';
 import { shortHostFromServerUrl } from '../../../utils/server/serverDisplayName';
 import { useAuthStore } from '../../../store/authStore';
+import Modal from '../../Modal';
 
 interface Props {
   user: NdUser;
@@ -27,9 +26,6 @@ interface Props {
  * APIs, so we must re-set one); on success we encode it into a server
  * magic string, copy it to the clipboard, and let the parent reload the
  * list.
- *
- * Rendered into `document.body` via portal so the modal escapes the
- * settings overflow box.
  */
 export function MagicStringModal({
   user,
@@ -88,63 +84,18 @@ export function MagicStringModal({
     })();
   };
 
-  return createPortal(
-    <div
-      className="modal-overlay"
-      onClick={closeIfIdle}
-      role="dialog"
-      aria-modal="true"
-      style={{ alignItems: 'center', paddingTop: 0 }}
-    >
-      <div
-        className="modal-content"
-        onClick={e => e.stopPropagation()}
-        style={{ maxWidth: '400px' }}
-      >
-        <button
-          type="button"
-          className="modal-close"
-          onClick={closeIfIdle}
-          aria-label={t('settings.userMgmtCancel')}
-        >
-          <X size={18} />
-        </button>
-        <h3 style={{ marginBottom: '0.5rem', fontFamily: 'var(--font-display)' }}>
-          {t('settings.userMgmtMagicStringModalTitle')}
-        </h3>
-        <p style={{ color: 'var(--text-secondary)', marginBottom: '0.75rem', lineHeight: 1.5, fontSize: 13 }}>
-          {t('settings.userMgmtMagicStringModalDesc', { username: user.userName })}
-        </p>
-        <p style={{ color: 'var(--text-muted)', marginBottom: '0.75rem', lineHeight: 1.45, fontSize: 12 }}>
-          {t('settings.userMgmtMagicStringPasswordNavHint')}
-        </p>
-        <div
-          role="note"
-          style={{
-            fontSize: 11,
-            lineHeight: 1.45,
-            marginBottom: '1rem',
-            padding: '8px 10px',
-            borderRadius: 6,
-            border: '1px solid color-mix(in srgb, var(--warning, #f59e0b) 35%, transparent)',
-            background: 'color-mix(in srgb, var(--warning, #f59e0b) 10%, transparent)',
-            color: 'var(--text-primary)',
-          }}
-        >
-          {t('settings.userMgmtMagicStringPlaintextWarning')}
-        </div>
-        <div className="form-group" style={{ marginBottom: '1.25rem' }}>
-          <label style={{ fontSize: 13 }}>{t('settings.userMgmtPassword')}</label>
-          <input
-            className="input"
-            type="password"
-            value={password}
-            onChange={e => setPassword(e.target.value)}
-            autoComplete="off"
-            disabled={submitting}
-          />
-        </div>
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+  return (
+    <Modal
+      open
+      onClose={closeIfIdle}
+      title={t('settings.userMgmtMagicStringModalTitle')}
+      size="sm"
+      closeLabel={t('settings.userMgmtCancel')}
+      closeOnBackdrop={!submitting}
+      closeOnEscape={!submitting}
+      bodyClassName="ui-modal-body--padded"
+      footer={
+        <>
           <button
             type="button"
             className="btn btn-ghost"
@@ -161,9 +112,41 @@ export function MagicStringModal({
           >
             {t('settings.userMgmtMagicStringModalConfirm')}
           </button>
-        </div>
+        </>
+      }
+    >
+      <p style={{ color: 'var(--text-secondary)', marginBottom: '0.75rem', lineHeight: 1.5, fontSize: 13 }}>
+        {t('settings.userMgmtMagicStringModalDesc', { username: user.userName })}
+      </p>
+      <p style={{ color: 'var(--text-muted)', marginBottom: '0.75rem', lineHeight: 1.45, fontSize: 12 }}>
+        {t('settings.userMgmtMagicStringPasswordNavHint')}
+      </p>
+      <div
+        role="note"
+        style={{
+          fontSize: 11,
+          lineHeight: 1.45,
+          marginBottom: '1rem',
+          padding: '8px 10px',
+          borderRadius: 6,
+          border: '1px solid color-mix(in srgb, var(--warning, #f59e0b) 35%, transparent)',
+          background: 'color-mix(in srgb, var(--warning, #f59e0b) 10%, transparent)',
+          color: 'var(--text-primary)',
+        }}
+      >
+        {t('settings.userMgmtMagicStringPlaintextWarning')}
       </div>
-    </div>,
-    document.body,
+      <div className="form-group">
+        <label style={{ fontSize: 13 }}>{t('settings.userMgmtPassword')}</label>
+        <input
+          className="input"
+          type="password"
+          value={password}
+          onChange={e => setPassword(e.target.value)}
+          autoComplete="off"
+          disabled={submitting}
+        />
+      </div>
+    </Modal>
   );
 }
