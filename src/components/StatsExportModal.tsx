@@ -160,96 +160,96 @@ export default function StatsExportModal({ open, albums, meta, onClose }: Props)
         </>
       }
     >
-        {/* Format */}
-        <div style={{ marginBottom: '0.875rem' }}>
-          <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-            {t('statistics.exportFormat')}
-          </div>
-          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-            {FORMATS.map(f => {
-              const active = format === f.key;
-              return (
-                <button
-                  key={f.key}
-                  type="button"
-                  onClick={() => setFormat(f.key)}
-                  className="btn btn-surface"
-                  style={{
-                    padding: '0.5rem 0.75rem',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.5rem',
-                    border: `1px solid ${active ? 'var(--accent)' : 'var(--glass-border)'}`,
-                    background: active ? 'color-mix(in srgb, var(--accent) 12%, transparent)' : undefined,
-                  }}
-                >
-                  <span style={{
-                    display: 'inline-block',
-                    width: f.ratioBox.w * 0.4,
-                    height: f.ratioBox.h * 0.4,
-                    background: active ? 'var(--accent)' : 'var(--text-muted)',
-                    opacity: active ? 0.9 : 0.5,
-                    borderRadius: 2,
-                  }} />
-                  {t(`statistics.exportFormat${f.key[0].toUpperCase()}${f.key.slice(1)}`)}
-                </button>
-              );
-            })}
-          </div>
+      {/* Format */}
+      <div style={{ marginBottom: '0.875rem' }}>
+        <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+          {t('statistics.exportFormat')}
         </div>
+        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+          {FORMATS.map(f => {
+            const active = format === f.key;
+            return (
+              <button
+                key={f.key}
+                type="button"
+                onClick={() => setFormat(f.key)}
+                className="btn btn-surface"
+                style={{
+                  padding: '0.5rem 0.75rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  border: `1px solid ${active ? 'var(--accent)' : 'var(--glass-border)'}`,
+                  background: active ? 'color-mix(in srgb, var(--accent) 12%, transparent)' : undefined,
+                }}
+              >
+                <span style={{
+                  display: 'inline-block',
+                  width: f.ratioBox.w * 0.4,
+                  height: f.ratioBox.h * 0.4,
+                  background: active ? 'var(--accent)' : 'var(--text-muted)',
+                  opacity: active ? 0.9 : 0.5,
+                  borderRadius: 2,
+                }} />
+                {t(`statistics.exportFormat${f.key[0].toUpperCase()}${f.key.slice(1)}`)}
+              </button>
+            );
+          })}
+        </div>
+      </div>
 
-        {/* Grid */}
-        <div style={{ marginBottom: '1rem' }}>
-          <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-            {t('statistics.exportGrid')}
-          </div>
-          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-            {GRID_SIZES.map(n => {
-              const active = gridSize === n;
-              return (
-                <button
-                  key={n}
-                  type="button"
-                  onClick={() => setGridSize(n)}
-                  className="btn btn-surface"
-                  style={{
-                    padding: '0.5rem 0.875rem',
-                    border: `1px solid ${active ? 'var(--accent)' : 'var(--glass-border)'}`,
-                    background: active ? 'color-mix(in srgb, var(--accent) 12%, transparent)' : undefined,
-                  }}
-                >
-                  {t('statistics.exportGridLabel', { n })}
-                </button>
-              );
-            })}
-          </div>
+      {/* Grid */}
+      <div style={{ marginBottom: '1rem' }}>
+        <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+          {t('statistics.exportGrid')}
         </div>
+        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+          {GRID_SIZES.map(n => {
+            const active = gridSize === n;
+            return (
+              <button
+                key={n}
+                type="button"
+                onClick={() => setGridSize(n)}
+                className="btn btn-surface"
+                style={{
+                  padding: '0.5rem 0.875rem',
+                  border: `1px solid ${active ? 'var(--accent)' : 'var(--glass-border)'}`,
+                  background: active ? 'color-mix(in srgb, var(--accent) 12%, transparent)' : undefined,
+                }}
+              >
+                {t('statistics.exportGridLabel', { n })}
+              </button>
+            );
+          })}
+        </div>
+      </div>
 
-        {/* Preview */}
-        <div style={{ marginBottom: '1rem' }}>
-          <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-            {t('statistics.exportPreview')}
-          </div>
-          <PreviewFrame format={format}>
-            {!enoughAlbums ? (
-              <div style={{
-                position: 'absolute',
-                inset: 0,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                textAlign: 'center',
-                color: 'var(--text-muted)',
-                fontSize: '0.875rem',
-                padding: '1rem',
-              }}>
-                {t('statistics.exportNotEnough', { count: required, n: gridSize })}
-              </div>
-            ) : (
-              <div ref={previewRef} style={{ width: '100%' }} />
-            )}
-          </PreviewFrame>
+      {/* Preview */}
+      <div style={{ marginBottom: '1rem' }}>
+        <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+          {t('statistics.exportPreview')}
         </div>
+        <PreviewFrame format={format}>
+          {!enoughAlbums ? (
+            <div style={{
+              position: 'absolute',
+              inset: 0,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              textAlign: 'center',
+              color: 'var(--text-muted)',
+              fontSize: '0.875rem',
+              padding: '1rem',
+            }}>
+              {t('statistics.exportNotEnough', { count: required, n: gridSize })}
+            </div>
+          ) : (
+            <div ref={previewRef} style={{ width: '100%' }} />
+          )}
+        </PreviewFrame>
+      </div>
 
     </Modal>
   );
