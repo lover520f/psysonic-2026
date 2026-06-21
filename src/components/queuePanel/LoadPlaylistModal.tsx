@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
-import { Play, X, Trash2, ListPlus } from 'lucide-react';
+import { Play, Trash2, ListPlus } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { getPlaylists, deletePlaylist } from '../../api/subsonicPlaylists';
 import type { SubsonicPlaylist } from '../../api/subsonicTypes';
+import Modal from '../Modal';
+import ConfirmDialog from '../ConfirmDialog';
 
 interface Props {
   onClose: () => void;
@@ -33,7 +35,7 @@ export function LoadPlaylistModal({ onClose, onLoad }: Props) {
     fetchPlaylists();
   }, []);
 
-  const handleDelete = async (id: string, name: string) => {
+  const handleDelete = (id: string, name: string) => {
     setConfirmDelete({ id, name });
   };
 
@@ -46,10 +48,14 @@ export function LoadPlaylistModal({ onClose, onLoad }: Props) {
 
   return (
     <>
-    <div className="modal-overlay" onClick={onClose} role="dialog" aria-modal="true">
-      <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '560px', width: '90vw' }}>
-        <button className="modal-close" onClick={onClose}><X size={18} /></button>
-        <h3 style={{ marginBottom: '1rem', fontFamily: 'var(--font-display)' }}>{t('queue.loadPlaylist')}</h3>
+      <Modal
+        open
+        onClose={onClose}
+        title={t('queue.loadPlaylist')}
+        size="md"
+        closeLabel={t('queue.cancel')}
+        bodyClassName="ui-modal-body--padded"
+      >
         {!loading && playlists.length > 0 && (
           <input
             type="text"
@@ -79,26 +85,18 @@ export function LoadPlaylistModal({ onClose, onLoad }: Props) {
             ))}
           </div>
         )}
-      </div>
-    </div>
+      </Modal>
 
-    {confirmDelete && (
-      <div className="modal-overlay" onClick={() => setConfirmDelete(null)} role="dialog" aria-modal="true">
-        <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '360px' }}>
-          <button className="modal-close" onClick={() => setConfirmDelete(null)}><X size={18} /></button>
-          <h3 style={{ marginBottom: '0.5rem', fontFamily: 'var(--font-display)' }}>{t('queue.delete')}</h3>
-          <p style={{ color: 'var(--text-secondary)', marginBottom: '1.25rem', lineHeight: 1.5 }}>
-            {t('queue.deleteConfirm', { name: confirmDelete.name })}
-          </p>
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
-            <button className="btn btn-ghost" onClick={() => setConfirmDelete(null)}>{t('queue.cancel')}</button>
-            <button className="btn btn-primary" style={{ background: 'var(--danger)', borderColor: 'var(--danger)' }} onClick={confirmDeletePlaylist}>
-              {t('queue.delete')}
-            </button>
-          </div>
-        </div>
-      </div>
-    )}
+      <ConfirmDialog
+        open={!!confirmDelete}
+        title={t('queue.delete')}
+        message={confirmDelete ? t('queue.deleteConfirm', { name: confirmDelete.name }) : ''}
+        confirmLabel={t('queue.delete')}
+        cancelLabel={t('queue.cancel')}
+        danger
+        onConfirm={confirmDeletePlaylist}
+        onCancel={() => setConfirmDelete(null)}
+      />
     </>
   );
 }
