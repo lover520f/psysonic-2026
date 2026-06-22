@@ -12,9 +12,9 @@ function sample(over: Partial<DriftSample> = {}): DriftSample {
   return {
     ts: Date.parse('2026-06-22T20:00:00.000Z'),
     driftMs: -812.4,
-    rate: 1.03,
-    targetRate: 1.1,
-    action: 'soft',
+    smoothedMs: -790,
+    rate: 1.1,
+    action: 'correct',
     trackRemSec: 118.7,
     hostPosMs: 60_000,
     guestPosMs: 59_188,
@@ -34,16 +34,22 @@ describe('driftTrace', () => {
     pushDriftSample(sample());
     const csv = formatDriftTraceCsv();
     const [header, row] = csv.split('\n');
-    expect(header).toBe('iso_ts,drift_ms,rate,target,action,rem_s,host_ms,guest_ms');
-    // drift/positions rounded to whole ms; rate/target to 2 dp; rem to 1 dp.
-    expect(row).toBe('2026-06-22T20:00:00.000Z,-812,1.03,1.10,soft,118.7,60000,59188');
+    expect(header).toBe('iso_ts,raw_ms,smoothed_ms,rate,action,rem_s,host_ms,guest_ms');
+    // raw/smoothed/positions rounded to whole ms; rate to 2 dp; rem to 1 dp.
+    expect(row).toBe('2026-06-22T20:00:00.000Z,-812,-790,1.10,correct,118.7,60000,59188');
+  });
+
+  it('leaves smoothed empty before the window fills', () => {
+    pushDriftSample(sample({ smoothedMs: null }));
+    const row = formatDriftTraceCsv().split('\n')[1];
+    expect(row).toBe('2026-06-22T20:00:00.000Z,-812,,1.10,correct,118.7,60000,59188');
   });
 
   it('keeps samples in insertion order', () => {
-    pushDriftSample(sample({ driftMs: -800, action: 'soft' }));
+    pushDriftSample(sample({ driftMs: -800, action: 'correct' }));
     pushDriftSample(sample({ driftMs: -200, action: 'hold' }));
     const rows = formatDriftTraceCsv().split('\n').slice(1);
-    expect(rows[0]).toContain(',soft,');
+    expect(rows[0]).toContain(',correct,');
     expect(rows[1]).toContain(',hold,');
   });
 

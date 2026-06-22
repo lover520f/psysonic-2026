@@ -7,31 +7,31 @@ import { estimateLivePosition } from '../api/orbit';
 import {
   computeOrbitDriftMs,
   planOrbitDriftCorrection,
-  stepRateToward,
   applyOrbitDriftRate,
   resetOrbitDriftRate,
   setOrbitDriftStatus,
   resetOrbitDriftStatus,
   pushDriftSample,
+  makeDriftSmoother,
   ORBIT_DRIFT_LOOP_TICK_MS,
-  type DriftCorrectionAction,
+  ORBIT_DRIFT_SETTLE_TICKS,
+  ORBIT_DRIFT_SMOOTH_WINDOW,
+  ORBIT_DRIFT_SMOOTH_MIN_SAMPLES,
 } from '../utils/orbit';
 import { clampCrossfadeSecs } from '../utils/playback/autodjAutoAdvance';
 import { pushOrbitEvent } from '../utils/orbitDiag';
 
 /**
- * Orbit — guest-side smooth drift correction.
+ * Orbit — guest-side drift correction (v3: smoothed bang-bang).
  *
- * Once per `LOOP_TICK_MS`, while we're an active guest playing the host's
- * current track, nudge our playback rate (pitch-preserving, ≤ ±10%) toward the
- * host's live position instead of hard-seeking on every wobble. A pure planner
- * (`planOrbitDriftCorrection`) decides hold / soft / seek from the live drift
- * and the time left in the track; this loop steps the rate one 1% increment per
- * tick toward the planned target and re-plans every tick.
- *
- * The rate goes through the Orbit drift-rate carve-out (`applyOrbitDriftRate`),
- * which is independent of the user's suppressed playback-rate preference and is
- * always handed back to 1.0× / the user pref on any abort.
+ * Once per `LOOP_TICK_MS`, while we're an active guest playing the host's track,
+ * nudge our playback rate toward the host. The raw drift is noisy (it swings
+ * ±1500 ms tick-to-tick with no real change), so we **median-smooth** it and act
+ * only on the stable value. Correction is **bang-bang**: jump straight to the
+ * ±10% cap, hold until caught up, then jump back to 1.0× — far fewer speed
+ * switches (which cause artifacts). After every speed change / seek we **settle**
+ * (ignore measurements) for a few ticks so a correction can't read back its own
+ * perturbation, which is what made the v2 ramp chase its own tail.
  *
  * Mounted from `useOrbitGuest`; does nothing unless `active`.
  */
@@ -42,7 +42,9 @@ export function useOrbitGuestDriftCorrection(active: boolean): void {
     let cancelled = false;
     let timer: number | null = null;
     let currentRate = 1.0;
+    let settleTicks = 0;
     let lastAction: string | null = null;
+    const smoother = makeDriftSmoother(ORBIT_DRIFT_SMOOTH_WINDOW, ORBIT_DRIFT_SMOOTH_MIN_SAMPLES);
 
     const note = (action: string, detail: string) => {
       if (action !== lastAction) {
@@ -51,90 +53,120 @@ export function useOrbitGuestDriftCorrection(active: boolean): void {
       }
     };
 
-    const resetRate = (reason: string) => {
-      // Idempotent: once neutral, do nothing — otherwise a paused or diverged
-      // guest (which hits an abort guard every tick) would fire a redundant
-      // rate IPC every 500 ms. `lastAction === null` marks "already handed back".
-      if (currentRate === 1.0 && lastAction === null) return;
+    /** Abort to neutral (pause / track change / teardown). No settle — we stop. */
+    const resetToNeutral = (reason: string) => {
+      if (currentRate === 1.0 && lastAction === null && settleTicks === 0) return;
       note('reset', reason);
       lastAction = null;
       currentRate = 1.0;
+      settleTicks = 0;
+      smoother.reset();
       resetOrbitDriftRate();
       resetOrbitDriftStatus();
+    };
+
+    /**
+     * Set the engine rate. A real change is a correction action: settle and drop
+     * buffered samples so the next measurement isn't the engine's transient.
+     */
+    const setRate = (rate: number) => {
+      if (Math.abs(rate - currentRate) < 1e-9) return;
+      currentRate = rate;
+      applyOrbitDriftRate(rate);
+      smoother.reset();
+      settleTicks = ORBIT_DRIFT_SETTLE_TICKS;
     };
 
     const step = () => {
       const state = useOrbitStore.getState().state;
       const player = usePlayerStore.getState();
 
-      // ── Abort guards → reset to 1.0× ──
-      if (!state?.currentTrack || !player.currentTrack) { resetRate('no track'); return; }
+      // ── Abort guards → neutral ──
+      if (!state?.currentTrack || !player.currentTrack) { resetToNeutral('no track'); return; }
       const hostTrackId = state.currentTrack.trackId;
-      if (player.currentTrack.id !== hostTrackId) { resetRate('different track'); return; }
-      if (!player.isPlaying || !state.isPlaying) { resetRate('paused'); return; }
+      if (player.currentTrack.id !== hostTrackId) { resetToNeutral('different track'); return; }
+      if (!player.isPlaying || !state.isPlaying) { resetToNeutral('paused'); return; }
 
       const now = Date.now();
       const durationSec = player.currentTrack.duration;
       const trackDurationMs = durationSec * 1000;
       const hostPositionMs = estimateLivePosition(state, now);
       const tTrackRemSec = (trackDurationMs - hostPositionMs) / 1000;
-      const guestPosMs = (player.currentTime ?? 0) * 1000;
-      const driftMs = computeOrbitDriftMs(state, guestPosMs, now);
-
-      // Publish the live status snapshot and append a dense trace sample from
-      // one place, so the diagnostics row and the CSV trace never disagree.
-      const publish = (action: DriftCorrectionAction, targetRate = 1.0, expectedDurationSec: number | null = null) => {
-        setOrbitDriftStatus({ action, currentRate, targetRate, expectedDurationSec });
-        pushDriftSample({ ts: now, driftMs, rate: currentRate, targetRate, action, trackRemSec: tTrackRemSec, hostPosMs: hostPositionMs, guestPosMs });
-      };
 
       // ── Blend guard ──
-      // Settle to 1.0× through a crossfade / AutoDJ smooth-skip blend near the
-      // track end — a ±10% nudge during an overlap could disturb it (the
-      // bit-perfect/blend audit is Phase 2). Gapless has no overlap, so no guard.
+      // Hold 1.0× through a crossfade / AutoDJ smooth-skip blend near the track
+      // end. Gapless has no overlap, so no guard.
       const a = useAuthStore.getState();
       let blendGuardSec = 0;
       if (a.crossfadeEnabled) blendGuardSec = clampCrossfadeSecs(a.crossfadeSecs);
       if (a.autodjSmoothSkip) blendGuardSec = Math.max(blendGuardSec, 2);
-      if (blendGuardSec > 0) blendGuardSec += 2; // reach 1.0× before the blend opens
+      if (blendGuardSec > 0) blendGuardSec += 2;
       if (blendGuardSec > 0 && tTrackRemSec <= blendGuardSec) {
-        currentRate = stepRateToward(currentRate, 1.0);
-        applyOrbitDriftRate(currentRate);
-        publish('blend');
+        setRate(1.0);
+        setOrbitDriftStatus({ action: 'blend', currentRate, smoothedDriftMs: smoother.value() });
         note('blend-guard', `holding 1.0× for blend, ${tTrackRemSec.toFixed(1)}s left`);
         return;
       }
 
-      const plan = planOrbitDriftCorrection({
-        driftMs,
-        trackDurationMs,
-        hostPositionMs,
-        hostIsPlaying: state.isPlaying,
-        currentRate,
-      });
-
-      if (plan.action === 'seek') {
-        // Unrecoverable within the track even at the cap — hard-seek to the
-        // host's live position (same destination as manual Catch-Up) and drop
-        // the soft correction.
-        const fraction = Math.max(0, Math.min(0.99, (hostPositionMs / 1000) / Math.max(1, durationSec)));
-        // Sample the give-up moment before the reset clears the status.
-        pushDriftSample({ ts: now, driftMs, rate: currentRate, targetRate: 1.0, action: 'seek', trackRemSec: tTrackRemSec, hostPosMs: hostPositionMs, guestPosMs });
-        note('seek', `drift ${Math.round(driftMs)}ms uncorrectable, seeking`);
-        player.seek(fraction);
-        resetRate('post-seek'); // re-syncs to host → correction state back to idle
+      // ── Settle window after a speed change / seek ──
+      // Hold the current rate and don't measure — the engine is still settling,
+      // so a measurement here would read the perturbation and we'd chase it.
+      if (settleTicks > 0) {
+        settleTicks -= 1;
+        setOrbitDriftStatus({ action: 'settle', currentRate, smoothedDriftMs: smoother.value() });
         return;
       }
 
-      const target = plan.action === 'soft' ? plan.targetRate : 1.0;
-      currentRate = stepRateToward(currentRate, target);
-      applyOrbitDriftRate(currentRate);
-      if (plan.action === 'soft') {
-        publish('soft', target, plan.expectedDurationSec);
-        note('soft', `drift ${Math.round(driftMs)}ms → rate ${target.toFixed(2)}× (~${Math.round(plan.expectedDurationSec)}s)`);
+      const guestPosMs = (player.currentTime ?? 0) * 1000;
+      const rawDrift = computeOrbitDriftMs(state, guestPosMs, now);
+      smoother.push(rawDrift);
+      const smoothed = smoother.value();
+
+      // Continuous trace (raw + smoothed) for the CSV diagnostics export.
+      pushDriftSample({
+        ts: now,
+        driftMs: rawDrift,
+        smoothedMs: smoothed,
+        rate: currentRate,
+        action: lastAction ?? 'idle',
+        trackRemSec: tTrackRemSec,
+        hostPosMs: hostPositionMs,
+        guestPosMs,
+      });
+
+      // Window not full yet → wait, holding whatever rate we're on.
+      if (smoothed === null) {
+        setOrbitDriftStatus({ action: currentRate === 1.0 ? 'hold' : 'correct', currentRate, smoothedDriftMs: null });
+        return;
+      }
+
+      const plan = planOrbitDriftCorrection({
+        driftMs: smoothed,
+        trackRemSec: tTrackRemSec,
+        hostIsPlaying: state.isPlaying,
+        correcting: currentRate !== 1.0,
+      });
+
+      if (plan.action === 'seek') {
+        const fraction = Math.max(0, Math.min(0.99, (hostPositionMs / 1000) / Math.max(1, durationSec)));
+        note('seek', `smoothed drift ${Math.round(smoothed)}ms uncorrectable, seeking`);
+        player.seek(fraction);
+        currentRate = 1.0;
+        resetOrbitDriftRate();
+        smoother.reset();
+        settleTicks = ORBIT_DRIFT_SETTLE_TICKS;
+        setOrbitDriftStatus({ action: 'seek', currentRate: 1.0, smoothedDriftMs: smoothed });
+        return;
+      }
+
+      if (plan.action === 'correct') {
+        setRate(plan.rate);
+        setOrbitDriftStatus({ action: 'correct', currentRate, smoothedDriftMs: smoothed });
+        note('correct', `smoothed drift ${Math.round(smoothed)}ms → rate ${plan.rate.toFixed(2)}×`);
       } else {
-        publish('hold');
-        if (currentRate === 1.0) note('hold', `drift ${Math.round(driftMs)}ms within band`);
+        setRate(1.0);
+        setOrbitDriftStatus({ action: 'hold', currentRate, smoothedDriftMs: smoothed });
+        note('hold', `smoothed drift ${Math.round(smoothed)}ms within band`);
       }
     };
 

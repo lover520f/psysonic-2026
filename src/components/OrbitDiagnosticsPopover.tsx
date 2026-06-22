@@ -96,13 +96,9 @@ export default function OrbitDiagnosticsPopover({ anchorRef, onClose }: Props) {
   // Live drift-correction status — re-read each render; the 1 s nowMs tick above
   // already repaints this popover, so the snapshot stays fresh without a subscribe.
   const dc = getOrbitDriftStatus();
-  const dcRateText = dc.action === 'idle'
-    ? '—'
-    : Math.abs(dc.currentRate - dc.targetRate) < 1e-6
-      ? `${dc.currentRate.toFixed(2)}×`
-      : `${dc.currentRate.toFixed(2)}× → ${dc.targetRate.toFixed(2)}×`;
-  const dcStatusText = dc.action === 'soft' && dc.expectedDurationSec != null
-    ? `${dc.action} · ~${Math.round(dc.expectedDurationSec)}s`
+  const dcRateText = dc.action === 'idle' ? '—' : `${dc.currentRate.toFixed(2)}×`;
+  const dcStatusText = dc.smoothedDriftMs != null
+    ? `${dc.action} · ${(dc.smoothedDriftMs / 1000).toFixed(1)}s`
     : dc.action;
 
   const hostPosSec = state ? Math.round(((state.positionMs ?? 0) + (state.isPlaying ? (nowMs - state.positionAt) : 0)) / 1000) : null;

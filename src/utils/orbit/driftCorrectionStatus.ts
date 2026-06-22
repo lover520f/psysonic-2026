@@ -7,23 +7,20 @@
  * the current value when it repaints.
  */
 
-export type DriftCorrectionAction = 'idle' | 'hold' | 'soft' | 'seek' | 'blend';
+export type DriftCorrectionAction = 'idle' | 'hold' | 'correct' | 'seek' | 'blend' | 'settle';
 
 export interface OrbitDriftStatus {
   action: DriftCorrectionAction;
   /** Rate currently sent to the engine (1.0 when not correcting). */
   currentRate: number;
-  /** Rate the loop is ramping toward (equals currentRate once settled). */
-  targetRate: number;
-  /** Planner's estimated time to close the gap, or null when not soft-correcting. */
-  expectedDurationSec: number | null;
+  /** Smoothed drift (ms) the controller last acted on, or null before the window fills. */
+  smoothedDriftMs: number | null;
 }
 
 const IDLE: OrbitDriftStatus = {
   action: 'idle',
   currentRate: 1.0,
-  targetRate: 1.0,
-  expectedDurationSec: null,
+  smoothedDriftMs: null,
 };
 
 let status: OrbitDriftStatus = IDLE;

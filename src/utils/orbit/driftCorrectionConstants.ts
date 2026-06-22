@@ -1,61 +1,57 @@
 /**
- * Orbit smooth drift correction — tunable constants.
+ * Orbit smooth drift correction — tunable constants (v3: bang-bang + smoothing).
  *
- * A guest that has drifted slightly from the host's live position is nudged
- * back with a pitch-preserving speed change (≤ ±10%) instead of an audible
- * hard seek. These numbers govern the deadband, the ramp cadence, and the
- * time budgets the planner reasons about. See the approved spec
- * (workdocs: 2026-06-22-orbit-smooth-drift-correction-plan.md, v2) for the
- * rationale behind each value — they are deliberately chosen against the
- * 2.5 s Navidrome poll cadence and real extrapolation noise.
+ * A guest that has drifted from the host's live position is nudged back with a
+ * pitch-preserving speed change. v3 replaces the v2 ramp (1%/500 ms steps): the
+ * test round showed the per-step speed switches caused audio artifacts and the
+ * raw drift signal is far too noisy for a fine controller (it swings ±1500 ms
+ * tick-to-tick with no real change). So now:
+ *
+ *   - The raw drift is median-smoothed before the controller sees it.
+ *   - Correction is bang-bang: jump straight to the ±10% cap, hold until caught
+ *     up, then jump back to 1.0× — two speed switches per cycle, not twenty.
+ *   - After any speed change / seek the loop settles (ignores measurements) for
+ *     a few ticks so a correction can't perturb its own next measurement.
+ *
+ * The host position only lands in ~5 s quanta, so sub-second sync is impossible
+ * anyway — the deadband is sized accordingly.
  */
 
 /**
- * Drift at or below this is acceptable jitter (poll noise, extrapolation
- * error). Correcting smaller errors causes audible pumping and wastes IPC.
- * Also the amount subtracted from |drift| to get the "effective work" the
- * correction actually has to close.
+ * Drift at or below this is left alone. Sized against the coarse (~5 s) host
+ * position updates — chasing sub-second error is futile and just causes pumping.
  */
-export const DRIFT_DEADBAND_MS = 500;
+export const DRIFT_DEADBAND_MS = 1500;
 
 /**
- * Hysteresis exit: while actively correcting, treat the job as done once
- * |drift| falls to this — then ramp back to 1.0×. Below the deadband so we
- * don't flip-flop right at the 500 ms boundary.
+ * Hysteresis exit: while correcting, drop back to 1.0× once the smoothed drift
+ * falls to this. Well below the deadband so we don't immediately re-trigger.
  */
-export const DRIFT_DONE_MS = 450;
+export const DRIFT_DONE_MS = 600;
 
-/**
- * Hysteresis entry: only *start* a fresh correction (from 1.0×) once |drift|
- * reaches this. Above the deadband so brushing 500 ms doesn't kick off chatter.
- */
-export const DRIFT_ENTER_MS = 550;
-
-/**
- * Preferred completion horizon for short corrections when the track is long
- * enough. The planner picks the gentlest rate (closest to 1.0×) that still
- * closes the drift within this window — not the fastest rate. Capped by the
- * remaining track time near end-of-track (`T_target = min(this, T_track_rem)`).
- */
-export const CORRECTION_TARGET_SEC = 30;
-
-/** ±10% product cap on the correction rate. */
+/** ±10% product cap on the correction rate. Bang-bang always uses the cap. */
 export const RATE_MIN = 0.9;
 export const RATE_MAX = 1.1;
 
-/** Quantised speed change per ramp step (1%). Predictable + testable. */
-export const RATE_STEP = 0.01;
+/** Drift (ms) closed per second of real time at the ±10% cap. */
+export const CLOSURE_MS_PER_SEC = (RATE_MAX - 1) * 1000; // 100 ms/s
 
 /**
- * The rate moves by one `RATE_STEP` every this many ms, both accelerating and
- * decelerating. A full 10% ramp therefore takes 5 s per leg — slow enough to
- * avoid clicks, fast enough to matter for sync.
+ * Beyond this smoothed drift a soft nudge is pointless (would take >50 s at the
+ * cap) — hard-seek to the host instead. Also the fallback when the remaining
+ * track is too short to close the gap softly.
  */
-export const RAMP_TICK_MS = 500;
+export const DRIFT_SEEK_HARD_MS = 5000;
 
-/**
- * Drift-correction loop cadence. Matches `RAMP_TICK_MS` (one step per tick) and
- * is faster than the 2.5 s state poll so we extrapolate host position between
- * polls.
- */
+/** Drift-correction loop cadence. Faster than the 2.5 s state poll. */
 export const LOOP_TICK_MS = 500;
+
+/**
+ * Ticks to ignore after a speed change or seek, so the engine settles and the
+ * correction doesn't read back its own perturbation. 4 ticks ≈ 2 s.
+ */
+export const DRIFT_SETTLE_TICKS = 4;
+
+/** Median window over raw drift samples, and the minimum before acting. */
+export const DRIFT_SMOOTH_WINDOW = 5;
+export const DRIFT_SMOOTH_MIN_SAMPLES = 3;

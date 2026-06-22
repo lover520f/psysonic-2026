@@ -17,9 +17,11 @@ const MAX_SAMPLES = 1200;
 
 export interface DriftSample {
   ts: number;
+  /** Raw drift this tick (noisy). */
   driftMs: number;
+  /** Median-smoothed drift the controller acts on, or null before the window fills. */
+  smoothedMs: number | null;
   rate: number;
-  targetRate: number;
   action: string;
   trackRemSec: number;
   hostPosMs: number;
@@ -49,13 +51,13 @@ export function driftTraceCount(): number {
  */
 export function formatDriftTraceCsv(): string {
   if (buffer.length === 0) return '';
-  const header = 'iso_ts,drift_ms,rate,target,action,rem_s,host_ms,guest_ms';
+  const header = 'iso_ts,raw_ms,smoothed_ms,rate,action,rem_s,host_ms,guest_ms';
   const rows = buffer.map(s =>
     [
       new Date(s.ts).toISOString(),
       Math.round(s.driftMs),
+      s.smoothedMs === null ? '' : Math.round(s.smoothedMs),
       s.rate.toFixed(2),
-      s.targetRate.toFixed(2),
       s.action,
       s.trackRemSec.toFixed(1),
       Math.round(s.hostPosMs),
