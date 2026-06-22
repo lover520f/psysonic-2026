@@ -53,12 +53,8 @@ export function applyOrbitDriftRate(rate: number): void {
  * leave. Idempotent.
  */
 export function resetOrbitDriftRate(): void {
-  if (lastSentRate === null) {
-    // Never engaged the channel this cycle — still re-assert the baseline once
-    // so a stale engine rate from a prior correction can't linger.
-    usePlaybackRateStore.getState().syncToRust();
-    return;
-  }
+  // Clear tracking and re-assert the baseline so a stale engine rate from a
+  // prior correction can't linger. `null` is idempotent if already cleared.
   lastSentRate = null;
   usePlaybackRateStore.getState().syncToRust();
 }

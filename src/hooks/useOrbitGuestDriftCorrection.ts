@@ -50,7 +50,12 @@ export function useOrbitGuestDriftCorrection(active: boolean): void {
     };
 
     const resetRate = (reason: string) => {
-      if (currentRate !== 1.0 || lastAction !== null) note('reset', reason);
+      // Idempotent: once neutral, do nothing — otherwise a paused or diverged
+      // guest (which hits an abort guard every tick) would fire a redundant
+      // rate IPC every 500 ms. `lastAction === null` marks "already handed back".
+      if (currentRate === 1.0 && lastAction === null) return;
+      note('reset', reason);
+      lastAction = null;
       currentRate = 1.0;
       resetOrbitDriftRate();
       resetOrbitDriftStatus();
@@ -105,10 +110,9 @@ export function useOrbitGuestDriftCorrection(active: boolean): void {
         // host's live position (same destination as manual Catch-Up) and drop
         // the soft correction.
         const fraction = Math.max(0, Math.min(0.99, (hostPositionMs / 1000) / Math.max(1, durationSec)));
-        setOrbitDriftStatus({ action: 'seek', currentRate: 1.0, targetRate: 1.0, expectedDurationSec: null });
         note('seek', `drift ${Math.round(driftMs)}ms uncorrectable, seeking`);
         player.seek(fraction);
-        resetRate('post-seek');
+        resetRate('post-seek'); // re-syncs to host → correction state back to idle
         return;
       }
 
@@ -136,6 +140,7 @@ export function useOrbitGuestDriftCorrection(active: boolean): void {
       cancelled = true;
       if (timer !== null) window.clearTimeout(timer);
       resetOrbitDriftRate();
+      resetOrbitDriftStatus();
     };
   }, [active]);
 }

@@ -86,8 +86,8 @@ export default function OrbitDiagnosticsPopover({ anchorRef, onClose }: Props) {
   const driftMs = sameTrack && state ? computeOrbitDriftMs(state, localPosMs, nowMs) : null;
   const hostStateAgeMs = state ? Math.max(0, nowMs - state.positionAt) : null;
 
-  // Live drift-correction status, re-read on the 1 s tick (depends on nowMs).
-  void nowMs;
+  // Live drift-correction status — re-read each render; the 1 s nowMs tick above
+  // already repaints this popover, so the snapshot stays fresh without a subscribe.
   const dc = getOrbitDriftStatus();
   const dcRateText = dc.action === 'idle'
     ? '—'
