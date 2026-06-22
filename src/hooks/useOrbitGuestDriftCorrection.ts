@@ -148,14 +148,13 @@ export function useOrbitGuestDriftCorrection(active: boolean): void {
       });
 
       if (plan.action === 'seek') {
-        const fraction = Math.max(0, Math.min(0.99, (hostPositionMs / 1000) / Math.max(1, durationSec)));
-        note('seek', `smoothed drift ${Math.round(smoothed)}ms uncorrectable, seeking`);
-        player.seek(fraction);
-        currentRate = 1.0;
-        resetOrbitDriftRate();
-        smoother.reset();
-        settleTicks = ORBIT_DRIFT_SETTLE_TICKS;
-        setOrbitDriftStatus({ action: 'seek', currentRate: 1.0, smoothedDriftMs: smoothed });
+        // Too far for a soft nudge. We deliberately do NOT auto-seek — a hard
+        // seek mid-track causes an audible dropout and chases a coarse target.
+        // Hold 1.0× and surface the manual Catch-Up button (OrbitSessionBar
+        // reads this 'seek' status); the user takes the jump if they want it.
+        setRate(1.0);
+        setOrbitDriftStatus({ action: 'seek', currentRate, smoothedDriftMs: smoothed });
+        note('giveup', `smoothed drift ${Math.round(smoothed)}ms — too far to nudge, offering manual catch-up`);
         return;
       }
 
