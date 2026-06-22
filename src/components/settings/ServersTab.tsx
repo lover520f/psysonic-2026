@@ -12,7 +12,11 @@ import { bootstrapIndexedServer } from '../../utils/library/librarySession';
 import { useLibraryIndexSync } from '../../hooks/useLibraryIndexSync';
 import ServerLibraryIndexControls from './ServerLibraryIndexControls';
 import type { ServerProfile } from '../../store/authStoreTypes';
-import { pingWithCredentials, scheduleInstantMixProbeForServer } from '../../api/subsonic';
+import { pingWithCredentialsForProfile, scheduleInstantMixProbeForServer } from '../../api/subsonic';
+import {
+  clearServerHttpContext,
+  syncServerHttpContextForProfile,
+} from '../../utils/server/syncServerHttpContext';
 import { useDragDrop } from '../../contexts/DragDropContext';
 import { type ServerMagicPayload } from '../../utils/server/serverMagicString';
 import { ensureConnectUrlResolved, invalidateReachableEndpointCache } from '../../utils/server/serverEndpoint';
@@ -191,6 +195,7 @@ export function ServersTab({
 
     auth.removeServer(server.id);
     try {
+      await clearServerHttpContext(server);
       await librarySyncClearSession(server.id);
       if (purgeLibrary) {
         await libraryDeleteServerData(server.id);
@@ -238,7 +243,12 @@ export function ServersTab({
       // straight to the legacy ping (which is also the connect-test).
       if (data.alternateUrl) {
         const verify = await verifySameServerEndpoints(
-          { url: data.url, alternateUrl: data.alternateUrl },
+          {
+            url: data.url,
+            alternateUrl: data.alternateUrl,
+            customHeaders: data.customHeaders,
+            customHeadersApplyTo: data.customHeadersApplyTo,
+          },
           data.username,
           data.password,
         );
@@ -247,7 +257,7 @@ export function ServersTab({
           return;
         }
       }
-      const ping = await pingWithCredentials(data.url, data.username, data.password);
+      const ping = await pingWithCredentialsForProfile(data, data.url);
       if (ping.ok) {
         const id = auth.addServer(data);
         const identity = {
@@ -259,7 +269,10 @@ export function ServersTab({
         scheduleInstantMixProbeForServer(id, data.url, data.username, data.password, identity, true);
         setConnStatus(s => ({ ...s, [id]: 'ok' }));
         const added = useAuthStore.getState().servers.find(s => s.id === id);
-        if (added) void bootstrapIndexedServer(added);
+        if (added) {
+          void syncServerHttpContextForProfile(added);
+          void bootstrapIndexedServer(added);
+        }
       } else {
         setConnStatus(s => ({ ...s, [tempId]: 'error' }));
       }
@@ -323,7 +336,12 @@ export function ServersTab({
     if (dualAddressChanged) {
       setConnStatus(s => ({ ...s, [id]: 'testing' }));
       const verify = await verifySameServerEndpoints(
-        { url: data.url, alternateUrl: data.alternateUrl },
+        {
+          url: data.url,
+          alternateUrl: data.alternateUrl,
+          customHeaders: data.customHeaders,
+          customHeadersApplyTo: data.customHeadersApplyTo,
+        },
         data.username,
         data.password,
       );
@@ -335,12 +353,13 @@ export function ServersTab({
 
     setEditingServerId(null);
     auth.updateServer(id, data);
+    const updated = useAuthStore.getState().servers.find(s => s.id === id);
+    if (updated) void syncServerHttpContextForProfile(updated);
     // Profile edited → any cached sticky connect URL for this id may now be
-    // stale (credentials may have changed, alternate may have been added).
     invalidateReachableEndpointCache(id);
     setConnStatus(s => ({ ...s, [id]: 'testing' }));
     try {
-      const ping = await pingWithCredentials(data.url, data.username, data.password);
+      const ping = await pingWithCredentialsForProfile(data, data.url);
       if (ping.ok) {
         const identity = {
           type: ping.type,

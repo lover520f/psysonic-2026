@@ -1,6 +1,9 @@
 import axios from 'axios';
 import md5 from 'md5';
 import { useAuthStore } from '../store/authStore';
+import type { ServerProfile } from '../store/authStoreTypes';
+import { headersForServerRequest } from '../utils/server/serverHttpHeaders';
+import { findServerByIdOrIndexKey } from '../utils/server/serverLookup';
 import {
   type InstantMixProbeResult,
   type SubsonicServerIdentity,
@@ -19,6 +22,7 @@ import {
   api,
   apiWithCredentials,
   secureRandomSalt,
+  type ServerHttpHeaderProfile,
 } from './subsonicClient';
 import type { PingWithCredentialsResult, SubsonicSong } from './subsonicTypes';
 
@@ -61,6 +65,47 @@ export async function pingWithCredentials(
   }
 }
 
+/** Profile-aware ping for connect probe — attaches custom headers per endpoint. */
+export async function pingWithCredentialsForProfile(
+  profile: Pick<
+    ServerProfile,
+    'url' | 'alternateUrl' | 'username' | 'password' | 'customHeaders' | 'customHeadersApplyTo'
+  >,
+  endpointBaseUrl: string,
+): Promise<PingWithCredentialsResult> {
+  try {
+    const base = endpointBaseUrl.startsWith('http')
+      ? endpointBaseUrl.replace(/\/$/, '')
+      : `http://${endpointBaseUrl.replace(/\/$/, '')}`;
+    const salt = secureRandomSalt();
+    const token = md5(profile.password + salt);
+    const resp = await axios.get(`${base}/rest/ping.view`, {
+      params: {
+        u: profile.username,
+        t: token,
+        s: salt,
+        v: '1.16.1',
+        c: SUBSONIC_CLIENT,
+        f: 'json',
+      },
+      headers: headersForServerRequest(profile, endpointBaseUrl),
+      paramsSerializer: { indexes: null },
+      timeout: 15000,
+    });
+    const data = resp.data?.['subsonic-response'];
+    const ok = data?.status === 'ok';
+    return {
+      ok,
+      type: typeof data?.type === 'string' ? data.type : undefined,
+      serverVersion: typeof data?.serverVersion === 'string' ? data.serverVersion : undefined,
+      openSubsonic: data?.openSubsonic === true,
+    };
+  } catch (err) {
+    console.warn('[psysonic] pingWithCredentialsForProfile failed:', endpointBaseUrl, err);
+    return { ok: false };
+  }
+}
+
 const INSTANT_MIX_PROBE_RANDOM_SIZE = 8;
 const INSTANT_MIX_PROBE_SIMILAR_COUNT = 12;
 const INSTANT_MIX_PROBE_MAX_TRACKS = 4;
@@ -74,6 +119,7 @@ export async function probeInstantMixWithCredentials(
   serverUrl: string,
   username: string,
   password: string,
+  headerProfile?: ServerHttpHeaderProfile,
 ): Promise<InstantMixProbeResult> {
   try {
     const data = await apiWithCredentials<{ randomSongs: { song: SubsonicSong | SubsonicSong[] } }>(
@@ -83,6 +129,7 @@ export async function probeInstantMixWithCredentials(
       'getRandomSongs.view',
       { size: INSTANT_MIX_PROBE_RANDOM_SIZE, _t: Date.now() },
       12000,
+      headerProfile,
     );
     const raw = data.randomSongs?.song;
     const songs: SubsonicSong[] = !raw ? [] : Array.isArray(raw) ? raw : [raw];
@@ -98,6 +145,7 @@ export async function probeInstantMixWithCredentials(
           'getSimilarSongs.view',
           { id: song.id, count: INSTANT_MIX_PROBE_SIMILAR_COUNT },
           12000,
+          headerProfile,
         );
         const sRaw = simData.similarSongs?.song;
         const list: SubsonicSong[] = !sRaw ? [] : Array.isArray(sRaw) ? sRaw : [sRaw];
@@ -138,6 +186,7 @@ export function scheduleInstantMixProbeForServer(
   const ctx = buildCapabilityContext(identity);
   const probeIds = neededProbeIds(SERVER_CAPABILITY_CATALOG, ctx);
   const store = useAuthStore.getState();
+  const headerProfile = findServerByIdOrIndexKey(serverId);
 
   if (probeIds.has(PROBE_OPENSUBSONIC_EXTENSIONS)) {
     // One `getOpenSubsonicExtensions` fetch answers every extension-gated feature.
@@ -153,7 +202,12 @@ export function scheduleInstantMixProbeForServer(
     const audiomuseStale = audiomuseEligible && (cached === undefined || cached === 'error');
     if (force || listMissing || audiomuseStale) {
       if (audiomuseEligible) store.setAudiomusePluginProbe(serverId, 'probing');
-      void fetchOpenSubsonicExtensionsWithCredentials(serverUrl, username, password).then(extensions => {
+      void fetchOpenSubsonicExtensionsWithCredentials(
+        serverUrl,
+        username,
+        password,
+        headerProfile,
+      ).then(extensions => {
         const st = useAuthStore.getState();
         if (extensions === null) {
           if (audiomuseEligible) st.setAudiomusePluginProbe(serverId, 'error');
@@ -170,7 +224,7 @@ export function scheduleInstantMixProbeForServer(
   if (probeIds.has(PROBE_LEGACY_INSTANT_MIX)) {
     const cached = store.instantMixProbeByServer[serverId];
     if (force || cached === undefined || cached === 'error') {
-      void probeInstantMixWithCredentials(serverUrl, username, password).then(result =>
+      void probeInstantMixWithCredentials(serverUrl, username, password, headerProfile).then(result =>
         useAuthStore.getState().setInstantMixProbe(serverId, result),
       );
     }
