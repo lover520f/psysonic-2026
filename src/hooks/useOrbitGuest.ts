@@ -19,6 +19,7 @@ import i18n from '../i18n';
 import { estimateLivePosition, type OrbitState } from '../api/orbit';
 import { pushOrbitEvent } from '../utils/orbitDiag';
 import { useOrbitOutboxHeartbeat } from './useOrbitOutboxHeartbeat';
+import { useOrbitGuestDriftCorrection } from './useOrbitGuestDriftCorrection';
 
 /**
  * Orbit — guest-side tick hook.
@@ -407,4 +408,8 @@ export function useOrbitGuest(): void {
   // Outbox heartbeat — shared with the host hook; the guest's outbox is keyed
   // by its own active-server username.
   useOrbitOutboxHeartbeat(active, outboxPlaylistId, sessionId, myName);
+
+  // Smooth drift correction — pitch-preserving ≤ ±10% nudge toward the host's
+  // live position instead of hard seeks on every intra-track wobble.
+  useOrbitGuestDriftCorrection(active);
 }

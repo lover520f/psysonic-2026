@@ -87,5 +87,25 @@ export {
   planPendingResends,
   resetPendingResendState,
 } from './orbit/pendingResend';
+export {
+  driftCorrectionTimeSec,
+  planOrbitDriftCorrection,
+  stepRateToward,
+  type DriftCorrectionInput,
+  type DriftCorrectionPlan,
+} from './orbit/driftCorrectionPlan';
+export {
+  applyOrbitDriftRate,
+  orbitDriftRateLastSent,
+  resetOrbitDriftRate,
+} from './orbit/driftRate';
+export {
+  getOrbitDriftStatus,
+  resetOrbitDriftStatus,
+  setOrbitDriftStatus,
+  type DriftCorrectionAction,
+  type OrbitDriftStatus,
+} from './orbit/driftCorrectionStatus';
+export { LOOP_TICK_MS as ORBIT_DRIFT_LOOP_TICK_MS } from './orbit/driftCorrectionConstants';
 export { sweepGuestOutboxes } from './orbit/sweep';
 export { cleanupOrphanedOrbitPlaylists } from './orbit/cleanup';
