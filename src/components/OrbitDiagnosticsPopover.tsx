@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { useOrbitStore } from '../store/orbitStore';
 import { usePlayerStore } from '../store/playerStore';
 import { showToast } from '../utils/ui/toast';
-import { computeOrbitDriftMs } from '../utils/orbit';
+import { computeOrbitDriftMs, getOrbitDriftStatus } from '../utils/orbit';
 import {
   clearOrbitEvents,
   formatOrbitEvents,
@@ -86,6 +86,18 @@ export default function OrbitDiagnosticsPopover({ anchorRef, onClose }: Props) {
   const driftMs = sameTrack && state ? computeOrbitDriftMs(state, localPosMs, nowMs) : null;
   const hostStateAgeMs = state ? Math.max(0, nowMs - state.positionAt) : null;
 
+  // Live drift-correction status, re-read on the 1 s tick (depends on nowMs).
+  void nowMs;
+  const dc = getOrbitDriftStatus();
+  const dcRateText = dc.action === 'idle'
+    ? '—'
+    : Math.abs(dc.currentRate - dc.targetRate) < 1e-6
+      ? `${dc.currentRate.toFixed(2)}×`
+      : `${dc.currentRate.toFixed(2)}× → ${dc.targetRate.toFixed(2)}×`;
+  const dcStatusText = dc.action === 'soft' && dc.expectedDurationSec != null
+    ? `${dc.action} · ~${Math.round(dc.expectedDurationSec)}s`
+    : dc.action;
+
   const hostPosSec = state ? Math.round(((state.positionMs ?? 0) + (state.isPlaying ? (nowMs - state.positionAt) : 0)) / 1000) : null;
   const guestPosSec = Math.round((player.currentTime ?? 0));
 
@@ -134,6 +146,14 @@ export default function OrbitDiagnosticsPopover({ anchorRef, onClose }: Props) {
             <div className="orbit-diag-pop__live-row">
               <span className="orbit-diag-pop__live-label">{t('orbit.diag.drift')}</span>
               <span>{driftMs != null ? `${(driftMs / 1000).toFixed(1)}s` : '—'}</span>
+            </div>
+            <div className="orbit-diag-pop__live-row">
+              <span className="orbit-diag-pop__live-label">{t('orbit.diag.driftRate')}</span>
+              <span>{dcRateText}</span>
+            </div>
+            <div className="orbit-diag-pop__live-row">
+              <span className="orbit-diag-pop__live-label">{t('orbit.diag.driftStatus')}</span>
+              <span className="orbit-diag-pop__mono">{dcStatusText}</span>
             </div>
           </>
         )}

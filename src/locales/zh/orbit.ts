@@ -63,6 +63,8 @@ export const orbit = {
     guestTrack: '我的曲目 ID',
     guestPos: '我的位置',
     drift: '偏差',
+    driftRate: '校正速率',
+    driftStatus: '校正',
     stateAge: '状态时长',
     eventLog: '事件日志 ({{count}})',
     copyLabel: '复制',

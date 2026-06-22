@@ -63,6 +63,8 @@ export const orbit = {
     guestTrack: 'Id-ul piesei mele',
     guestPos: 'Id-ul poziției mele',
     drift: 'Drift',
+    driftRate: 'Rată corecție',
+    driftStatus: 'Corecție',
     stateAge: 'Status vârstă',
     eventLog: 'Log-uri evenimente ({{count}})',
     copyLabel: 'Copiază',

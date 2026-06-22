@@ -63,6 +63,8 @@ export const orbit = {
     guestTrack: 'My track id',
     guestPos: 'My position',
     drift: 'Drift',
+    driftRate: 'Correction rate',
+    driftStatus: 'Correction',
     stateAge: 'State age',
     eventLog: 'Event log ({{count}})',
     copyLabel: 'Copy',

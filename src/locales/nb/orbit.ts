@@ -63,6 +63,8 @@ export const orbit = {
     guestTrack: 'Min spor-ID',
     guestPos: 'Min posisjon',
     drift: 'Avvik',
+    driftRate: 'Korrigeringsrate',
+    driftStatus: 'Korrigering',
     stateAge: 'Tilstandens alder',
     eventLog: 'Hendelseslogg ({{count}})',
     copyLabel: 'Kopier',

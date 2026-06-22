@@ -63,6 +63,8 @@ export const orbit = {
     guestTrack: 'Saját szám-azonosító',
     guestPos: 'Saját pozíció',
     drift: 'Eltérés',
+    driftRate: 'Korrekciós ütem',
+    driftStatus: 'Korrekció',
     stateAge: 'Állapot kora',
     eventLog: 'Eseménynapló ({{count}})',
     copyLabel: 'Másolás',

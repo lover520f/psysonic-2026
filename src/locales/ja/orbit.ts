@@ -63,6 +63,8 @@ export const orbit = {
     guestTrack: '自分のトラック ID',
     guestPos: '自分の位置',
     drift: 'ずれ',
+    driftRate: '補正レート',
+    driftStatus: '補正',
     stateAge: '状態の経過時間',
     eventLog: 'イベントログ ({{count}})',
     copyLabel: 'コピー',
