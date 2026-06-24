@@ -239,6 +239,7 @@ const CONTRIBUTOR_ENTRIES = [
     since: '1.43.0',
     contributions: [
       'WebView2 idle hooks when Tauri windows are hidden — Windows GPU and compositor mitigation (PR #273)',
+      'AutoDJ edge-mix transition algorithm — waveform edge model and linear blend design (PR #1167)',
     ],
   },
   {

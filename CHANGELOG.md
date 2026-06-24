@@ -95,6 +95,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * The theme scheduler can now switch your day/night theme pair based on your operating system's light/dark setting, in addition to the existing time-of-day schedule. Pick the trigger with a new Time of Day / System Theme switch; in system mode the two pickers read as Light and Dark theme. On Linux setups where the OS does not signal the change live, a hint notes it applies after restarting the app.
 
+### AutoDJ — waveform edge-mix blend with min/max length
+
+**By [@cucadmuh](https://github.com/cucadmuh), PR [#1167](https://github.com/Psychotoxical/psysonic/pull/1167)**, algorithm by [@peri4ko](https://github.com/peri4ko)
+
+* AutoDJ now blends tracks using the **shape of the audio at each edge** — it measures how each track ends and how the next one begins, then crossfades over exactly that musical region with matched gain curves instead of a generic equal-power fade. Transitions follow real fade-outs and intros more closely; smooth skip uses the same model from your current position.
+* New **Transition length** controls under Settings → Audio → Track transitions: optional **Min** and **Max** bounds (each with an **Auto** setting) cap how short or long an AutoDJ blend can be. Auto leaves the length entirely up to the audio.
+* Classic Crossfade and Gapless are unchanged.
+
 
 ## Changed
 
