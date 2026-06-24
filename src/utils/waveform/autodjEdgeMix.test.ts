@@ -36,6 +36,21 @@ function paddedLoud(side: 'start' | 'end' | 'both', padBins = 10, n = N): number
   return bins;
 }
 
+/** Loud body with a linear amplitude fade-out over the last `fadeSec` seconds. */
+function fadeOutBins(fadeSec: number, n = N): number[] {
+  const fadeBins = Math.max(1, Math.round(fadeSec / (DUR / n)));
+  return Array.from({ length: n }, (_, i) => {
+    const fromEnd = n - 1 - i;
+    return fromEnd >= fadeBins ? pcmBinForT(1) : pcmBinForT(fromEnd / fadeBins);
+  });
+}
+
+/** Loud body with a linear amplitude fade-in over the first `riseSec` seconds. */
+function fadeInBins(riseSec: number, n = N): number[] {
+  const riseBins = Math.max(1, Math.round(riseSec / (DUR / n)));
+  return Array.from({ length: n }, (_, i) => (i >= riseBins ? pcmBinForT(1) : pcmBinForT(i / riseBins)));
+}
+
 describe('normU8 / encoding (§16.1 G1)', () => {
   it('maps the PCM percentile range 8…255 to [0,1]', () => {
     expect(normU8(8, 'pcm_u8')).toBeCloseTo(0, 6);
@@ -84,18 +99,23 @@ describe('analyzeEdge — duration & shape (§3)', () => {
     expect(edge!.shape.y0).toBeCloseTo(1, 2);
   });
 
-  it('self-fading outro → short end edge (min_duration) with y0 ≈ 0 (scenario A)', () => {
-    const edge = analyzeEdge(rampBins(1, 0), DUR, 'end');
+  it('self-fading outro → end edge spans the fade (not min_duration), y0 ≈ 0 (scenario A)', () => {
+    // The boundary sits in the quiet fade tail, so the loud-run walk would
+    // collapse to min_duration and B would only come in once A is already
+    // silent. The edge must instead span A's own fade so B rises underneath it.
+    const edge = analyzeEdge(fadeOutBins(6), DUR, 'end');
     expect(edge).not.toBeNull();
-    expect(edge!.shape.seconds).toBeCloseTo(0.5, 1); // min_duration after clamp
-    expect(edge!.shape.y0).toBeLessThan(0.1);
+    expect(edge!.shape.seconds).toBeGreaterThan(2);
+    expect(edge!.shape.seconds).toBeLessThan(8);
+    expect(edge!.shape.y0).toBeLessThan(0.25); // quiet at the very end → A rides its fade
   });
 
-  it('quiet fade-in intro → short start edge (min_duration) with y0 ≈ 0', () => {
-    const edge = analyzeEdge(rampBins(0, 1), DUR, 'start');
+  it('quiet fade-in intro → start edge spans the rise (not min_duration), y0 ≈ 0', () => {
+    const edge = analyzeEdge(fadeInBins(6), DUR, 'start');
     expect(edge).not.toBeNull();
-    expect(edge!.shape.seconds).toBeCloseTo(0.5, 1);
-    expect(edge!.shape.y0).toBeLessThan(0.1);
+    expect(edge!.shape.seconds).toBeGreaterThan(2);
+    expect(edge!.shape.seconds).toBeLessThan(8);
+    expect(edge!.shape.y0).toBeLessThan(0.25);
   });
 
   it('hard-start intro → long start edge with y0 ≈ 1', () => {
@@ -161,11 +181,14 @@ describe('planEdgeMix — end-of-track AutoDJ (§4)', () => {
     }
   });
 
-  it('transition_dur = min(edges), capped to the playable window', () => {
-    // A self-fades (end edge ≈ 0.5 s); B hard-starts (start edge ≈ 12 s) → min ≈ 0.5.
-    const plan = planEdgeMix(rampBins(1, 0), DUR, DUR, constBins(1), DUR, 0, DUR);
+  it('transition_dur = min(edges), spanning A’s fade so B rises underneath it', () => {
+    // A self-fades over ~6 s (end edge ≈ the fade); B hard-starts (start edge ≈ 12 s).
+    // transition_dur must follow A's fade, not collapse to min_duration.
+    const plan = planEdgeMix(fadeOutBins(6), DUR, 239, constBins(1), DUR, 0, DUR);
     expect(plan).not.toBeNull();
-    expect(plan!.transitionDur).toBeCloseTo(0.5, 1);
+    expect(plan!.transitionDur).toBeGreaterThan(2);
+    expect(plan!.transitionDur).toBeLessThan(8);
+    expect(plan!.outgoingGainAtMixEnd).toBeGreaterThan(0.7); // A rides its own fade
     expect(plan!.bStartSec).toBe(0);
   });
 

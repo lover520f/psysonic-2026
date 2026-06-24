@@ -176,8 +176,10 @@ function fitLine(points: { t: number; y: number }[]): { a: number; b: number } {
 /**
  * Analyse one edge of a track. `side='start'` walks inward from the content
  * start; `side='end'` walks backward from the content end (both from the
- * silence-trimmed boundary, not the raw file edge). Returns null when bins are
- * missing/invalid or duration is non-positive.
+ * silence-trimmed boundary, not the raw file edge). The span is the adjacent
+ * loud run for a hard edge, or the natural fade/rise envelope when the boundary
+ * is below threshold. Returns null when bins are missing/invalid or duration is
+ * non-positive.
  */
 export function analyzeEdge(
   bins: number[] | null | undefined,
@@ -225,14 +227,32 @@ export function analyzeEdge(
   const contentStartBin = clamp(Math.round(silence.contentStartSec / secPerBin), 0, n - 1);
   const contentEndBin = clamp(Math.round(silence.contentEndSec / secPerBin), contentStartBin + 1, n);
 
-  // Step 1 — contiguous loud run from the content edge → raw duration.
+  // Step 1 — edge transition span from the content edge → raw duration. The
+  // boundary bin is either at/above the loud threshold or below it, and the two
+  // cases call for different spans:
+  //   • Hard edge (boundary loud): measure the contiguous *loud run* — the room
+  //     the engine has to fade A out / fade B in over solid material.
+  //   • Natural fade-out / fade-in (boundary below threshold): measure the
+  //     *envelope run* back to where the signal reaches the loud body, so B
+  //     rises over A's own recorded fade (scenario A) instead of the mix
+  //     collapsing to min_duration and switching only once A is already silent.
+  // The boundary bin belongs to exactly one case, so there is no double count.
+  const loudAt = (idx: number) => tValues[idx] >= thresholdT;
+  const edgeBin = side === 'start' ? contentStartBin : contentEndBin - 1;
+  const step = side === 'start' ? 1 : -1;
+  const past = (idx: number) => (side === 'start' ? idx >= contentEndBin : idx < contentStartBin);
+
   let runBins = 0;
-  if (side === 'start') {
-    let i = contentStartBin;
-    while (i < contentEndBin && tValues[i] >= thresholdT) { i++; runBins++; }
+  if (loudAt(edgeBin)) {
+    let i = edgeBin;
+    while (!past(i) && loudAt(i)) { i += step; runBins++; }
   } else {
-    let j = contentEndBin - 1;
-    while (j >= contentStartBin && tValues[j] >= thresholdT) { j--; runBins++; }
+    // Walk the quiet envelope until it reaches the loud body. If it never does
+    // (whole content below threshold — silent/degenerate track), there is no
+    // edge to ride → fall back to the min_duration clamp.
+    let i = edgeBin;
+    while (!past(i) && !loudAt(i)) { i += step; runBins++; }
+    if (past(i)) runBins = 0;
   }
   const rawSeconds = runBins * secPerBin;
   const edgeSeconds = clamp(rawSeconds, minDuration, maxDuration);
