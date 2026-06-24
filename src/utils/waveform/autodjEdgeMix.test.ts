@@ -28,6 +28,14 @@ function rampBins(tStart: number, tEnd: number, n = N): number[] {
   return Array.from({ length: n }, (_, i) => pcmBinForT(tStart + (tEnd - tStart) * (i / (n - 1))));
 }
 
+/** Loud content with `padBins` of trim-silence (bin 8 ≤ cut) on the given side(s). */
+function paddedLoud(side: 'start' | 'end' | 'both', padBins = 10, n = N): number[] {
+  const bins = new Array(n).fill(pcmBinForT(1));
+  if (side === 'start' || side === 'both') for (let i = 0; i < padBins; i++) bins[i] = 8;
+  if (side === 'end' || side === 'both') for (let i = 0; i < padBins; i++) bins[n - 1 - i] = 8;
+  return bins;
+}
+
 describe('normU8 / encoding (§16.1 G1)', () => {
   it('maps the PCM percentile range 8…255 to [0,1]', () => {
     expect(normU8(8, 'pcm_u8')).toBeCloseTo(0, 6);
@@ -97,6 +105,18 @@ describe('analyzeEdge — duration & shape (§3)', () => {
     expect(edge!.shape.y0).toBeCloseTo(1, 2);
   });
 
+  it('anchors at the content edge — trimmed lead/trail silence does not collapse the edge', () => {
+    // Regression: walking from the raw physical bin stopped instantly in the
+    // trimmed silence → every edge became min_duration → near-gapless overlaps.
+    const startEdge = analyzeEdge(paddedLoud('start'), DUR, 'start');
+    expect(startEdge!.shape.seconds).toBeGreaterThan(2);
+    expect(startEdge!.shape.y0).toBeCloseTo(1, 1);
+
+    const endEdge = analyzeEdge(paddedLoud('end'), DUR, 'end');
+    expect(endEdge!.shape.seconds).toBeGreaterThan(2);
+    expect(endEdge!.shape.y0).toBeCloseTo(1, 1);
+  });
+
   it('silence-only track → raw 0 → min_duration, y0 ≈ 0 (fallback threshold path)', () => {
     const edge = analyzeEdge(constBins(0), DUR, 'end');
     expect(edge).not.toBeNull();
@@ -156,6 +176,17 @@ describe('planEdgeMix — end-of-track AutoDJ (§4)', () => {
     // Hard loud cut → engine must fully duck A by mix end.
     const hard = planEdgeMix(constBins(1), DUR, DUR, constBins(1), DUR, 0, DUR);
     expect(hard!.outgoingGainAtMixEnd).toBeLessThan(0.05);
+  });
+
+  it('two loud tracks padded with edge silence still blend over a real overlap (not gapless)', () => {
+    // A ends loud (with trailing silence trimmed); B starts loud (leading silence
+    // trimmed). Content bounds come from the silence layer; the blend must be a
+    // multi-second musical overlap, not a min_duration cut.
+    const plan = planEdgeMix(paddedLoud('end'), DUR, 235.2, paddedLoud('start'), DUR, 4.8, DUR);
+    expect(plan).not.toBeNull();
+    expect(plan!.transitionDur).toBeGreaterThan(2);
+    expect(plan!.outgoingGainAtMixEnd).toBeLessThan(0.05); // loud A fully ducks
+    expect(plan!.incomingGainAtMixStart).toBeLessThan(0.05); // loud B rises from ~0
   });
 
   it('documents the linear-sum clipping risk: g_A(0) + g_B(0) can exceed 1 (§10.5)', () => {

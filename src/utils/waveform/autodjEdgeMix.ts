@@ -174,8 +174,9 @@ function fitLine(points: { t: number; y: number }[]): { a: number; b: number } {
 }
 
 /**
- * Analyse one edge of a track. `side='start'` walks inward from bin 0;
- * `side='end'` walks backward from the last bin. Returns null when bins are
+ * Analyse one edge of a track. `side='start'` walks inward from the content
+ * start; `side='end'` walks backward from the content end (both from the
+ * silence-trimmed boundary, not the raw file edge). Returns null when bins are
  * missing/invalid or duration is non-positive.
  */
 export function analyzeEdge(
@@ -212,21 +213,37 @@ export function analyzeEdge(
 
   const secPerBin = dur / n;
 
-  // Step 1 — contiguous loud run from the physical edge → raw duration.
+  // Anchor the edge at the *content* boundary, not the raw file edge. Leading /
+  // trailing digital silence is trimmed by the orthogonal silence layer (B is
+  // even seeked to `bStartSec`), so walking the loud run from bin 0 / bin n-1
+  // would stop immediately inside that silence and collapse essentially every
+  // edge to `min_duration` — a tiny overlap that plays like gapless. Walking
+  // from the trimmed content edge makes the run reflect the actual music
+  // approaching the boundary. (§10.2's "quiet intro → min_duration" still holds:
+  // that is genuinely soft *content*, distinct from trimmed silence.)
+  const silence = computeWaveformSilence(coerced, dur);
+  const contentStartBin = clamp(Math.round(silence.contentStartSec / secPerBin), 0, n - 1);
+  const contentEndBin = clamp(Math.round(silence.contentEndSec / secPerBin), contentStartBin + 1, n);
+
+  // Step 1 — contiguous loud run from the content edge → raw duration.
   let runBins = 0;
   if (side === 'start') {
-    while (runBins < n && tValues[runBins] >= thresholdT) runBins++;
+    let i = contentStartBin;
+    while (i < contentEndBin && tValues[i] >= thresholdT) { i++; runBins++; }
   } else {
-    while (runBins < n && tValues[n - 1 - runBins] >= thresholdT) runBins++;
+    let j = contentEndBin - 1;
+    while (j >= contentStartBin && tValues[j] >= thresholdT) { j--; runBins++; }
   }
   const rawSeconds = runBins * secPerBin;
   const edgeSeconds = clamp(rawSeconds, minDuration, maxDuration);
 
-  // Step 2 — collect samples over the (possibly forced) edge window, in edge time.
+  // Step 2 — collect samples over the (possibly forced) edge window, in edge
+  // time (t = 0 at the content edge, increasing inward).
   const windowBins = clamp(Math.round(edgeSeconds / secPerBin), 1, n);
   const points: { t: number; y: number }[] = [];
   for (let k = 0; k < windowBins; k++) {
-    const binIndex = side === 'start' ? k : n - 1 - k;
+    const binIndex = side === 'start' ? contentStartBin + k : contentEndBin - 1 - k;
+    if (binIndex < 0 || binIndex >= n) break;
     points.push({ t: k * secPerBin, y: tValues[binIndex] });
   }
 
