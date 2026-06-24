@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { analyzeBoundary, computeWaveformSilence, planCrossfadeTransition } from './waveformSilence';
+import { analyzeBoundary, computeWaveformSilence, contentPlayBinRange, planCrossfadeTransition } from './waveformSilence';
 
 /** Build a 500-bin peak curve: `lead` silent bins, a loud middle, `trail` silent bins. */
 function curve(lead: number, mid: number, trail: number, loud = 200, quiet = 4): number[] {
@@ -59,6 +59,14 @@ describe('computeWaveformSilence', () => {
     const r = computeWaveformSilence(bins, 100, { maxTrimSec: 8 });
     expect(r.leadSilenceSec).toBe(8);
     expect(r.trailSilenceSec).toBe(8);
+  });
+
+  it('contentPlayBinRange matches capped trim in bin space', () => {
+    const bins = curve(20, 470, 10);
+    const peak = bins; // single curve in tests
+    const range = contentPlayBinRange(peak, 250)!;
+    expect(range.startBin).toBe(10); // 5 s cap at 0.5 s/bin
+    expect(range.endBin).toBe(490);
   });
 
   it('never trims a fully-silent curve to nothing', () => {

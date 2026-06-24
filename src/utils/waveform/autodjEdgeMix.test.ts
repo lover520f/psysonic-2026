@@ -161,6 +161,26 @@ describe('analyzeEdge — duration & shape (§3)', () => {
     expect(analyzeEdge(constBins(0), DUR, 'end')!.kind).toBe('silent');
   });
 
+  it('does not count trim-silence residue after capped lead trim in start edge span', () => {
+    // 30 silent bins (~14 s raw) but playback trim cap → seek at bin ~10; bins 10–29
+    // are still digital silence and must not inflate the edge / fade window.
+    const bins = new Array(N).fill(pcmBinForT(1));
+    for (let i = 0; i < 30; i++) bins[i] = 8;
+    const edge = analyzeEdge(bins, DUR, 'start');
+    expect(edge!.kind).toBe('hard');
+    expect(edge!.shape.y0).toBeCloseTo(1, 1);
+    expect(edge!.shape.seconds).toBeGreaterThan(2);
+  });
+
+  it('does not count trim-silence residue before capped trail trim in end edge span', () => {
+    const bins = new Array(N).fill(pcmBinForT(1));
+    for (let i = 0; i < 30; i++) bins[N - 1 - i] = 8;
+    const edge = analyzeEdge(bins, DUR, 'end');
+    expect(edge!.kind).toBe('hard');
+    expect(edge!.shape.y0).toBeCloseTo(1, 1);
+    expect(edge!.shape.seconds).toBeGreaterThan(2);
+  });
+
   it('silence-only track → raw 0 → min_duration, y0 ≈ 0 (fallback threshold path)', () => {
     const edge = analyzeEdge(constBins(0), DUR, 'end');
     expect(edge).not.toBeNull();

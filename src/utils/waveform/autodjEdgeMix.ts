@@ -17,13 +17,15 @@
  * task spec §16.1 / §16.7 for the full rationale.
  */
 import { coerceWaveformBins } from './waveformParse';
-import { computeWaveformSilence, peakHalf } from './waveformSilence';
+import { computeWaveformSilence, contentPlayBinRange, peakHalf } from './waveformSilence';
 
 /** Gamma applied by `normalize_peak_bins` before storage (perceptual shaping). */
 export const WAVEFORM_GAMMA = 0.52;
 
 /** PCM percentile path floors silence at this u8; byte-envelope can emit 0. */
 const PCM_FLOOR = 8;
+/** Bins at/below this peak value are trim-silence (must match waveformSilence cut). */
+const SILENCE_CUT = 12;
 
 const DEFAULT_MIN_DURATION = 0.5;
 const DEFAULT_MAX_DURATION = 12.0;
@@ -152,10 +154,12 @@ function binToAmplitude(bin: number, encoding: WaveformEncoding, gamma: number):
   return unGammaToAmplitude(normU8(bin, encoding), gamma);
 }
 
-/** 75th-percentile of above-floor amplitudes — the track's own "plateau" level. */
-function plateauAmplitude(tValues: number[]): number {
+/** 75th-percentile of above-floor amplitudes within the playable content window. */
+function plateauAmplitude(tValues: number[], peak: number[], startBin: number, endBin: number): number {
   const loud: number[] = [];
-  for (const t of tValues) if (t > PLATEAU_SILENCE_FLOOR_T) loud.push(t);
+  for (let i = startBin; i < endBin; i++) {
+    if (peak[i] > SILENCE_CUT && tValues[i] > PLATEAU_SILENCE_FLOOR_T) loud.push(tValues[i]);
+  }
   if (loud.length === 0) return 0;
   loud.sort((a, b) => a - b);
   return loud[Math.min(loud.length - 1, Math.floor(loud.length * 0.75))];
@@ -216,7 +220,13 @@ export function analyzeEdge(
 
   // Plateau-relative threshold (un-gamma'd amplitude domain). Fallback to the
   // absolute normU8 threshold (also un-gamma'd) when no usable plateau exists.
-  const plateau = plateauAmplitude(tValues);
+  // Plateau is measured only inside the playable content window — not from trim
+  // silence bins that would skew the threshold.
+  const playRange = contentPlayBinRange(peak, dur);
+  const playStartBin = playRange?.startBin ?? 0;
+  const playEndBin = playRange?.endBin ?? n;
+
+  const plateau = plateauAmplitude(tValues, peak, playStartBin, playEndBin);
   const thresholdT =
     plateau > 0
       ? clamp(plateauFactor * plateau, absFloorT, THRESHOLD_T_CAP)
@@ -224,35 +234,32 @@ export function analyzeEdge(
 
   const secPerBin = dur / n;
 
-  // Anchor the edge at the *content* boundary, not the raw file edge. Leading /
-  // trailing digital silence is trimmed by the orthogonal silence layer (B is
-  // even seeked to `bStartSec`), so walking the loud run from bin 0 / bin n-1
-  // would stop immediately inside that silence and collapse essentially every
-  // edge to `min_duration` — a tiny overlap that plays like gapless. Walking
-  // from the trimmed content edge makes the run reflect the actual music
-  // approaching the boundary. (§10.2's "quiet intro → min_duration" still holds:
-  // that is genuinely soft *content*, distinct from trimmed silence.)
-  const silence = computeWaveformSilence(coerced, dur);
-  const contentStartBin = clamp(Math.round(silence.contentStartSec / secPerBin), 0, n - 1);
-  const contentEndBin = clamp(Math.round(silence.contentEndSec / secPerBin), contentStartBin + 1, n);
+  // Anchor edge walks at the first/last *audible* bin inside the playback window.
+  // `computeWaveformSilence` may seek past only part of a long digital tail (trim
+  // cap); bins between the seek point and real music are still trim-silence and
+  // must not inflate edge span or fade length.
+  const isTrimSilence = (idx: number) =>
+    idx < playStartBin || idx >= playEndBin || peak[idx] <= SILENCE_CUT;
 
-  // Step 1 — edge transition span from the content edge → raw duration. The
-  // boundary bin is either at/above the loud threshold or below it, and the two
-  // cases call for different spans:
-  //   • Hard edge (boundary loud): measure the contiguous *loud run* — the room
-  //     the engine has to fade A out / fade B in over solid material.
-  //   • Natural fade-out / fade-in (boundary below threshold): measure the
-  //     *envelope run* back to where the signal reaches the loud body, so B
-  //     rises over A's own recorded fade (scenario A) instead of the mix
-  //     collapsing to min_duration and switching only once A is already silent.
-  // The boundary bin belongs to exactly one case, so there is no double count.
-  const loudAt = (idx: number) => tValues[idx] >= thresholdT;
-  const edgeBin = side === 'start' ? contentStartBin : contentEndBin - 1;
+  let edgeBin: number;
+  if (side === 'start') {
+    edgeBin = playStartBin;
+    while (edgeBin < playEndBin && isTrimSilence(edgeBin)) edgeBin++;
+  } else {
+    edgeBin = playEndBin - 1;
+    while (edgeBin >= playStartBin && isTrimSilence(edgeBin)) edgeBin--;
+  }
+  if (edgeBin < playStartBin || edgeBin >= playEndBin) {
+    return { side, kind: 'silent', shape: { seconds: minDuration, y0: 0, y1: 0 } };
+  }
+
   const step = side === 'start' ? 1 : -1;
-  const past = (idx: number) => (side === 'start' ? idx >= contentEndBin : idx < contentStartBin);
+  const past = (idx: number) =>
+    side === 'start' ? idx >= playEndBin || isTrimSilence(idx) : idx < playStartBin || isTrimSilence(idx);
 
   let runBins = 0;
   let kind: EdgeKind;
+  const loudAt = (idx: number) => tValues[idx] >= thresholdT;
   if (loudAt(edgeBin)) {
     let i = edgeBin;
     while (!past(i) && loudAt(i)) { i += step; runBins++; }
@@ -278,8 +285,8 @@ export function analyzeEdge(
   const windowBins = clamp(Math.round(edgeSeconds / secPerBin), 1, n);
   const points: { t: number; y: number }[] = [];
   for (let k = 0; k < windowBins; k++) {
-    const binIndex = side === 'start' ? contentStartBin + k : contentEndBin - 1 - k;
-    if (binIndex < 0 || binIndex >= n) break;
+    const binIndex = side === 'start' ? edgeBin + k : edgeBin - k;
+    if (binIndex < playStartBin || binIndex >= playEndBin || isTrimSilence(binIndex)) break;
     points.push({ t: k * secPerBin, y: tValues[binIndex] });
   }
 

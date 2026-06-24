@@ -34,6 +34,42 @@ const DEFAULT_SILENCE_CUT = 12;
 const DEFAULT_MAX_TRIM_SEC = 5;
 
 /**
+ * Playback content window `[startBin, endBin)` in bin indices — mirrors
+ * {@link computeWaveformSilence} (trim cap included). Use this instead of
+ * rounding `contentStartSec` / `contentEndSec` back to bins, which can drift
+ * by ±1 bin and pull trim-silence into edge/fade math.
+ */
+export function contentPlayBinRange(
+  peak: number[],
+  durationSec: number,
+  opts: WaveformSilenceOptions = {},
+): { startBin: number; endBin: number } | null {
+  const dur = Number.isFinite(durationSec) && durationSec > 0 ? durationSec : 0;
+  if (peak.length === 0 || dur <= 0) return null;
+
+  const cut = opts.cut ?? DEFAULT_SILENCE_CUT;
+  const maxTrimSec = opts.maxTrimSec ?? DEFAULT_MAX_TRIM_SEC;
+  const n = peak.length;
+  const secPerBin = dur / n;
+
+  let anyLoud = false;
+  for (let i = 0; i < n; i++) {
+    if (peak[i] > cut) { anyLoud = true; break; }
+  }
+  if (!anyLoud) return null;
+
+  let leadBins = 0;
+  while (leadBins < n && peak[leadBins] <= cut) leadBins++;
+  let trailBins = 0;
+  while (trailBins < n && peak[n - 1 - trailBins] <= cut) trailBins++;
+
+  const maxTrimBins = Math.max(0, Math.round(maxTrimSec / secPerBin));
+  const startBin = Math.min(leadBins, maxTrimBins);
+  const endBin = Math.max(startBin + 1, n - Math.min(trailBins, maxTrimBins));
+  return { startBin, endBin };
+}
+
+/**
  * Dual-curve payload is peak ++ mean; use the peak half. Legacy single curve
  * (length === peak length) is used as-is.
  */
