@@ -364,6 +364,8 @@ mod tests {
                 base_volume: 1.0,
                 fadeout_trigger: None,
                 fadeout_samples: None,
+                fadeout_linear: None,
+                fadeout_end_gain: None,
             };
             Self {
                 gen: 1,

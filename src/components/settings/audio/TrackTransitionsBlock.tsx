@@ -1,6 +1,12 @@
 import React from 'react';
 import type { TFunction } from 'i18next';
 import { useAuthStore } from '../../../store/authStore';
+import {
+  AUTODJ_MAX_TRANSITION_SEC_MAX,
+  AUTODJ_MAX_TRANSITION_SEC_MIN,
+  AUTODJ_MIN_TRANSITION_SEC_MAX,
+  AUTODJ_MIN_TRANSITION_SEC_MIN,
+} from '../../../store/authStoreDefaults';
 import { useOrbitStore } from '../../../store/orbitStore';
 import {
   getTransitionMode,
@@ -12,6 +18,56 @@ import { SettingsToggle } from '../SettingsToggle';
 
 interface Props {
   t: TFunction;
+}
+
+interface BoundRowProps {
+  label: string;
+  autoLabel: string;
+  unit: string;
+  /** Stored value; `0` (or less) means Auto. */
+  value: number;
+  min: number;
+  max: number;
+  /** Value applied when the user turns Auto off. */
+  enabledDefault: number;
+  disabled?: boolean;
+  onChange: (next: number) => void;
+}
+
+/** One AutoDJ transition bound: an Auto checkbox + a seconds input (disabled while Auto). */
+function TransitionBoundRow({
+  label, autoLabel, unit, value, min, max, enabledDefault, disabled, onChange,
+}: BoundRowProps) {
+  const isAuto = !(value > 0);
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.4rem' }}>
+      <span style={{ minWidth: 56, fontSize: 13, color: 'var(--text-secondary)' }}>{label}</span>
+      <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: 'var(--text-secondary)' }}>
+        <input
+          type="checkbox"
+          checked={isAuto}
+          disabled={disabled}
+          onChange={e => onChange(e.target.checked ? 0 : enabledDefault)}
+        />
+        {autoLabel}
+      </label>
+      <input
+        type="number"
+        min={min}
+        max={max}
+        step={0.5}
+        value={isAuto ? '' : value}
+        disabled={isAuto || disabled}
+        placeholder="—"
+        onChange={e => {
+          const n = parseFloat(e.target.value);
+          onChange(Number.isFinite(n) ? n : 0);
+        }}
+        style={{ width: 72 }}
+      />
+      <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{unit}</span>
+    </div>
+  );
 }
 
 /**
@@ -96,6 +152,36 @@ export function TrackTransitionsBlock({ t }: Props) {
               checked={auth.autodjSmoothSkip}
               disabled={hostControlled}
               onChange={auth.setAutodjSmoothSkip}
+            />
+          </div>
+          <div style={{ paddingLeft: '1rem', marginTop: '0.9rem' }}>
+            <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 2 }}>
+              {t('settings.autodjTransitionBounds')}
+            </div>
+            <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: '0.6rem' }}>
+              {t('settings.autodjTransitionBoundsDesc')}
+            </div>
+            <TransitionBoundRow
+              label={t('settings.autodjMinLabel')}
+              autoLabel={t('settings.autodjAuto')}
+              unit={t('settings.autodjSecondsUnit')}
+              value={auth.autodjMinTransitionSec}
+              min={AUTODJ_MIN_TRANSITION_SEC_MIN}
+              max={AUTODJ_MIN_TRANSITION_SEC_MAX}
+              enabledDefault={2}
+              disabled={hostControlled}
+              onChange={auth.setAutodjMinTransitionSec}
+            />
+            <TransitionBoundRow
+              label={t('settings.autodjMaxLabel')}
+              autoLabel={t('settings.autodjAuto')}
+              unit={t('settings.autodjSecondsUnit')}
+              value={auth.autodjMaxTransitionSec}
+              min={AUTODJ_MAX_TRANSITION_SEC_MIN}
+              max={AUTODJ_MAX_TRANSITION_SEC_MAX}
+              enabledDefault={8}
+              disabled={hostControlled}
+              onChange={auth.setAutodjMaxTransitionSec}
             />
           </div>
         </>

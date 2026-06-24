@@ -94,7 +94,12 @@ import {
 } from '../utils/playback/autodjAutoAdvance';
 import { isInterruptHandoffPending } from '../utils/playback/autodjInterruptPrep';
 import { isCrossfadeNextReady, maybeCrossfadeBytePreload } from './crossfadePreload';
-import { armCrossfadeDynamicOverlap, getCrossfadeTransition } from './crossfadeTrimCache';
+import {
+  armCrossfadeDynamicOverlap,
+  armEdgeMix,
+  getCrossfadeTransition,
+  getEdgeMixPlan,
+} from './crossfadeTrimCache';
 import { armAutodjMixing } from './autodjTransitionUi';
 
 // Silence-aware crossfade (A-tail): guards the early advance to once per play
@@ -289,31 +294,16 @@ export function handleAudioProgress(
       : (store.repeatMode === 'all' && store.queueItems.length > 0 ? store.queueItems[0] : null);
     const nextTrackId = nextRef ? resolveQueueTrack(nextRef)?.id : undefined;
     if (nextTrackId) {
-      const cf = clampCrossfadeSecs(crossfadeSecs);
-      const plan = getCrossfadeTransition(nextTrackId);
-      let contentOverlap: number;
-      // Scenario A: does A carry its own recorded fade-out? If so we let it ride
-      // at full engine gain (no double fade) and bring B up underneath.
-      let aRidesOwnFade: boolean;
-      if (plan && plan.overlapSec > 0) {
-        contentOverlap = plan.overlapSec;
-        aRidesOwnFade = plan.outgoingFadeSec <= 0.001;
-      } else {
-        // No next-track envelope (cold plan) → judge A from its own waveform.
-        const aShape = analyzeBoundary(store.waveformBins, dur);
-        contentOverlap = aShape.outroFadeSec;
-        aRidesOwnFade = aShape.outroFadeSec >= 1.0;
-      }
-      if (shouldJsDriveAutodjTransition(curTrailSilenceSec, contentOverlap, cf, aRidesOwnFade)) {
+      const edgePlan = getEdgeMixPlan(nextTrackId);
+      if (edgePlan) {
+        // AutoDJ edge-mix (§16): JS always drives the swap so the linear blend is
+        // sample-aligned and readiness-gated; the engine's autonomous crossfade
+        // timer is suppressed. The full plan (overlap + B head-trim + linear gain
+        // curves) is armed for playTrack → `autodj_linear_mix`.
         autodjSuppressWant = true;
-        const { overlapSec, outgoingFadeSec } = computeAutodjJsOverlap(contentOverlap, aRidesOwnFade);
+        const overlapSec = edgePlan.transitionDur;
         const triggerAt = autodjJsTriggerAtSec(dur, curTrailSilenceSec, overlapSec);
         const gen = getPlayGeneration();
-        // Readiness gate: only advance when B's audio is actually available (RAM
-        // preload slot or local on disk). A cold stream can't sustain a stable
-        // fade, so we leave the gen guard unset and re-check on later ticks — if
-        // B readies before A ends we fade then; if never, A plays out (engine
-        // timer suppressed) and the source-exhaustion end gives a clean cut.
         if (
           current_time >= triggerAt
           && crossfadeTrimAdvanceGen !== gen
@@ -324,10 +314,54 @@ export function handleAudioProgress(
           )
         ) {
           crossfadeTrimAdvanceGen = gen;
-          armCrossfadeDynamicOverlap(nextTrackId, overlapSec, outgoingFadeSec);
+          armEdgeMix(nextTrackId, edgePlan);
           armAutodjMixing(overlapSec);
           store.next(false);
           return;
+        }
+      } else {
+        // Cold/un-analysed B (no edge plan) → degrade to the equal-power engine
+        // crossfade driven from A's own envelope (pre-edge-mix behaviour).
+        const cf = clampCrossfadeSecs(crossfadeSecs);
+        const plan = getCrossfadeTransition(nextTrackId);
+        let contentOverlap: number;
+        // Scenario A: does A carry its own recorded fade-out? If so we let it ride
+        // at full engine gain (no double fade) and bring B up underneath.
+        let aRidesOwnFade: boolean;
+        if (plan && plan.overlapSec > 0) {
+          contentOverlap = plan.overlapSec;
+          aRidesOwnFade = plan.outgoingFadeSec <= 0.001;
+        } else {
+          // No next-track envelope (cold plan) → judge A from its own waveform.
+          const aShape = analyzeBoundary(store.waveformBins, dur);
+          contentOverlap = aShape.outroFadeSec;
+          aRidesOwnFade = aShape.outroFadeSec >= 1.0;
+        }
+        if (shouldJsDriveAutodjTransition(curTrailSilenceSec, contentOverlap, cf, aRidesOwnFade)) {
+          autodjSuppressWant = true;
+          const { overlapSec, outgoingFadeSec } = computeAutodjJsOverlap(contentOverlap, aRidesOwnFade);
+          const triggerAt = autodjJsTriggerAtSec(dur, curTrailSilenceSec, overlapSec);
+          const gen = getPlayGeneration();
+          // Readiness gate: only advance when B's audio is actually available (RAM
+          // preload slot or local on disk). A cold stream can't sustain a stable
+          // fade, so we leave the gen guard unset and re-check on later ticks — if
+          // B readies before A ends we fade then; if never, A plays out (engine
+          // timer suppressed) and the source-exhaustion end gives a clean cut.
+          if (
+            current_time >= triggerAt
+            && crossfadeTrimAdvanceGen !== gen
+            && isCrossfadeNextReady(
+              nextTrackId,
+              playbackProfileIdForRef(nextRef),
+              playbackCacheKeyForRef(nextRef),
+            )
+          ) {
+            crossfadeTrimAdvanceGen = gen;
+            armCrossfadeDynamicOverlap(nextTrackId, overlapSec, outgoingFadeSec);
+            armAutodjMixing(overlapSec);
+            store.next(false);
+            return;
+          }
         }
       }
     }

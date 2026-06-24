@@ -190,6 +190,8 @@ mod tests {
                 base_volume: 0.8,
                 fadeout_trigger: None,
                 fadeout_samples: None,
+                fadeout_linear: None,
+                fadeout_end_gain: None,
             })),
             generation: Arc::new(AtomicU64::new(0)),
             http_client: Arc::new(RwLock::new(reqwest::Client::new())),

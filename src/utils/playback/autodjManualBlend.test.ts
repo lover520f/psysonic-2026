@@ -1,21 +1,18 @@
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { useAuthStore } from '../../store/authStore';
 import { setTransitionMode } from './playbackTransition';
 import { computeAutodjManualBlendPlan, shouldAutodjInterruptBlend } from './autodjManualBlend';
 
-/** Loud plateau with a short trailing silence (500 bins, 100 s). */
-function loudTrackBins(trailQuietBins = 8): number[] {
-  const bins = Array<number>(500).fill(200);
-  for (let i = 0; i < trailQuietBins; i++) bins[499 - i] = 8;
-  return bins;
+/** Fully-loud track (500 bins, plays as 100 s) — no lead/trail silence. */
+function loudBins(): number[] {
+  return Array<number>(500).fill(200);
 }
 
-/** Loud track with quiet head then plateau. */
-function loudIntroBins(leadQuietBins = 6): number[] {
-  const bins = Array<number>(500).fill(200);
-  for (let i = 0; i < leadQuietBins; i++) bins[i] = 8;
-  return bins;
-}
+beforeEach(() => {
+  // Reset the user transition bounds to Auto so the default-span tests are
+  // independent of bound-override tests (Vitest keeps store state across cases).
+  useAuthStore.setState({ autodjMinTransitionSec: 0, autodjMaxTransitionSec: 0 });
+});
 
 describe('shouldAutodjInterruptBlend', () => {
   it('is true while playing even when manual flag would be false', () => {
@@ -32,37 +29,38 @@ describe('shouldAutodjInterruptBlend', () => {
 });
 
 describe('computeAutodjManualBlendPlan', () => {
-  it('clamps overlap to remaining audible tail when skipping mid-track', () => {
-    const aBins = loudTrackBins();
-    const bBins = loudIntroBins();
-    const plan = computeAutodjManualBlendPlan(aBins, 100, 95, bBins, 100);
+  it('returns an edge-mix plan for a mid-track skip with loud A and B', () => {
+    const plan = computeAutodjManualBlendPlan(loudBins(), 100, 50, loudBins(), 100);
     expect(plan).not.toBeNull();
-    expect(plan!.overlapSec).toBeLessThanOrEqual(100 - 95 + 0.01);
-    expect(plan!.overlapSec).toBeGreaterThanOrEqual(0.5);
-    expect(plan!.bStartSec).toBeGreaterThan(0);
+    expect(plan!.transitionDur).toBeGreaterThan(0);
+    expect(plan!.outgoingGainAtMixStart).toBe(1);
+    expect(plan!.incomingGainAtMixEnd).toBe(1);
   });
 
-  it('uses standard blend for hard loud→loud when enough tail remains', () => {
-    const aBins = loudTrackBins(4);
-    const bBins = loudIntroBins(4);
-    const plan = computeAutodjManualBlendPlan(aBins, 100, 50, bBins, 100);
+  it('fully ducks A (outgoing_gain_end = 0) on a mid-track loud skip', () => {
+    // Skip lands well before A's outro zone → not scenario A → A must fade to 0.
+    const plan = computeAutodjManualBlendPlan(loudBins(), 100, 50, loudBins(), 100);
     expect(plan).not.toBeNull();
-    expect(plan!.overlapSec).toBe(2);
-    expect(plan!.outgoingFadeSec).toBe(2);
+    expect(plan!.outgoingGainAtMixEnd).toBe(0);
   });
 
-  it('caps skip blend to 2s when B has a long quiet intro', () => {
-    const aBins = loudTrackBins();
-    const bBins = loudIntroBins(80);
-    const plan = computeAutodjManualBlendPlan(aBins, 100, 40, bBins, 100);
+  it('honours the user max transition bound', () => {
+    useAuthStore.setState({ autodjMaxTransitionSec: 1 });
+    const plan = computeAutodjManualBlendPlan(loudBins(), 100, 50, loudBins(), 100);
     expect(plan).not.toBeNull();
-    expect(plan!.overlapSec).toBe(2);
-    expect(plan!.outgoingFadeSec).toBe(2);
+    expect(plan!.transitionDur).toBeLessThanOrEqual(1 + 1e-6);
   });
 
   it('returns null when almost no audible tail remains on A', () => {
-    const aBins = loudTrackBins();
-    const bBins = loudIntroBins();
-    expect(computeAutodjManualBlendPlan(aBins, 100, 99.95, bBins, 100)).toBeNull();
+    expect(computeAutodjManualBlendPlan(loudBins(), 100, 99.95, loudBins(), 100)).toBeNull();
+  });
+
+  it('returns null when a waveform is missing', () => {
+    expect(computeAutodjManualBlendPlan(null, 100, 50, loudBins(), 100)).toBeNull();
+    expect(computeAutodjManualBlendPlan(loudBins(), 100, 50, undefined, 100)).toBeNull();
+  });
+
+  it('returns null for non-positive durations', () => {
+    expect(computeAutodjManualBlendPlan(loudBins(), 0, 50, loudBins(), 100)).toBeNull();
   });
 });

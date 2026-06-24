@@ -1,5 +1,12 @@
 import { clampStoredLoudnessPreAnalysisAttenuationRefDb } from '../utils/audio/loudnessPreAnalysisSlider';
-import { DEFAULT_LOUDNESS_PRE_ANALYSIS_ATTENUATION_DB } from './authStoreDefaults';
+import {
+  AUTODJ_MAX_TRANSITION_SEC_MAX,
+  AUTODJ_MAX_TRANSITION_SEC_MIN,
+  AUTODJ_MIN_TRANSITION_SEC_MAX,
+  AUTODJ_MIN_TRANSITION_SEC_MIN,
+  DEFAULT_LOUDNESS_PRE_ANALYSIS_ATTENUATION_DB,
+} from './authStoreDefaults';
+import { clampAutodjTransitionSec } from './authStoreHelpers';
 import { usePlayerStore } from './playerStore';
 import type { AuthState } from './authStoreTypes';
 
@@ -29,6 +36,8 @@ export function createAudioSettingsActions(set: SetState): Pick<
   | 'setCrossfadeSecs'
   | 'setCrossfadeTrimSilence'
   | 'setAutodjSmoothSkip'
+  | 'setAutodjMinTransitionSec'
+  | 'setAutodjMaxTransitionSec'
   | 'setGaplessEnabled'
   | 'setEnableHiRes'
   | 'setAudioOutputDevice'
@@ -71,6 +80,16 @@ export function createAudioSettingsActions(set: SetState): Pick<
     setCrossfadeSecs: (v) => set({ crossfadeSecs: v }),
     setCrossfadeTrimSilence: (v) => set({ crossfadeTrimSilence: v }),
     setAutodjSmoothSkip: (v) => set({ autodjSmoothSkip: v }),
+    setAutodjMinTransitionSec: (v) => set({
+      autodjMinTransitionSec: clampAutodjTransitionSec(
+        v, AUTODJ_MIN_TRANSITION_SEC_MIN, AUTODJ_MIN_TRANSITION_SEC_MAX,
+      ),
+    }),
+    setAutodjMaxTransitionSec: (v) => set({
+      autodjMaxTransitionSec: clampAutodjTransitionSec(
+        v, AUTODJ_MAX_TRANSITION_SEC_MIN, AUTODJ_MAX_TRANSITION_SEC_MAX,
+      ),
+    }),
     setGaplessEnabled: (v) => set({ gaplessEnabled: v }),
     setEnableHiRes: (v) => set({ enableHiRes: v }),
     setAudioOutputDevice: (v) => set({ audioOutputDevice: v }),

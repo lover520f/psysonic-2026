@@ -702,8 +702,15 @@ pub(crate) fn parse_gapless_info(data: &[u8]) -> GaplessInfo {
     GaplessInfo { delay_samples: delay, total_valid_samples: total_valid }
 }
 
+// The incoming fade-in is type-erased through `DynSource` so the same stack type
+// covers both the equal-power (classic crossfade) and linear (AutoDJ edge-mix)
+// fade-in envelopes selected at build time.
 pub(crate) type BuiltSourceStack =
-    PriorityBoostSource<CountingSource<NotifyingSource<TriggeredFadeOut<EqualPowerFadeIn<EqSource<DynSource>>>>>>;
+    PriorityBoostSource<CountingSource<NotifyingSource<TriggeredFadeOut<DynSource>>>>;
+
+/// Incoming linear fade-in endpoints for the AutoDJ edge-mix (track B):
+/// `(incoming_gain_start, incoming_gain_end)`. `None` ⇒ classic equal-power fade.
+pub(crate) type AutodjFadeIn = Option<(f32, f32)>;
 
 /// Result of build_source: the fully-wrapped source plus metadata and control Arcs.
 pub(crate) struct BuiltSource {
@@ -715,6 +722,30 @@ pub(crate) struct BuiltSource {
     pub(crate) fadeout_trigger: Arc<AtomicBool>,
     /// Total samples for the fade-out (set before triggering).
     pub(crate) fadeout_samples: Arc<AtomicU64>,
+    /// AutoDJ edge-mix: set at handoff for a linear fade-to-hold (else cos→0).
+    pub(crate) fadeout_linear: Arc<AtomicBool>,
+    /// AutoDJ edge-mix: outgoing end gain (f32 bits) the linear fade holds at.
+    pub(crate) fadeout_end_gain: Arc<AtomicU32>,
+}
+
+/// Build the fade stage shared by both builders: type-erase the chosen fade-in
+/// envelope, then wrap in the (generalised) triggered fade-out.
+fn build_fade_stage(
+    eq_src: EqSource<DynSource>,
+    fade_in_dur: Duration,
+    autodj_in: AutodjFadeIn,
+    fadeout_trigger: Arc<AtomicBool>,
+    fadeout_samples: Arc<AtomicU64>,
+    fadeout_linear: Arc<AtomicBool>,
+    fadeout_end_gain: Arc<AtomicU32>,
+) -> TriggeredFadeOut<DynSource> {
+    let fade_in: DynSource = match autodj_in {
+        Some((start, end)) => {
+            DynSource::new(LinearGainEnvelopeIn::new(eq_src, fade_in_dur, start, end))
+        }
+        None => DynSource::new(EqualPowerFadeIn::new(eq_src, fade_in_dur)),
+    };
+    TriggeredFadeOut::new(fade_in, fadeout_trigger, fadeout_samples, fadeout_linear, fadeout_end_gain)
 }
 
 /// Build a fully-prepared playback source:
@@ -742,6 +773,7 @@ pub(crate) fn build_source(
     target_rate: u32,
     format_hint: Option<&str>,
     hi_res: bool,
+    autodj_in: AutodjFadeIn,
 ) -> Result<BuiltSource, String> {
     let gapless = parse_gapless_info(&data);
 
@@ -805,12 +837,21 @@ pub(crate) fn build_source(
 
     let fadeout_trigger = Arc::new(AtomicBool::new(false));
     let fadeout_samples = Arc::new(AtomicU64::new(0));
+    let fadeout_linear = Arc::new(AtomicBool::new(false));
+    let fadeout_end_gain = Arc::new(AtomicU32::new(0));
 
     let rate_src = PlaybackRateSource::new(dyn_src, playback_rate.clone());
     let rate_dyn = DynSource::new(rate_src);
     let eq_src = EqSource::new(rate_dyn, eq_gains, eq_enabled, eq_pre_gain);
-    let fade_in = EqualPowerFadeIn::new(eq_src, fade_in_dur);
-    let fade_out = TriggeredFadeOut::new(fade_in, fadeout_trigger.clone(), fadeout_samples.clone());
+    let fade_out = build_fade_stage(
+        eq_src,
+        fade_in_dur,
+        autodj_in,
+        fadeout_trigger.clone(),
+        fadeout_samples.clone(),
+        fadeout_linear.clone(),
+        fadeout_end_gain.clone(),
+    );
     let notifying = NotifyingSource::new(fade_out, done_flag);
     let counting = CountingSource::new(notifying, sample_counter);
     let boosted = PriorityBoostSource::new(counting);
@@ -822,6 +863,8 @@ pub(crate) fn build_source(
         output_channels: channels.get(),
         fadeout_trigger,
         fadeout_samples,
+        fadeout_linear,
+        fadeout_end_gain,
     })
 }
 
@@ -841,6 +884,7 @@ pub(crate) fn build_streaming_source(
     sample_counter: Arc<AtomicU64>,
     target_rate: u32,
     count_gate: Option<Arc<AtomicBool>>,
+    autodj_in: AutodjFadeIn,
 ) -> Result<BuiltSource, String> {
     let sample_rate = decoder.sample_rate();
     let channels = decoder.channels();
@@ -874,12 +918,21 @@ pub(crate) fn build_streaming_source(
 
     let fadeout_trigger = Arc::new(AtomicBool::new(false));
     let fadeout_samples = Arc::new(AtomicU64::new(0));
+    let fadeout_linear = Arc::new(AtomicBool::new(false));
+    let fadeout_end_gain = Arc::new(AtomicU32::new(0));
 
     let rate_src = PlaybackRateSource::new(dyn_src, playback_rate.clone());
     let rate_dyn = DynSource::new(rate_src);
     let eq_src = EqSource::new(rate_dyn, eq_gains, eq_enabled, eq_pre_gain);
-    let fade_in = EqualPowerFadeIn::new(eq_src, fade_in_dur);
-    let fade_out = TriggeredFadeOut::new(fade_in, fadeout_trigger.clone(), fadeout_samples.clone());
+    let fade_out = build_fade_stage(
+        eq_src,
+        fade_in_dur,
+        autodj_in,
+        fadeout_trigger.clone(),
+        fadeout_samples.clone(),
+        fadeout_linear.clone(),
+        fadeout_end_gain.clone(),
+    );
     let notifying = NotifyingSource::new(fade_out, done_flag);
     let counting = match count_gate {
         Some(gate) => CountingSource::new_gated(notifying, sample_counter, gate),
@@ -894,6 +947,8 @@ pub(crate) fn build_streaming_source(
         output_channels: channels.get(),
         fadeout_trigger,
         fadeout_samples,
+        fadeout_linear,
+        fadeout_end_gain,
     })
 }
 
@@ -1212,6 +1267,7 @@ mod build_source_tests {
             0,
             Some("wav"),
             false,
+            None,
         )
         .expect("build_source must succeed for a valid WAV");
         assert_eq!(built.output_channels, 1);
@@ -1235,6 +1291,7 @@ mod build_source_tests {
             0,
             None,
             false,
+            None,
         );
         assert!(result.is_err());
     }
@@ -1255,6 +1312,7 @@ mod build_source_tests {
             Duration::ZERO,
             sample_counter,
             0,
+            None,
             None,
         )
         .expect("build_streaming_source must succeed for a valid WAV decoder");
@@ -1279,6 +1337,7 @@ mod build_source_tests {
             48_000,
             Some("wav"),
             false,
+            None,
         )
         .expect("resampled build_source must succeed");
         assert_eq!(built.output_rate, 48_000);

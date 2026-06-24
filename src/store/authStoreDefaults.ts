@@ -46,3 +46,15 @@ export const RANDOM_MIX_SIZE_OPTIONS: readonly number[] = [50, 75, 100, 125, 150
 export const DEFAULT_LIBRARY_GRID_MAX_COLUMNS = 6;
 export const LIBRARY_GRID_MAX_COLUMNS_MIN = 4;
 export const LIBRARY_GRID_MAX_COLUMNS_MAX = 12;
+
+// AutoDJ transition-length user bounds (Settings → Track transitions). `0` is the
+// "Auto" sentinel — the edge-mix algorithm uses its own content-derived span with
+// no user floor/ceiling. A non-zero value clamps `transition_dur` (and the edge
+// analysis window) to that many seconds. Min must stay ≤ max at use sites.
+export const AUTODJ_MIN_TRANSITION_SEC_MIN = 0.5;
+export const AUTODJ_MIN_TRANSITION_SEC_MAX = 10;
+export const AUTODJ_MAX_TRANSITION_SEC_MIN = 1;
+// Upper ceiling mirrors the engine's AutoDJ mix clamp in `audio_play`
+// (`mix_secs.clamp(0.5, 12.0)`) — keep them in lockstep so a configured max is
+// actually honoured end-to-end (no silent re-clamp in Rust).
+export const AUTODJ_MAX_TRANSITION_SEC_MAX = 12;

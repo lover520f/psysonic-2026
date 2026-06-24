@@ -4,7 +4,7 @@
 //! download task arms playback. Split out of `play_input.rs` so source
 //! selection and source building stay focused on their own concerns.
 
-use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU32, AtomicU64, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
@@ -88,21 +88,32 @@ pub(crate) struct SinkSwapInputs {
     pub(crate) gain_linear: f32,
     pub(crate) fadeout_trigger: Arc<AtomicBool>,
     pub(crate) fadeout_samples: Arc<AtomicU64>,
+    /// New track's linear-mix control Arcs (stored so the *next* swap can drive
+    /// this track's outgoing fade); inert until a later handoff sets them.
+    pub(crate) fadeout_linear: Arc<AtomicBool>,
+    pub(crate) fadeout_end_gain: Arc<AtomicU32>,
     pub(crate) crossfade_enabled: bool,
     pub(crate) actual_fade_secs: f32,
     /// Track A fade-out length (decoupled from B's `actual_fade_secs` fade-in).
     /// `0` ⇒ don't fade A — it rides its own recorded fade-out (scenario A).
     pub(crate) outgoing_fade_secs: f32,
+    /// AutoDJ edge-mix: when `Some(end_gain)`, fade outgoing A *linearly* to
+    /// `end_gain` then hold (instead of the equal-power cos → 0). `None` = cos.
+    pub(crate) outgoing_linear_end_gain: Option<f32>,
     pub(crate) start_paused: bool,
 }
 
 /// Hand off the outgoing sink to a sample-level fade-out, then stop it after
 /// `cleanup_secs`. No-op when `fade_secs <= 0` (immediate stop).
+#[allow(clippy::too_many_arguments)]
 fn handoff_old_sink_fade_out(
     state: &State<'_, AudioEngine>,
     old_sink: Option<Arc<rodio::Player>>,
     old_fadeout_trigger: Option<Arc<AtomicBool>>,
     old_fadeout_samples: Option<Arc<AtomicU64>>,
+    old_fadeout_linear: Option<Arc<AtomicBool>>,
+    old_fadeout_end_gain: Option<Arc<AtomicU32>>,
+    linear_end_gain: Option<f32>,
     fade_secs: f32,
     cleanup_secs: f32,
 ) {
@@ -116,6 +127,15 @@ fn handoff_old_sink_fade_out(
     let rate = state.current_sample_rate.load(Ordering::Relaxed);
     let ch = state.current_channels.load(Ordering::Relaxed);
     let fade_total = (fade_secs as f64 * rate as f64 * ch as f64) as u64;
+
+    // AutoDJ edge-mix: configure the outgoing source's linear fade-to-hold before
+    // arming the trigger, so its first fade sample reads the right mode + gain.
+    if let (Some(end_gain), Some(linear), Some(bits)) =
+        (linear_end_gain, old_fadeout_linear, old_fadeout_end_gain)
+    {
+        bits.store(end_gain.clamp(0.0, 1.0).to_bits(), Ordering::SeqCst);
+        linear.store(true, Ordering::SeqCst);
+    }
 
     if let (Some(trigger), Some(samples)) = (old_fadeout_trigger, old_fadeout_samples) {
         samples.store(fade_total.max(1), Ordering::SeqCst);
@@ -145,17 +165,22 @@ pub(crate) fn swap_in_new_sink(state: &State<'_, AudioEngine>, inputs: SinkSwapI
         gain_linear,
         fadeout_trigger: new_fadeout_trigger,
         fadeout_samples: new_fadeout_samples,
+        fadeout_linear: new_fadeout_linear,
+        fadeout_end_gain: new_fadeout_end_gain,
         crossfade_enabled,
         actual_fade_secs,
         outgoing_fade_secs,
+        outgoing_linear_end_gain,
         start_paused,
     } = inputs;
 
-    let (old_sink, old_fadeout_trigger, old_fadeout_samples) = {
+    let (old_sink, old_fadeout_trigger, old_fadeout_samples, old_fadeout_linear, old_fadeout_end_gain) = {
         let mut cur = state.current.lock().unwrap();
         let old = cur.sink.take();
         let old_fo_trigger = cur.fadeout_trigger.take();
         let old_fo_samples = cur.fadeout_samples.take();
+        let old_fo_linear = cur.fadeout_linear.take();
+        let old_fo_end_gain = cur.fadeout_end_gain.take();
         cur.sink = Some(sink.clone());
         cur.duration_secs = duration_secs;
         cur.seek_offset = 0.0;
@@ -171,18 +196,25 @@ pub(crate) fn swap_in_new_sink(state: &State<'_, AudioEngine>, inputs: SinkSwapI
         cur.base_volume = volume.clamp(0.0, 1.0);
         cur.fadeout_trigger = Some(new_fadeout_trigger);
         cur.fadeout_samples = Some(new_fadeout_samples);
-        (old, old_fo_trigger, old_fo_samples)
+        cur.fadeout_linear = Some(new_fadeout_linear);
+        cur.fadeout_end_gain = Some(new_fadeout_end_gain);
+        (old, old_fo_trigger, old_fo_samples, old_fo_linear, old_fo_end_gain)
     };
 
     if crossfade_enabled {
         if outgoing_fade_secs > 0.0 {
             // Scenario A (`outgoing_fade_secs == 0`): A keeps full engine gain;
             // still keep the old sink alive until B's fade-in window elapses.
+            // AutoDJ edge-mix: `outgoing_linear_end_gain` drives a linear
+            // fade-to-hold instead of the equal-power cos → 0.
             handoff_old_sink_fade_out(
                 state,
                 old_sink,
                 old_fadeout_trigger,
                 old_fadeout_samples,
+                old_fadeout_linear,
+                old_fadeout_end_gain,
+                outgoing_linear_end_gain,
                 outgoing_fade_secs,
                 actual_fade_secs.max(outgoing_fade_secs) + 0.5,
             );

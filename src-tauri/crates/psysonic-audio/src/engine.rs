@@ -141,6 +141,11 @@ pub struct AudioCurrent {
     pub fadeout_trigger: Option<Arc<AtomicBool>>,
     /// Crossfade: total fade samples (set before triggering).
     pub fadeout_samples: Option<Arc<AtomicU64>>,
+    /// AutoDJ edge-mix: set true at handoff to fade this source linearly to
+    /// `fadeout_end_gain` then hold (instead of the equal-power cos → 0).
+    pub fadeout_linear: Option<Arc<AtomicBool>>,
+    /// AutoDJ edge-mix: outgoing end gain (f32 bits) the linear fade holds at.
+    pub fadeout_end_gain: Option<Arc<AtomicU32>>,
 }
 
 impl AudioCurrent {
@@ -464,6 +469,8 @@ pub fn create_engine() -> (AudioEngine, std::thread::JoinHandle<()>) {
             base_volume: 0.8,
             fadeout_trigger: None,
             fadeout_samples: None,
+            fadeout_linear: None,
+            fadeout_end_gain: None,
         })),
         generation: Arc::new(AtomicU64::new(0)),
         http_client: Arc::new(RwLock::new(

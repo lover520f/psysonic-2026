@@ -1,5 +1,6 @@
 import { invoke } from '@tauri-apps/api/core';
-import { computeWaveformSilence, planCrossfadeTransition } from '../utils/waveform/waveformSilence';
+import { computeWaveformSilence } from '../utils/waveform/waveformSilence';
+import { edgeDurationOptionsFromSettings, planEdgeMix } from '../utils/waveform/autodjEdgeMix';
 import { findLocalPlaybackUrl } from '../utils/offline/offlineLibraryHelpers';
 import { playbackCacheKeyForRef } from '../utils/playback/playbackServer';
 import { resolvePlaybackUrl } from '../utils/playback/resolvePlaybackUrl';
@@ -9,7 +10,7 @@ import { useAuthStore } from './authStore';
 import {
   hasPlannedCrossfade,
   markPlannedCrossfade,
-  setCrossfadeTransition,
+  setEdgeMixPlan,
 } from './crossfadeTrimCache';
 import { getBytePreloadingId, setBytePreloadingId } from './gaplessPreloadState';
 import { refreshLoudnessForTrack } from './loudnessRefresh';
@@ -121,6 +122,7 @@ export function maybeCrossfadeBytePreload(currentTime: number, dur: number): voi
   if (!(dur > 0)) return;
   const {
     gaplessEnabled, hotCacheEnabled, crossfadeEnabled, crossfadeSecs, crossfadeTrimSilence,
+    autodjMinTransitionSec, autodjMaxTransitionSec,
   } = useAuthStore.getState();
   if (!crossfadeEnabled || gaplessEnabled) return;
 
@@ -169,24 +171,37 @@ export function maybeCrossfadeBytePreload(currentTime: number, dur: number): voi
     }).catch(() => {});
   }
 
-  // B-head + dynamic overlap: plan the whole transition once (no store write) so
-  // playTrack can start the incoming track past its dead head AND fade over a
-  // content-adaptive overlap. Pairs the current track's envelope (already in the
-  // store) with the next track's cached waveform; the alignment maths is cheap,
-  // so it runs regardless of hot cache (which otherwise skips the byte
-  // pre-download). Cold/un-analysed tracks fall back to a fixed overlap + no
-  // head trim → today's behaviour.
+  // AutoDJ edge-mix: plan the whole transition once (no store write) so playTrack
+  // can start the incoming track past its dead head AND blend over the
+  // content-derived linear edge curves. Pairs the current track's envelope
+  // (already in the store) with the next track's cached waveform; the analysis is
+  // cheap, so it runs regardless of hot cache (which otherwise skips the byte
+  // pre-download). Cold/un-analysed tracks leave no plan → audioEventHandlers
+  // degrades to the engine crossfade (§16.4).
   if (crossfadeTrimSilence && !hasPlannedCrossfade(nextTrack.id)) {
     markPlannedCrossfade(nextTrack.id);
     const planTrackId = nextTrack.id;
     const planDuration = nextTrack.duration;
     const curBins = store.waveformBins;
+    const aContentEndSec = computeWaveformSilence(curBins, dur).contentEndSec;
+    // User min/max transition bounds (Settings → Track transitions); `0` = Auto.
+    const edgeOpts = edgeDurationOptionsFromSettings(autodjMinTransitionSec, autodjMaxTransitionSec);
     void fetchWaveformBins(planTrackId, serverId || null)
       .then(nextBins => {
-        // Overlap is derived purely from the audio (fade-out / buildup); the
+        // Edge curves + overlap derive purely from the audio (edge model); the
         // user's crossfadeSecs is intentionally not a factor in this mode.
-        const plan = planCrossfadeTransition(curBins, dur, nextBins, planDuration);
-        setCrossfadeTransition(planTrackId, plan);
+        const bSilence = computeWaveformSilence(nextBins, planDuration);
+        const edgePlan = planEdgeMix(
+          curBins,
+          dur,
+          aContentEndSec,
+          nextBins,
+          planDuration,
+          bSilence.contentStartSec,
+          bSilence.contentEndSec,
+          edgeOpts,
+        );
+        if (edgePlan) setEdgeMixPlan(planTrackId, edgePlan);
       })
       .catch(() => {});
   }

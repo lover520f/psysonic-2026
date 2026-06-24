@@ -1,7 +1,7 @@
 //! Live internet-radio playback. Distinct from main track playback: no
 //! gapless chain, no seek, no replay-gain, no preload.
 
-use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU32, AtomicU64, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
@@ -136,6 +136,9 @@ pub async fn audio_play_radio(
     let done_flag       = Arc::new(AtomicBool::new(false));
     let fadeout_trigger = Arc::new(AtomicBool::new(false));
     let fadeout_samples = Arc::new(AtomicU64::new(0));
+    // Radio never uses the AutoDJ linear edge-mix → fixed non-linear defaults.
+    let fadeout_linear    = Arc::new(AtomicBool::new(false));
+    let fadeout_end_gain  = Arc::new(AtomicU32::new(0));
     state.samples_played.store(0, Ordering::Relaxed);
 
     // Radio: no gapless trim, no ReplayGain, 5 ms fade-in to suppress click.
@@ -143,7 +146,8 @@ pub async fn audio_play_radio(
     let eq_src    = EqSource::new(dyn_src, state.eq_gains.clone(),
                                   state.eq_enabled.clone(), state.eq_pre_gain.clone());
     let fade_in   = EqualPowerFadeIn::new(eq_src, Duration::from_millis(5));
-    let fade_out  = TriggeredFadeOut::new(fade_in, fadeout_trigger.clone(), fadeout_samples.clone());
+    let fade_out  = TriggeredFadeOut::new(fade_in, fadeout_trigger.clone(), fadeout_samples.clone(),
+                                          fadeout_linear.clone(), fadeout_end_gain.clone());
     let notifying = NotifyingSource::new(fade_out, done_flag.clone());
     let counting  = CountingSource::new(notifying, state.samples_played.clone());
     let boosted   = PriorityBoostSource::new(counting);
@@ -167,6 +171,8 @@ pub async fn audio_play_radio(
         cur.base_volume       = volume.clamp(0.0, 1.0);
         cur.fadeout_trigger   = Some(fadeout_trigger);
         cur.fadeout_samples   = Some(fadeout_samples);
+        cur.fadeout_linear    = Some(fadeout_linear);
+        cur.fadeout_end_gain  = Some(fadeout_end_gain);
     }
 
     *state.current_playback_url.lock().unwrap() = Some(url.clone());

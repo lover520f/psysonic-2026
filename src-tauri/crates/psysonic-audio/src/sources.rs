@@ -239,6 +239,75 @@ impl<S: Source<Item = f32>> Source for EqualPowerFadeIn<S> {
     }
 }
 
+// ─── LinearGainEnvelopeIn — AutoDJ edge-mix incoming linear fade-in ──────────
+//
+// Incoming track B on the AutoDJ edge-mix path: gain rises *linearly* from
+// `start_gain` (= 1 − linear_B(0), may be > 0 when B starts loud) to `end_gain`
+// (always 1.0) across the mix window, then holds `end_gain`. Unlike the
+// equal-power sin fade-in this is a plain lerp, matched to the linear sample sum
+// (`out = sampleA·gA + sampleB·gB`) the maintainer algorithm specifies.
+
+pub(crate) struct LinearGainEnvelopeIn<S: Source<Item = f32>> {
+    inner: S,
+    sample_count: u64,
+    fade_samples: u64,
+    start_gain: f32,
+    end_gain: f32,
+}
+
+impl<S: Source<Item = f32>> LinearGainEnvelopeIn<S> {
+    pub(crate) fn new(inner: S, fade_dur: Duration, start_gain: f32, end_gain: f32) -> Self {
+        let sample_rate = inner.sample_rate();
+        let channels = inner.channels().get() as u64;
+        let fade_samples = if fade_dur.is_zero() {
+            0
+        } else {
+            (fade_dur.as_secs_f64() * sample_rate.get() as f64 * channels as f64) as u64
+        };
+        Self {
+            inner,
+            sample_count: 0,
+            fade_samples,
+            start_gain: start_gain.clamp(0.0, 1.0),
+            end_gain: end_gain.clamp(0.0, 1.0),
+        }
+    }
+}
+
+impl<S: Source<Item = f32>> Iterator for LinearGainEnvelopeIn<S> {
+    type Item = f32;
+    fn next(&mut self) -> Option<f32> {
+        let sample = self.inner.next()?;
+        let gain = if self.fade_samples == 0 || self.sample_count >= self.fade_samples {
+            self.end_gain
+        } else {
+            let t = self.sample_count as f32 / self.fade_samples as f32;
+            self.start_gain + (self.end_gain - self.start_gain) * t
+        };
+        self.sample_count += 1;
+        Some((sample * gain).clamp(-1.0, 1.0))
+    }
+}
+
+impl<S: Source<Item = f32>> Source for LinearGainEnvelopeIn<S> {
+    fn current_span_len(&self) -> Option<usize> { self.inner.current_span_len() }
+    fn channels(&self) -> rodio::ChannelCount { self.inner.channels() }
+    fn sample_rate(&self) -> rodio::SampleRate { self.inner.sample_rate() }
+    fn total_duration(&self) -> Option<Duration> { self.inner.total_duration() }
+    fn try_seek(&mut self, pos: Duration) -> Result<(), rodio::source::SeekError> {
+        if self.sample_count == 0 {
+            // Initial start-offset seek (B-head: skip leading silence). Keep the
+            // envelope so B still rises in from its trimmed start.
+        } else if pos.as_millis() < 100 {
+            self.sample_count = 0;
+        } else {
+            // Mid-playback seek elsewhere → jump to the held end gain.
+            self.sample_count = self.fade_samples;
+        }
+        self.inner.try_seek(pos)
+    }
+}
+
 // ─── TriggeredFadeOut — sample-level cos(t·π/2) fade-out triggered externally ─
 //
 // Every track source is wrapped with this. It passes through at unity gain
@@ -255,20 +324,39 @@ pub(crate) struct TriggeredFadeOut<S: Source<Item = f32>> {
     inner: S,
     trigger: Arc<AtomicBool>,
     fade_total_samples: Arc<AtomicU64>,
+    // AutoDJ edge-mix: when `linear` is set at trigger time, fade *linearly* from
+    // 1.0 to `end_gain` over the fade window, then **hold** `end_gain` until the
+    // inner source exhausts (generalised scenario A — the recording carries the
+    // outgoing track the rest of the way at a fixed engine gain). When `linear`
+    // is false the classic equal-power `cos(t·π/2) → 0 → None` path runs.
+    linear: Arc<AtomicBool>,
+    end_gain_bits: Arc<AtomicU32>,
     fade_progress: u64,
     fading: bool,
     cached_total: u64,
+    cached_linear: bool,
+    cached_end_gain: f32,
 }
 
 impl<S: Source<Item = f32>> TriggeredFadeOut<S> {
-    pub(crate) fn new(inner: S, trigger: Arc<AtomicBool>, fade_total_samples: Arc<AtomicU64>) -> Self {
+    pub(crate) fn new(
+        inner: S,
+        trigger: Arc<AtomicBool>,
+        fade_total_samples: Arc<AtomicU64>,
+        linear: Arc<AtomicBool>,
+        end_gain_bits: Arc<AtomicU32>,
+    ) -> Self {
         Self {
             inner,
             trigger,
             fade_total_samples,
+            linear,
+            end_gain_bits,
             fade_progress: 0,
             fading: false,
             cached_total: 0,
+            cached_linear: false,
+            cached_end_gain: 0.0,
         }
     }
 }
@@ -280,17 +368,29 @@ impl<S: Source<Item = f32>> Iterator for TriggeredFadeOut<S> {
         if !self.fading && self.trigger.load(Ordering::Relaxed) {
             self.fading = true;
             self.cached_total = self.fade_total_samples.load(Ordering::Relaxed).max(1);
+            self.cached_linear = self.linear.load(Ordering::Relaxed);
+            self.cached_end_gain = f32::from_bits(self.end_gain_bits.load(Ordering::Relaxed)).clamp(0.0, 1.0);
             self.fade_progress = 0;
         }
 
         if self.fading {
             if self.fade_progress >= self.cached_total {
+                // Linear edge-mix with a non-zero end gain: hold that gain so the
+                // outgoing recording keeps playing under the incoming track.
+                if self.cached_linear && self.cached_end_gain > 0.001 {
+                    let sample = self.inner.next()?;
+                    return Some((sample * self.cached_end_gain).clamp(-1.0, 1.0));
+                }
                 // Fade complete — exhaust the source.
                 return None;
             }
             let sample = self.inner.next()?;
             let t = self.fade_progress as f32 / self.cached_total as f32;
-            let gain = (t * std::f32::consts::FRAC_PI_2).cos();
+            let gain = if self.cached_linear {
+                1.0 + (self.cached_end_gain - 1.0) * t
+            } else {
+                (t * std::f32::consts::FRAC_PI_2).cos()
+            };
             self.fade_progress += 1;
             Some((sample * gain).clamp(-1.0, 1.0))
         } else {
@@ -556,5 +656,89 @@ mod counting_source_tests {
         let mut src2 = CountingSource::new_gated(TwoSamples(0), counter.clone(), gate);
         assert_eq!(src2.next(), Some(0.1));
         assert_eq!(counter.load(Ordering::Relaxed), 1);
+    }
+}
+
+#[cfg(test)]
+mod edge_mix_tests {
+    use super::*;
+
+    /// Constant 1.0 source: mono, 4 Hz → a 1-second fade spans exactly 4 samples.
+    struct Ones(usize);
+    impl Iterator for Ones {
+        type Item = f32;
+        fn next(&mut self) -> Option<f32> {
+            if self.0 == 0 {
+                None
+            } else {
+                self.0 -= 1;
+                Some(1.0)
+            }
+        }
+    }
+    impl Source for Ones {
+        fn current_span_len(&self) -> Option<usize> { Some(1) }
+        fn channels(&self) -> rodio::ChannelCount { std::num::NonZero::new(1).unwrap() }
+        fn sample_rate(&self) -> rodio::SampleRate { std::num::NonZero::new(4).unwrap() }
+        fn total_duration(&self) -> Option<Duration> { None }
+    }
+
+    fn end_gain_arc(g: f32) -> Arc<AtomicU32> {
+        Arc::new(AtomicU32::new(g.to_bits()))
+    }
+
+    #[test]
+    fn linear_fade_in_lerps_then_holds_end_gain() {
+        let out: Vec<f32> =
+            LinearGainEnvelopeIn::new(Ones(8), Duration::from_secs(1), 0.25, 1.0).collect();
+        assert!((out[0] - 0.25).abs() < 1e-4); // p=0 → start_gain
+        assert!((out[2] - 0.625).abs() < 1e-4); // p=0.5 → 0.25 + 0.75·0.5
+        assert!((out[4] - 1.0).abs() < 1e-4); // after fade → end_gain
+        assert!((out[7] - 1.0).abs() < 1e-4);
+    }
+
+    #[test]
+    fn triggered_linear_fade_out_holds_nonzero_end_gain() {
+        let src = TriggeredFadeOut::new(
+            Ones(8),
+            Arc::new(AtomicBool::new(true)),
+            Arc::new(AtomicU64::new(4)),
+            Arc::new(AtomicBool::new(true)),
+            end_gain_arc(0.5),
+        );
+        let out: Vec<f32> = src.collect();
+        assert!((out[0] - 1.0).abs() < 1e-4); // p=0 → outgoing_gain_start (1.0)
+        assert!((out[2] - 0.75).abs() < 1e-4); // p=0.5 → 1 + (0.5−1)·0.5
+        assert!((out[4] - 0.5).abs() < 1e-4); // held at end_gain
+        assert!((out[7] - 0.5).abs() < 1e-4);
+        assert_eq!(out.len(), 8); // not exhausted — A keeps playing under B
+    }
+
+    #[test]
+    fn triggered_linear_fade_out_exhausts_when_end_gain_zero() {
+        let src = TriggeredFadeOut::new(
+            Ones(8),
+            Arc::new(AtomicBool::new(true)),
+            Arc::new(AtomicU64::new(4)),
+            Arc::new(AtomicBool::new(true)),
+            end_gain_arc(0.0),
+        );
+        let out: Vec<f32> = src.collect();
+        assert_eq!(out.len(), 4); // fades 1→0 then returns None
+        assert!((out[0] - 1.0).abs() < 1e-4);
+    }
+
+    #[test]
+    fn triggered_cos_fade_out_unchanged_when_not_linear() {
+        let src = TriggeredFadeOut::new(
+            Ones(8),
+            Arc::new(AtomicBool::new(true)),
+            Arc::new(AtomicU64::new(4)),
+            Arc::new(AtomicBool::new(false)),
+            end_gain_arc(0.0),
+        );
+        let out: Vec<f32> = src.collect();
+        assert_eq!(out.len(), 4); // cos → 0 then None
+        assert!((out[0] - 1.0).abs() < 1e-4); // cos(0) = 1
     }
 }

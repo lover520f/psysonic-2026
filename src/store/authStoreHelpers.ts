@@ -51,6 +51,18 @@ export function clampLibraryGridMaxColumns(v: unknown): number {
   return Math.max(LIBRARY_GRID_MAX_COLUMNS_MIN, Math.min(LIBRARY_GRID_MAX_COLUMNS_MAX, Math.round(n)));
 }
 
+/**
+ * Clamp an AutoDJ transition-length bound (seconds). A non-positive / non-finite
+ * value (or explicit `0`) is the "Auto" sentinel and passes through as `0`; any
+ * other value is snapped to a 0.5 s step inside `[lo, hi]`.
+ */
+export function clampAutodjTransitionSec(v: unknown, lo: number, hi: number): number {
+  const n = typeof v === 'number' ? v : Number(v);
+  if (!Number.isFinite(n) || n <= 0) return 0;
+  const snapped = Math.round(n * 2) / 2;
+  return Math.max(lo, Math.min(hi, snapped));
+}
+
 export function clampSkipStarThreshold(v: number): number {
   if (!Number.isFinite(v)) return 3;
   return Math.max(1, Math.min(99, Math.round(v)));

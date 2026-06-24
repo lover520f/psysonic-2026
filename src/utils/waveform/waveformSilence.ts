@@ -37,7 +37,7 @@ const DEFAULT_MAX_TRIM_SEC = 5;
  * Dual-curve payload is peak ++ mean; use the peak half. Legacy single curve
  * (length === peak length) is used as-is.
  */
-function peakHalf(bins: number[]): number[] {
+export function peakHalf(bins: number[]): number[] {
   return bins.length >= 1000 ? bins.slice(0, Math.floor(bins.length / 2)) : bins;
 }
 

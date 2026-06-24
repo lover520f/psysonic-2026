@@ -25,6 +25,27 @@ use super::preview::preview_clear_for_new_main_playback;
 use super::progress_task::spawn_progress_task;
 use super::state::{ChainedInfo, PreloadedTrack};
 
+/// AutoDJ edge-mix linear blend parameters (additive `audio_play` arg). Sent by
+/// the frontend only in AutoDJ mode when an edge-mix plan is available; absent
+/// ⇒ the classic equal-power sin/cos crossfade path is used unchanged.
+///
+/// Field names are the locked contract (snake_case) from the implementation
+/// spec §16.5 — the frontend object literal uses these exact keys.
+#[derive(Debug, Clone, Copy, serde::Deserialize)]
+pub struct AutodjLinearMixParams {
+    /// Desired mix overlap length (clamped 0.5..12 s, then to A's remaining).
+    pub mix_secs: f32,
+    /// Outgoing A gain at mix start — always 1.0 (carried for completeness).
+    #[allow(dead_code)]
+    pub outgoing_gain_start: f32,
+    /// Outgoing A gain at mix end = 1 − linear_A(0); held after the fade.
+    pub outgoing_gain_end: f32,
+    /// Incoming B gain at mix start = 1 − linear_B(0).
+    pub incoming_gain_start: f32,
+    /// Incoming B gain at mix end — always 1.0.
+    pub incoming_gain_end: f32,
+}
+
 // ─── Commands ─────────────────────────────────────────────────────────────────
 
 /// `analysis_track_id`: Subsonic `song.id` from the UI — ties waveform/loudness
@@ -75,6 +96,9 @@ pub async fn audio_play(
     // AutoDJ smooth skip: short outgoing fade when the user hits next/previous
     // while a track is playing. Optional; only honoured when `manual` is true.
     manual_autodj_blend: Option<bool>,
+    // AutoDJ edge-mix: linear blend plan (mix length + gain endpoints). Present
+    // only in AutoDJ mode with a valid plan; absent ⇒ equal-power sin/cos path.
+    autodj_linear_mix: Option<AutodjLinearMixParams>,
     app: AppHandle,
     state: State<'_, AudioEngine>,
 ) -> Result<(), String> {
@@ -263,20 +287,46 @@ pub async fn audio_play(
         0.0
     };
 
+    // AutoDJ edge-mix: when a linear blend plan is present (and crossfade is
+    // active for this swap) it replaces the equal-power fade shape on BOTH sides
+    // — B rises linearly from `incoming_gain_start`, A falls linearly to
+    // `outgoing_gain_end` and holds. `actual_mix_secs` mirrors `actual_fade_secs`:
+    // the planned mix length clamped to A's measured remaining audio.
+    let autodj_mix = autodj_linear_mix.filter(|_| crossfade_enabled);
+    let actual_mix_secs: f32 = match autodj_mix {
+        Some(m) => {
+            let mix = m.mix_secs.clamp(0.5, 12.0);
+            let cur = state.current.lock().unwrap();
+            let remaining = (cur.duration_secs - cur.position()) as f32;
+            remaining.min(mix).clamp(0.1, mix)
+        }
+        None => 0.0,
+    };
+    let autodj_in: Option<(f32, f32)> = autodj_mix
+        .map(|m| (m.incoming_gain_start.clamp(0.0, 1.0), m.incoming_gain_end.clamp(0.0, 1.0)));
+    let outgoing_linear_end_gain: Option<f32> =
+        autodj_mix.map(|m| m.outgoing_gain_end.clamp(0.0, 1.0));
+
     // Fade-in duration for Track B:
-    //   crossfade → equal-power sin(t·π/2) over actual remaining time of Track A
-    //   hard cut  → 5 ms micro-fade to suppress DC-offset click
-    let fade_in_dur = if crossfade_enabled {
+    //   edge-mix   → linear lerp over the planned mix length (A's remaining)
+    //   crossfade  → equal-power sin(t·π/2) over actual remaining time of Track A
+    //   hard cut   → 5 ms micro-fade to suppress DC-offset click
+    let fade_in_dur = if autodj_mix.is_some() {
+        Duration::from_secs_f32(actual_mix_secs)
+    } else if crossfade_enabled {
         Duration::from_secs_f32(actual_fade_secs)
     } else {
         Duration::from_millis(5)
     };
 
-    // Outgoing (Track A) fade-out, decoupled from B's fade-in. Defaults to
-    // `actual_fade_secs` (symmetric crossfade, today's behaviour); a `Some(0)`
-    // override means A already fades out in the recording, so we leave it at
-    // full engine gain (scenario A). Never longer than A's remaining audio.
-    let outgoing_fade_secs: f32 = if crossfade_enabled {
+    // Outgoing (Track A) fade-out, decoupled from B's fade-in. Edge-mix uses the
+    // planned mix length with a linear fade-to-hold; otherwise defaults to
+    // `actual_fade_secs` (symmetric crossfade) — a `Some(0)` override means A
+    // already fades out in the recording, so we leave it at full engine gain
+    // (scenario A). Never longer than A's remaining audio.
+    let outgoing_fade_secs: f32 = if autodj_mix.is_some() {
+        actual_mix_secs
+    } else if crossfade_enabled {
         match outgoing_fade_secs_override {
             Some(v) => v.max(0.0).min(actual_fade_secs),
             None => actual_fade_secs,
@@ -302,6 +352,7 @@ pub async fn audio_play(
             fade_in_dur,
             hi_res_enabled,
             duration_hint,
+            autodj_in,
         },
         &state,
         &app,
@@ -471,9 +522,12 @@ pub async fn audio_play(
         gain_linear,
         fadeout_trigger: built.fadeout_trigger,
         fadeout_samples: built.fadeout_samples,
+        fadeout_linear: built.fadeout_linear,
+        fadeout_end_gain: built.fadeout_end_gain,
         crossfade_enabled,
         actual_fade_secs,
         outgoing_fade_secs,
+        outgoing_linear_end_gain,
         start_paused,
     });
 
@@ -693,6 +747,7 @@ pub async fn audio_chain_preload(
         target_rate,
         format_hint.as_deref(),
         hi_res_enabled,
+        None, // gapless chain never uses the AutoDJ linear edge-mix
     ).map_err(|e| e.to_string())?;
     let source = built.source;
     let duration_secs = built.duration_secs;

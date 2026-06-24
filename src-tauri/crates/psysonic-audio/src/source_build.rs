@@ -13,7 +13,7 @@ use tauri::{AppHandle, State};
 use super::analysis_dispatch::{
     prepare_playback_analysis, spawn_track_analysis_bytes, TrackAnalysisOrigin,
 };
-use super::decode::{build_source, build_streaming_source, BuiltSource, SizedDecoder};
+use super::decode::{build_source, build_streaming_source, AutodjFadeIn, BuiltSource, SizedDecoder};
 use super::engine::AudioEngine;
 use super::helpers::{fetch_data, resolve_playback_format_hint, same_playback_target};
 use super::play_input::PlayInput;
@@ -34,6 +34,8 @@ pub(crate) struct BuildSourceArgs<'a> {
     pub fade_in_dur: Duration,
     pub hi_res_enabled: bool,
     pub duration_hint: f64,
+    /// AutoDJ edge-mix incoming linear fade-in endpoints (None = equal-power).
+    pub autodj_in: AutodjFadeIn,
 }
 
 /// Output of `build_source_from_play_input`: the wrapped rodio source plus
@@ -184,6 +186,7 @@ pub(crate) async fn build_playback_source_with_probe_fallback(
         fade_in_dur,
         hi_res_enabled,
         duration_hint,
+        autodj_in,
     } = args;
     let media_hint = play_media_format_hint(&play_input);
     let effective_hint = resolve_playback_format_hint(
@@ -204,6 +207,7 @@ pub(crate) async fn build_playback_source_with_probe_fallback(
         fade_in_dur,
         hi_res_enabled,
         duration_hint,
+        autodj_in,
     )
     .await
     {
@@ -265,6 +269,7 @@ pub(crate) async fn build_playback_source_with_probe_fallback(
                 fade_in_dur,
                 hi_res_enabled,
                 duration_hint,
+                autodj_in,
             )
             .await
             {
@@ -300,6 +305,7 @@ pub(crate) async fn build_playback_source_with_probe_fallback(
                         fade_in_dur,
                         hi_res_enabled,
                         duration_hint,
+                        autodj_in,
                     )
                     .await
                 }
@@ -313,6 +319,7 @@ pub(crate) async fn build_playback_source_with_probe_fallback(
 /// Dispatch [`PlayInput`] → fully wrapped rodio source. For Bytes the full
 /// in-memory pipeline (incl. iTunSMPB scan); for SeekableMedia / Streaming
 /// the streaming variant runs the decoder build on a blocking thread.
+#[allow(clippy::too_many_arguments)]
 async fn build_source_from_play_input(
     play_input: PlayInput,
     state: &State<'_, AudioEngine>,
@@ -321,6 +328,7 @@ async fn build_source_from_play_input(
     fade_in_dur: Duration,
     hi_res_enabled: bool,
     duration_hint: f64,
+    autodj_in: AutodjFadeIn,
 ) -> Result<PlaybackSource, String> {
     // Always 0 — no application-level resampling. Rodio handles conversion to
     // the output device rate internally; we let every track play at its native rate.
@@ -340,6 +348,7 @@ async fn build_source_from_play_input(
             target_rate,
             format_hint,
             hi_res_enabled,
+            autodj_in,
         ),
         PlayInput::SeekableMedia {
             reader,
@@ -371,6 +380,7 @@ async fn build_source_from_play_input(
                 state.samples_played.clone(),
                 target_rate,
                 None,
+                autodj_in,
             )
         }
         PlayInput::Streaming { reader, format_hint: stream_hint } => {
@@ -397,6 +407,7 @@ async fn build_source_from_play_input(
                 state.samples_played.clone(),
                 target_rate,
                 Some(state.stream_playback_armed.clone()),
+                autodj_in,
             )
         }
     }?;

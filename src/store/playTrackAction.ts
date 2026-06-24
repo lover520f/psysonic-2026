@@ -8,7 +8,7 @@ import {
   computeAutodjManualBlendPlan,
   shouldAutodjInterruptBlend,
 } from '../utils/playback/autodjManualBlend';
-import type { CrossfadeTransitionPlan } from '../utils/waveform/waveformSilence';
+import type { EdgeMixPlan } from '../utils/waveform/autodjEdgeMix';
 import {
   armInterruptHandoff,
   clearInterruptHandoff,
@@ -34,7 +34,12 @@ import {
 import { resolvePlaybackUrl } from '../utils/playback/resolvePlaybackUrl';
 import { resolveReplayGainDb } from '../utils/audio/resolveReplayGainDb';
 import { useAuthStore } from './authStore';
-import { consumeCrossfadeDynamicOverlap, getCrossfadeTransition, peekArmedCrossfadeDynamicOverlap } from './crossfadeTrimCache';
+import {
+  consumeCrossfadeDynamicOverlap,
+  consumeEdgeMix,
+  getCrossfadeTransition,
+  peekArmedCrossfadeDynamicOverlap,
+} from './crossfadeTrimCache';
 import {
   bumpPlayGeneration,
   getPlayGeneration,
@@ -424,7 +429,7 @@ export function runPlayTrack(
     );
     const replayGainPeak = isReplayGainActive() ? (scopedTrack.replayGainPeak ?? null) : null;
 
-    const invokeAudioPlay = (manualBlend: CrossfadeTransitionPlan | null) => {
+    const invokeAudioPlay = (manualBlend: EdgeMixPlan | null) => {
       // Silence-aware crossfade (B-head + dynamic overlap): on a fresh auto-advance
       // under crossfade, start past this track's leading silence (always, from the
       // plan) and — only when the JS A-tail advance positioned this transition —
@@ -438,20 +443,37 @@ export function runPlayTrack(
         && initialTime <= 0.05;
       const useManualBlend = manualBlend !== null;
 
-      const crossfadePlan = useTrimAuto ? getCrossfadeTransition(scopedTrack.id) : null;
-      const armedOverlap = useTrimAuto ? consumeCrossfadeDynamicOverlap(scopedTrack.id) : null;
-      const crossfadeStartSecs = useManualBlend
-        ? manualBlend.bStartSec
+      // AutoDJ edge-mix (§16): both manual skip (`planEdgeMixForSkip`) and the JS
+      // A-tail auto-advance arm a full linear-blend plan. Either supersedes the
+      // equal-power dynamic-overlap handoff — the engine runs `autodj_linear_mix`
+      // instead of the cosine crossfade overrides. Manual skip takes priority.
+      const armedEdge = useTrimAuto ? consumeEdgeMix(scopedTrack.id) : null;
+      const edgePlan = manualBlend ?? armedEdge;
+      const crossfadePlan = !edgePlan && useTrimAuto ? getCrossfadeTransition(scopedTrack.id) : null;
+      const armedOverlap = !edgePlan && useTrimAuto ? consumeCrossfadeDynamicOverlap(scopedTrack.id) : null;
+      const autodjLinearMix = edgePlan
+        ? {
+            mix_secs: edgePlan.transitionDur,
+            outgoing_gain_start: edgePlan.outgoingGainAtMixStart,
+            outgoing_gain_end: edgePlan.outgoingGainAtMixEnd,
+            incoming_gain_start: edgePlan.incomingGainAtMixStart,
+            incoming_gain_end: edgePlan.incomingGainAtMixEnd,
+          }
+        : null;
+      const crossfadeStartSecs = edgePlan
+        ? edgePlan.bStartSec
         : (crossfadePlan?.bStartSec ?? 0);
-      const crossfadeSecsOverride = useManualBlend
-        ? manualBlend.overlapSec
+      // Edge-mix carries its fade shape in `autodj_linear_mix`; the cosine
+      // overrides only feed the degrade (no-plan) path.
+      const crossfadeSecsOverride = edgePlan
+        ? null
         : (armedOverlap ? armedOverlap.overlapSec : null);
-      const outgoingFadeSecsOverride = useManualBlend
-        ? manualBlend.outgoingFadeSec
+      const outgoingFadeSecsOverride = edgePlan
+        ? null
         : (armedOverlap ? armedOverlap.outgoingFadeSec : null);
 
-      if (useManualBlend) {
-        armAutodjMixing(manualBlend.overlapSec);
+      if (edgePlan && edgePlan.transitionDur > 0) {
+        armAutodjMixing(edgePlan.transitionDur);
       } else if (crossfadeSecsOverride != null && crossfadeSecsOverride > 0) {
         armAutodjMixing(crossfadeSecsOverride);
       } else if (manual) {
@@ -477,6 +499,7 @@ export function runPlayTrack(
         crossfadeSecsOverride,
         outgoingFadeSecsOverride,
         manualAutodjBlend: useManualBlend ? true : null,
+        autodjLinearMix,
       })
         .then(() => {
           if (getPlayGeneration() !== gen) return;
@@ -547,7 +570,7 @@ export function runPlayTrack(
       touchHotCacheOnPlayback(scopedTrack.id, playbackCacheSid);
     };
 
-    const startAudio = (manualBlend: CrossfadeTransitionPlan | null) => {
+    const startAudio = (manualBlend: EdgeMixPlan | null) => {
       if (deferInterruptUi) applyInterruptHandoffUi();
       clearInterruptHandoff();
       invokeAudioPlay(manualBlend);
@@ -584,13 +607,11 @@ export function runPlayTrack(
               scopedTrack.duration || 0,
             )
             : null;
-          startAudio(blend
-            ? {
-              ...blend,
-              // Prep fade already ducked A when we waited for a cold B.
-              outgoingFadeSec: bReadyNow ? blend.outgoingFadeSec : 0,
-            }
-            : null);
+          startAudio(blend && !bReadyNow
+            // Cold B: the interrupt prep already ducked A, so the linear handoff
+            // must not fade A again — hold it at full (`outgoing_gain_end = 1`).
+            ? { ...blend, outgoingGainAtMixEnd: 1 }
+            : blend);
         } catch {
           if (getPlayGeneration() !== gen) {
             clearInterruptHandoff();

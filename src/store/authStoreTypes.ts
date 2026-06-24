@@ -151,6 +151,13 @@ export interface AuthState {
    * playing (avoids an abrupt cut). Default on for new installs.
    */
   autodjSmoothSkip: boolean;
+  /**
+   * AutoDJ transition-length bounds (seconds). `0` = Auto: the edge-mix algorithm
+   * uses its own content-derived span with no user floor/ceiling. A non-zero value
+   * clamps the analysed edge window + final `transition_dur`. Default Auto (0).
+   */
+  autodjMinTransitionSec: number;
+  autodjMaxTransitionSec: number;
   gaplessEnabled: boolean;
   /** Show inline Play+Preview buttons in tracklists. Default on per Q3. Master kill switch — when off, all locations are off. */
   trackPreviewsEnabled: boolean;
@@ -372,6 +379,10 @@ export interface AuthState {
   setCrossfadeSecs: (v: number) => void;
   setCrossfadeTrimSilence: (v: boolean) => void;
   setAutodjSmoothSkip: (v: boolean) => void;
+  /** Set the AutoDJ min transition length (seconds); `0` = Auto. */
+  setAutodjMinTransitionSec: (v: number) => void;
+  /** Set the AutoDJ max transition length (seconds); `0` = Auto. */
+  setAutodjMaxTransitionSec: (v: number) => void;
   setGaplessEnabled: (v: boolean) => void;
   setTrackPreviewsEnabled: (v: boolean) => void;
   setTrackPreviewLocation: (location: TrackPreviewLocation, enabled: boolean) => void;

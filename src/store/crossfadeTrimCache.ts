@@ -11,11 +11,15 @@
  * per-transition playback data, not user state.
  */
 import type { CrossfadeTransitionPlan } from '../utils/waveform/waveformSilence';
+import type { EdgeMixPlan } from '../utils/waveform/autodjEdgeMix';
 
 export type { CrossfadeTransitionPlan } from '../utils/waveform/waveformSilence';
+export type { EdgeMixPlan } from '../utils/waveform/autodjEdgeMix';
 
 /** trackId → planned transition for when this track starts under crossfade. */
 const planByTrackId = new Map<string, CrossfadeTransitionPlan>();
+/** trackId → planned AutoDJ edge-mix (linear blend) for when this track starts. */
+const edgePlanByTrackId = new Map<string, EdgeMixPlan>();
 /** trackIds we've already attempted a plan for (avoids per-tick refetch). */
 const plannedTrackIds = new Set<string>();
 
@@ -45,6 +49,19 @@ export function setCrossfadeTransition(trackId: string, plan: CrossfadeTransitio
 export function getCrossfadeTransition(trackId: string): CrossfadeTransitionPlan | null {
   if (!trackId) return null;
   return planByTrackId.get(trackId) ?? null;
+}
+
+/** Record the computed AutoDJ edge-mix plan for `trackId`. */
+export function setEdgeMixPlan(trackId: string, plan: EdgeMixPlan): void {
+  if (!trackId) return;
+  edgePlanByTrackId.set(trackId, plan);
+  trim(edgePlanByTrackId);
+}
+
+/** Read the cached AutoDJ edge-mix plan for `trackId` (null when none/unknown). */
+export function getEdgeMixPlan(trackId: string): EdgeMixPlan | null {
+  if (!trackId) return null;
+  return edgePlanByTrackId.get(trackId) ?? null;
 }
 
 /** True once we've already attempted to plan a transition into `trackId`. */
@@ -109,11 +126,43 @@ export function peekArmedCrossfadeDynamicOverlap(trackId: string): boolean {
   return !!trackId && armedOverlapTrackId === trackId && armedOverlapSec > 0;
 }
 
+// ── One-shot AutoDJ edge-mix hand-off (A-tail advance → playTrack) ──────────────
+// AutoDJ edge-mix analogue of the dynamic-overlap handoff: the JS early advance
+// arms the full linear-mix plan for the incoming track; `playTrack` consumes it
+// to pass `autodj_linear_mix` to the engine. When this is armed it takes
+// precedence over the equal-power `crossfade_secs_override` path.
+let armedEdgeTrackId: string | null = null;
+let armedEdgePlan: EdgeMixPlan | null = null;
+
+/** Arm the edge-mix plan JS positioned for the incoming `trackId`. */
+export function armEdgeMix(trackId: string, plan: EdgeMixPlan): void {
+  if (!trackId) return;
+  armedEdgeTrackId = trackId;
+  armedEdgePlan = plan;
+}
+
+/** Consume + clear the armed edge-mix plan for `trackId` (null when none/mismatched). */
+export function consumeEdgeMix(trackId: string): EdgeMixPlan | null {
+  if (!trackId || armedEdgeTrackId !== trackId) return null;
+  const plan = armedEdgePlan;
+  armedEdgeTrackId = null;
+  armedEdgePlan = null;
+  return plan;
+}
+
+/** True when JS A-tail advance armed an edge-mix handoff for `trackId` (peek only). */
+export function peekArmedEdgeMix(trackId: string): boolean {
+  return !!trackId && armedEdgeTrackId === trackId && armedEdgePlan !== null;
+}
+
 /** Test/reset hook. */
 export function _resetCrossfadeTrimCacheForTest(): void {
   planByTrackId.clear();
+  edgePlanByTrackId.clear();
   plannedTrackIds.clear();
   armedOverlapTrackId = null;
   armedOverlapSec = 0;
   armedOutgoingFadeSec = 0;
+  armedEdgeTrackId = null;
+  armedEdgePlan = null;
 }

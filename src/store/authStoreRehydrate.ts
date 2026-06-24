@@ -3,8 +3,15 @@ import {
   LOUDNESS_PRE_ANALYSIS_REF_TARGET_LUFS,
   clampStoredLoudnessPreAnalysisAttenuationRefDb,
 } from '../utils/audio/loudnessPreAnalysisSlider';
-import { DEFAULT_LOUDNESS_PRE_ANALYSIS_ATTENUATION_DB } from './authStoreDefaults';
 import {
+  AUTODJ_MAX_TRANSITION_SEC_MAX,
+  AUTODJ_MAX_TRANSITION_SEC_MIN,
+  AUTODJ_MIN_TRANSITION_SEC_MAX,
+  AUTODJ_MIN_TRANSITION_SEC_MIN,
+  DEFAULT_LOUDNESS_PRE_ANALYSIS_ATTENUATION_DB,
+} from './authStoreDefaults';
+import {
+  clampAutodjTransitionSec,
   clampMixFilterMinStars,
   clampRandomMixSize,
   clampLibraryGridMaxColumns,
@@ -235,6 +242,14 @@ export function computeAuthStoreRehydration(state: AuthState): Partial<AuthState
     mixMinRatingAlbum: clampMixFilterMinStars(state.mixMinRatingAlbum as number),
     mixMinRatingArtist: clampMixFilterMinStars(state.mixMinRatingArtist as number),
     randomMixSize: clampRandomMixSize(state.randomMixSize as number),
+    autodjMinTransitionSec: clampAutodjTransitionSec(
+      (state as { autodjMinTransitionSec?: unknown }).autodjMinTransitionSec,
+      AUTODJ_MIN_TRANSITION_SEC_MIN, AUTODJ_MIN_TRANSITION_SEC_MAX,
+    ),
+    autodjMaxTransitionSec: clampAutodjTransitionSec(
+      (state as { autodjMaxTransitionSec?: unknown }).autodjMaxTransitionSec,
+      AUTODJ_MAX_TRANSITION_SEC_MIN, AUTODJ_MAX_TRANSITION_SEC_MAX,
+    ),
     libraryGridMaxColumns: clampLibraryGridMaxColumns(
       (state as { libraryGridMaxColumns?: unknown }).libraryGridMaxColumns,
     ),
