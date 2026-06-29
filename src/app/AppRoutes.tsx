@@ -11,8 +11,8 @@ import { resolveStartRoute } from '@/features/sidebar';
 // the entry chunk; each page is fetched when its route is first visited.
 const Home = lazy(() => import('../pages/Home'));
 const Albums = lazy(() => import('../pages/Albums'));
-const Artists = lazy(() => import('../pages/Artists'));
-const ArtistDetail = lazy(() => import('../pages/ArtistDetail'));
+const Artists = lazy(() => import('@/features/artist/pages/Artists'));
+const ArtistDetail = lazy(() => import('@/features/artist/pages/ArtistDetail'));
 const Composers = lazy(() => import('../pages/Composers'));
 const ComposerDetail = lazy(() => import('../pages/ComposerDetail'));
 const NewReleases = lazy(() => import('../pages/NewReleases'));

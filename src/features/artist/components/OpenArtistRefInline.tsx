@@ -1,5 +1,5 @@
 import React, { Fragment } from 'react';
-import type { SubsonicOpenArtistRef } from '../api/subsonicTypes';
+import type { SubsonicOpenArtistRef } from '@/api/subsonicTypes';
 
 interface Props {
   refs: SubsonicOpenArtistRef[];

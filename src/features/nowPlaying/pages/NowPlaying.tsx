@@ -37,7 +37,7 @@ import TourCard from '@/features/nowPlaying/components/TourCard';
 import DiscographyCard from '@/features/nowPlaying/components/DiscographyCard';
 import { useNowPlayingFetchers } from '@/features/nowPlaying/hooks/useNowPlayingFetchers';
 import { useNowPlayingStarLove } from '@/features/nowPlaying/hooks/useNowPlayingStarLove';
-import { useArtistInfoBatch } from '@/hooks/useArtistInfoBatch';
+import { useArtistInfoBatch } from '@/features/artist';
 import { primaryTrackArtistRef, resolveTrackArtistRefs } from '@/utils/playback/trackArtistRefs';
 import type { ArtistCardTab } from '@/features/nowPlaying/components/ArtistCard';
 

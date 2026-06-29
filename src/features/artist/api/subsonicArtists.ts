@@ -1,18 +1,18 @@
-import { useAuthStore } from '../store/authStore';
-import { api, apiForServer, libraryFilterParams, libraryFilterParamsForServer } from './subsonicClient';
-import { filterSongsToServerLibrary } from './subsonicLibrary';
-import { filterSongsToActiveLibrary, similarSongsRequestCount } from './subsonicLibrary';
+import { useAuthStore } from '@/store/authStore';
+import { api, apiForServer, libraryFilterParams, libraryFilterParamsForServer } from '@/api/subsonicClient';
+import { filterSongsToServerLibrary } from '@/api/subsonicLibrary';
+import { filterSongsToActiveLibrary, similarSongsRequestCount } from '@/api/subsonicLibrary';
 import {
   FEATURE_AUDIOMUSE_SIMILAR_TRACKS,
   OP_SIMILAR_TRACKS,
-} from '../serverCapabilities/catalog';
-import { resolveCallRoutesForServer } from '../serverCapabilities/storeView';
+} from '@/serverCapabilities/catalog';
+import { resolveCallRoutesForServer } from '@/serverCapabilities/storeView';
 import type {
   SubsonicAlbum,
   SubsonicArtist,
   SubsonicArtistInfo,
   SubsonicSong,
-} from './subsonicTypes';
+} from '@/api/subsonicTypes';
 
 export async function getArtists(): Promise<SubsonicArtist[]> {
   type ArtistIndexEntry = { artist?: SubsonicArtist | SubsonicArtist[] };

@@ -1,4 +1,4 @@
-import type { SubsonicArtist } from '../../api/subsonicTypes';
+import type { SubsonicArtist } from '@/api/subsonicTypes';
 
 export const ALL_SENTINEL = 'ALL';
 /** Catch-all bucket for names that start with neither an A–Z letter nor a digit

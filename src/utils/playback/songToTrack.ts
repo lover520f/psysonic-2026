@@ -1,6 +1,6 @@
 import type { SubsonicSong } from '../../api/subsonicTypes';
 import type { Track } from '../../store/playerStoreTypes';
-import { coerceOpenArtistRefs } from '../openArtistRefs';
+import { coerceOpenArtistRefs } from '@/features/artist';
 import { activeServerProfileId } from './trackServerScope';
 
 export function songToTrack(song: SubsonicSong): Track {

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
-import { getArtistInfoForServer } from '../api/subsonicArtists';
-import type { SubsonicArtistInfo, SubsonicOpenArtistRef } from '../api/subsonicTypes';
-import { makeCache } from '../utils/cache/nowPlayingCache';
+import { getArtistInfoForServer } from '@/features/artist/api/subsonicArtists';
+import type { SubsonicArtistInfo, SubsonicOpenArtistRef } from '@/api/subsonicTypes';
+import { makeCache } from '@/utils/cache/nowPlayingCache';
 
 const artistInfoCache = makeCache<SubsonicArtistInfo | null>();
 

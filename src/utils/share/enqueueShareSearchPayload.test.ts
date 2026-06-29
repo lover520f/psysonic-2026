@@ -27,7 +27,7 @@ vi.mock('../../api/subsonicLibrary', () => ({
   getSong: mocks.getSong,
 }));
 
-vi.mock('../../api/subsonicArtists', () => ({
+vi.mock('@/features/artist', () => ({
   getArtist: mocks.getArtist,
 }));
 

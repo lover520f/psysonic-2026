@@ -1,11 +1,11 @@
-import { getArtists } from '../api/subsonicArtists';
-import type { SubsonicArtist } from '../api/subsonicTypes';
+import { getArtists } from '@/features/artist/api/subsonicArtists';
+import type { SubsonicArtist } from '@/api/subsonicTypes';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { dedupeById } from '../utils/dedupeById';
+import { dedupeById } from '@/utils/dedupeById';
 import {
   fetchLocalArtistCatalogChunk,
   fetchNetworkStarredArtists,
-} from '../utils/library/browseTextSearch';
+} from '@/utils/library/browseTextSearch';
 import { useOfflineBrowseContext } from '@/features/offline';
 import { useOfflineBrowseReloadToken } from '@/features/offline';
 import {

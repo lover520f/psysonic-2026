@@ -1,26 +1,26 @@
 import React, { useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useAlbumDetailBack } from '../../hooks/useAlbumDetailBack';
+import { useAlbumDetailBack } from '@/hooks/useAlbumDetailBack';
 import {
   ArrowLeft, Camera, Check, HardDriveDownload, Heart,
   Loader2, Play, Radio, Share2, Shuffle, Users,
 } from 'lucide-react';
-import type { SubsonicAlbum, SubsonicArtist, SubsonicArtistInfo } from '../../api/subsonicTypes';
+import type { SubsonicAlbum, SubsonicArtist, SubsonicArtistInfo } from '@/api/subsonicTypes';
 import { useOfflineStore } from '@/features/offline';
-import { useAuthStore } from '../../store/authStore';
-import { useThemeStore } from '../../store/themeStore';
-import { useArtistOfflineState } from '../../hooks/useArtistOfflineState';
-import { useIsMobile } from '../../hooks/useIsMobile';
-import { ArtistHeroCover } from '../../cover/artistHero';
-import { useArtistBanner, useArtistFanart } from '../../cover/useArtistFanart';
-import { backdropFromConfig } from '../../cover/artistBackdrop';
-import { usePlaybackCoverArt } from '../../cover/usePlaybackCoverArt';
+import { useAuthStore } from '@/store/authStore';
+import { useThemeStore } from '@/store/themeStore';
+import { useArtistOfflineState } from '@/features/artist/hooks/useArtistOfflineState';
+import { useIsMobile } from '@/hooks/useIsMobile';
+import { ArtistHeroCover } from '@/cover/artistHero';
+import { useArtistBanner, useArtistFanart } from '@/cover/useArtistFanart';
+import { backdropFromConfig } from '@/cover/artistBackdrop';
+import { usePlaybackCoverArt } from '@/cover/usePlaybackCoverArt';
 import { useCachedUrl } from '@/ui/CachedImage';
-import { useCoverLightboxSrc } from '../../cover/lightbox';
-import type { CoverArtRef } from '../../cover/types';
-import LastfmIcon from '../LastfmIcon';
-import WikipediaIcon from '../WikipediaIcon';
-import StarRating from '../StarRating';
+import { useCoverLightboxSrc } from '@/cover/lightbox';
+import type { CoverArtRef } from '@/cover/types';
+import LastfmIcon from '@/components/LastfmIcon';
+import WikipediaIcon from '@/components/WikipediaIcon';
+import StarRating from '@/components/StarRating';
 import { tooltipAttrs } from '@/ui/tooltipAttrs';
 import { offlineActionPolicy, type OfflineActionPolicy } from '@/features/offline';
 

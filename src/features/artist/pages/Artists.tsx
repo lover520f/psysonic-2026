@@ -1,17 +1,17 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { LayoutGrid, List, Images } from 'lucide-react';
-import SelectionToggleButton from '../components/SelectionToggleButton';
-import StarFilterButton from '../components/StarFilterButton';
+import SelectionToggleButton from '@/components/SelectionToggleButton';
+import StarFilterButton from '@/components/StarFilterButton';
 import OverlayScrollArea from '@/ui/OverlayScrollArea';
-import { usePlayerStore } from '../store/playerStore';
-import { useAuthStore } from '../store/authStore';
+import { usePlayerStore } from '@/store/playerStore';
+import { useAuthStore } from '@/store/authStore';
 import { useTranslation } from 'react-i18next';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { APP_MAIN_SCROLL_VIEWPORT_ID, ARTISTS_INPAGE_SCROLL_VIEWPORT_ID } from '../constants/appScroll';
-import { useElementClientHeightById, useElementClientHeightForElement } from '../hooks/useResizeClientHeight';
-import { useVirtualizerScrollMargin } from '../hooks/useVirtualizerScrollMargin';
-import { usePerfProbeFlags } from '../utils/perf/perfFlags';
+import { APP_MAIN_SCROLL_VIEWPORT_ID, ARTISTS_INPAGE_SCROLL_VIEWPORT_ID } from '@/constants/appScroll';
+import { useElementClientHeightById, useElementClientHeightForElement } from '@/hooks/useResizeClientHeight';
+import { useVirtualizerScrollMargin } from '@/hooks/useVirtualizerScrollMargin';
+import { usePerfProbeFlags } from '@/utils/perf/perfFlags';
 import {
   ALL_SENTINEL,
   ALPHABET,
@@ -19,27 +19,27 @@ import {
   ARTIST_LIST_LAST_IN_LETTER_EST,
   ARTIST_LIST_LETTER_ROW_EST,
   ARTIST_LIST_ROW_EST,
-} from '../utils/componentHelpers/artistsHelpers';
-import { useArtistsFiltering } from '../hooks/useArtistsFiltering';
-import { useLibraryIgnoredArticles } from '../hooks/useLibraryIgnoredArticles';
-import { useArtistsBrowseCatalog } from '../hooks/useArtistsBrowseCatalog';
-import { useBrowseArtistTextSearch } from '../hooks/useBrowseArtistTextSearch';
-import { useMainstageInpageHeaderTight } from '../hooks/useMainstageInpageHeaderTight';
-import { useClientSliceInfiniteScroll } from '../hooks/useClientSliceInfiniteScroll';
-import { useInpageScrollSentinel } from '../hooks/useInpageScrollSentinel';
-import { useInpageScrollViewport } from '../hooks/useInpageScrollViewport';
-import { ArtistsGridView } from '../components/artists/ArtistsGridView';
-import { ArtistsListView } from '../components/artists/ArtistsListView';
-import InpageScrollSentinel from '../components/InpageScrollSentinel';
-import { useArtistsBrowseFilters, type ArtistBrowseScrollSnapshot } from '../hooks/useArtistsBrowseFilters';
-import { useArtistsBrowseScrollRestore } from '../hooks/useArtistsBrowseScrollRestore';
-import { useArtistsBrowseScrollReset } from '../hooks/useArtistsBrowseScrollReset';
-import { useNavigateToArtist } from '../hooks/useNavigateToArtist';
-import { peekArtistBrowseScrollRestore } from '../store/artistBrowseSessionStore';
-import { readArtistBrowseRestore } from '../utils/navigation/albumDetailNavigation';
+} from '@/features/artist/utils/artistsHelpers';
+import { useArtistsFiltering } from '@/features/artist/hooks/useArtistsFiltering';
+import { useLibraryIgnoredArticles } from '@/hooks/useLibraryIgnoredArticles';
+import { useArtistsBrowseCatalog } from '@/features/artist/hooks/useArtistsBrowseCatalog';
+import { useBrowseArtistTextSearch } from '@/features/artist/hooks/useBrowseArtistTextSearch';
+import { useMainstageInpageHeaderTight } from '@/hooks/useMainstageInpageHeaderTight';
+import { useClientSliceInfiniteScroll } from '@/hooks/useClientSliceInfiniteScroll';
+import { useInpageScrollSentinel } from '@/hooks/useInpageScrollSentinel';
+import { useInpageScrollViewport } from '@/hooks/useInpageScrollViewport';
+import { ArtistsGridView } from '@/features/artist/components/ArtistsGridView';
+import { ArtistsListView } from '@/features/artist/components/ArtistsListView';
+import InpageScrollSentinel from '@/components/InpageScrollSentinel';
+import { useArtistsBrowseFilters, type ArtistBrowseScrollSnapshot } from '@/features/artist/hooks/useArtistsBrowseFilters';
+import { useArtistsBrowseScrollRestore } from '@/features/artist/hooks/useArtistsBrowseScrollRestore';
+import { useArtistsBrowseScrollReset } from '@/features/artist/hooks/useArtistsBrowseScrollReset';
+import { useNavigateToArtist } from '@/features/artist/hooks/useNavigateToArtist';
+import { peekArtistBrowseScrollRestore } from '@/features/artist/store/artistBrowseSessionStore';
+import { readArtistBrowseRestore } from '@/utils/navigation/albumDetailNavigation';
 
-import { useScopedBrowseSearchQuery } from '../store/liveSearchScopeStore';
-import { useLibraryIndexStore } from '../store/libraryIndexStore';
+import { useScopedBrowseSearchQuery } from '@/store/liveSearchScopeStore';
+import { useLibraryIndexStore } from '@/store/libraryIndexStore';
 
 export default function Artists() {
   const perfFlags = usePerfProbeFlags();

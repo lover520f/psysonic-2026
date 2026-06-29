@@ -1,11 +1,11 @@
 import React from 'react';
 import { Check } from 'lucide-react';
 import type { TFunction } from 'i18next';
-import type { SubsonicArtist } from '../../api/subsonicTypes';
-import type { PlayerState } from '../../store/playerStoreTypes';
-import { ARTISTS_INPAGE_SCROLL_VIEWPORT_ID } from '../../constants/appScroll';
-import { VirtualCardGrid } from '../VirtualCardGrid';
-import { ArtistCardAvatar } from './ArtistAvatars';
+import type { SubsonicArtist } from '@/api/subsonicTypes';
+import type { PlayerState } from '@/store/playerStoreTypes';
+import { ARTISTS_INPAGE_SCROLL_VIEWPORT_ID } from '@/constants/appScroll';
+import { VirtualCardGrid } from '@/components/VirtualCardGrid';
+import { ArtistCardAvatar } from '@/features/artist/components/ArtistAvatars';
 
 interface TileProps {
   artist: SubsonicArtist;

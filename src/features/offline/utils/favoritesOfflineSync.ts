@@ -1,7 +1,7 @@
 import { libraryUpsertSongsFromApi } from '@/api/library';
 import { librarySqlServerId } from '@/api/coverCache';
 import { getAlbumForServer } from '@/api/subsonicLibrary';
-import { getArtistForServer } from '@/api/subsonicArtists';
+import { getArtistForServer } from '@/features/artist';
 import { getStarredForServer } from '@/api/subsonicStarRating';
 import { buildStreamUrlForServer } from '@/api/subsonicStreamUrl';
 import type { SubsonicSong } from '@/api/subsonicTypes';

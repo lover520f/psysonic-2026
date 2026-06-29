@@ -1,4 +1,4 @@
-import type { SubsonicOpenArtistRef } from '../api/subsonicTypes';
+import type { SubsonicOpenArtistRef } from '@/api/subsonicTypes';
 
 /** Subsonic JSON may return one ref object instead of a one-element array. */
 export function coerceOpenArtistRefs(

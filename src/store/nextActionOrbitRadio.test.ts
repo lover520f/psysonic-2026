@@ -7,7 +7,7 @@ const { inOrbit, getSimilarSongs2, getTopSongs } = vi.hoisted(() => ({
   getTopSongs: vi.fn(() => Promise.resolve([])),
 }));
 
-vi.mock('../api/subsonicArtists', () => ({ getSimilarSongs2, getTopSongs }));
+vi.mock('@/features/artist', () => ({ getSimilarSongs2, getTopSongs }));
 vi.mock('@tauri-apps/api/core', () => ({ invoke: vi.fn(() => Promise.resolve()) }));
 vi.mock('@/features/orbit', () => ({ isInOrbitSession: () => inOrbit.value }));
 vi.mock('./authStore', () => ({

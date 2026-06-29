@@ -1,5 +1,5 @@
 import { useAuthStore } from '../../store/authStore';
-import { DEFAULT_ARTIST_SECTIONS, useArtistLayoutStore } from '../../store/artistLayoutStore';
+import { DEFAULT_ARTIST_SECTIONS, useArtistLayoutStore } from '@/features/artist';
 import { DEFAULT_QUEUE_TOOLBAR_BUTTONS, useQueueToolbarStore } from '../../store/queueToolbarStore';
 import { DEFAULT_PLAYLIST_LAYOUT_ITEMS, usePlaylistLayoutStore } from '../../store/playlistLayoutStore';
 

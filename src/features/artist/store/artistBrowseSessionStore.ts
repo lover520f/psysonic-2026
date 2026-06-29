@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { ALL_SENTINEL } from '../utils/componentHelpers/artistsHelpers';
+import { ALL_SENTINEL } from '@/features/artist/utils/artistsHelpers';
 
 export type ArtistBrowseViewMode = 'grid' | 'list';
 

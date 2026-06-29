@@ -1,18 +1,18 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { search } from '../api/subsonicSearch';
-import { getArtist, getArtistForServer, getArtistInfo, getTopSongs } from '../api/subsonicArtists';
+import { search } from '@/api/subsonicSearch';
+import { getArtist, getArtistForServer, getArtistInfo, getTopSongs } from '@/features/artist/api/subsonicArtists';
 import type {
   SubsonicAlbum, SubsonicArtist, SubsonicArtistInfo, SubsonicSong,
-} from '../api/subsonicTypes';
-import { useAuthStore } from '../store/authStore';
-import { useConnectionStatus } from './useConnectionStatus';
+} from '@/api/subsonicTypes';
+import { useAuthStore } from '@/store/authStore';
+import { useConnectionStatus } from '@/hooks/useConnectionStatus';
 import { loadArtistFromLibraryIndex } from '@/features/offline';
 import { useOfflineBrowseContext } from '@/features/offline';
 import { loadArtistFromLocalPlayback, offlineLocalBrowseEnabled } from '@/features/offline';
-import { readDetailServerId } from '../utils/navigation/detailServerScope';
-import { runLocalArtistLosslessBrowse } from '../utils/library/browseTextSearch';
-import { isLosslessSuffix } from '../utils/library/losslessFormats';
+import { readDetailServerId } from '@/utils/navigation/detailServerScope';
+import { runLocalArtistLosslessBrowse } from '@/utils/library/browseTextSearch';
+import { isLosslessSuffix } from '@/utils/library/losslessFormats';
 
 export interface UseArtistDetailDataOptions {
   /** When true, albums and top tracks are limited to lossless containers (local index preferred). */

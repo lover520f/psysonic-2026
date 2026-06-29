@@ -1,4 +1,4 @@
-import { getArtist } from './subsonicArtists';
+import { getArtist } from '@/features/artist';
 import { getAlbum } from './subsonicLibrary';
 import { shouldAttemptSubsonicForActiveServer } from '../utils/network/subsonicNetworkGuard';
 

@@ -15,7 +15,7 @@ import { useQueueTrackEnrichment } from '../../hooks/useQueueTrackEnrichment';
 import { QueueLufsTargetMenu } from './QueueLufsTargetMenu';
 import { PlaybackBufferingOverlay } from '../playback/PlaybackBufferingOverlay';
 import { CoverArtImage } from '../../cover/CoverArtImage';
-import { OpenArtistRefInline } from '../OpenArtistRefInline';
+import { OpenArtistRefInline } from '@/features/artist';
 import { usePlaybackTrackCoverRef } from '../../cover/useLibraryCoverRef';
 import { usePlayerStore } from '../../store/playerStore';
 import { resolveTrackArtistRefs } from '../../utils/playback/trackArtistRefs';

@@ -1,8 +1,8 @@
 import React from 'react';
-import { CoverArtImage } from '../../cover/CoverArtImage';
-import { useAlbumCoverRef } from '../../cover/useLibraryCoverRef';
-import { COVER_ARTIST_TOP_TRACK_CSS_PX } from '../../cover/layoutSizes';
-import type { TopSongAlbumCoverSource } from './topSongAlbumForCover';
+import { CoverArtImage } from '@/cover/CoverArtImage';
+import { useAlbumCoverRef } from '@/cover/useLibraryCoverRef';
+import { COVER_ARTIST_TOP_TRACK_CSS_PX } from '@/cover/layoutSizes';
+import type { TopSongAlbumCoverSource } from '@/features/artist/components/topSongAlbumForCover';
 
 /** 32px album thumb — same cover ref path as {@link AlbumCard} on artist pages. */
 export default function ArtistTopTrackCover({ album }: { album: TopSongAlbumCoverSource }) {

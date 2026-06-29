@@ -1,6 +1,6 @@
-import type { SubsonicArtist } from '../api/subsonicTypes';
+import type { SubsonicArtist } from '@/api/subsonicTypes';
 import React, { useRef, useState, useEffect, useLayoutEffect } from 'react';
-import ArtistCardLocal from './ArtistCardLocal';
+import ArtistCardLocal from '@/features/artist/components/ArtistCardLocal';
 import { ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 

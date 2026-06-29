@@ -43,7 +43,7 @@ vi.mock('@/api/subsonicLibrary', () => ({
   getSong: vi.fn(async () => null),
   getRandomSongs: vi.fn(async () => []),
 }));
-vi.mock('@/api/subsonicArtists', () => ({
+vi.mock('@/features/artist', () => ({
   getSimilarSongs2: vi.fn(async () => []),
   getTopSongs: vi.fn(async () => []),
 }));

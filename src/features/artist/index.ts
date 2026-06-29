@@ -1,0 +1,41 @@
+/**
+ * Artist feature — the Artists overview + ArtistDetail (both lazy via their deep
+ * `pages/*` paths, not re-exported), artist cards/rows/avatars, the detail hero +
+ * similar-artists + top-tracks UI, the artist Subsonic API, browse catalog/
+ * filter/scroll hooks, per-artist offline status, and the open-artist-ref nav
+ * cluster. `sortArtistAlbums` moved in from `utils/library/` (artist-only sort,
+ * not the shared index query engine).
+ *
+ * Stays OUT (other owners): `deriveAlbumHeaderArtistRefs` (album header),
+ * `playArtistShuffled` + `trackArtistRefs` (playback/track helpers), the
+ * `*ContextItems`/`*ToPlaylistSubmenu` items (the cross-cutting context-menu
+ * subsystem, shared with album), and `PlaylistArtistCell` (playlist).
+ */
+export * from './api/subsonicArtists';
+export * from './hooks/useArtistDetailData';
+export * from './hooks/useArtistInfoBatch';
+export * from './hooks/useArtistOfflineState';
+export * from './hooks/useArtistsBrowseCatalog';
+export * from './hooks/useArtistsBrowseFilters';
+export * from './hooks/useArtistsBrowseScrollReset';
+export * from './hooks/useArtistsBrowseScrollRestore';
+export * from './hooks/useArtistsFiltering';
+export * from './hooks/useArtistSimilarArtists';
+export * from './hooks/useArtistsInfiniteScroll';
+export * from './hooks/useBrowseArtistTextSearch';
+export * from './hooks/useNavigateToArtist';
+export * from './store/artistAlbumYearSortStore';
+export * from './store/artistBrowseSessionStore';
+export * from './store/artistLayoutStore';
+export * from './utils/artistsHelpers';
+export * from './utils/openArtistRefs';
+export * from './utils/runArtistDetailActions';
+export * from './utils/runArtistDetailPlay';
+export * from './utils/sortArtistAlbums';
+export { OpenArtistRefInline } from './components/OpenArtistRefInline';
+export { default as ArtistCardLocal } from './components/ArtistCardLocal';
+export { default as ArtistDetailHero } from './components/ArtistDetailHero';
+export { default as ArtistDetailSimilarArtists } from './components/ArtistDetailSimilarArtists';
+export { default as ArtistDetailTopTracks } from './components/ArtistDetailTopTracks';
+export { default as ArtistRow } from './components/ArtistRow';
+export { default as ArtistTopTrackCover } from './components/ArtistTopTrackCover';

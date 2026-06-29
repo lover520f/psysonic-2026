@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
-import { getMusicNetworkRuntime } from '../music-network';
-import { search } from '../api/subsonicSearch';
-import type { SubsonicArtist, SubsonicArtistInfo } from '../api/subsonicTypes';
-import { useAuthStore } from '../store/authStore';
+import { getMusicNetworkRuntime } from '@/music-network';
+import { search } from '@/api/subsonicSearch';
+import type { SubsonicArtist, SubsonicArtistInfo } from '@/api/subsonicTypes';
+import { useAuthStore } from '@/store/authStore';
 
 export interface ArtistSimilarArtistsResult {
   similarArtists: SubsonicArtist[];

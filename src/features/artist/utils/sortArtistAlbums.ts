@@ -1,4 +1,4 @@
-import type { SubsonicAlbum } from '../../api/subsonicTypes';
+import type { SubsonicAlbum } from '@/api/subsonicTypes';
 
 export type ArtistAlbumYearOrder = 'yearDesc' | 'yearAsc';
 

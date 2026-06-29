@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
-import type { SubsonicArtist } from '../api/subsonicTypes';
-import { usePlayerStore } from '../store/playerStore';
-import { ALL_SENTINEL, artistLetterBucket, compareBuckets, type ArtistListFlatRow } from '../utils/componentHelpers/artistsHelpers';
+import type { SubsonicArtist } from '@/api/subsonicTypes';
+import { usePlayerStore } from '@/store/playerStore';
+import { ALL_SENTINEL, artistLetterBucket, compareBuckets, type ArtistListFlatRow } from '@/features/artist/utils/artistsHelpers';
 
 interface UseArtistsFilteringArgs {
   artists: SubsonicArtist[];

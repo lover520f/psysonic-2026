@@ -2,8 +2,8 @@ import React, { Fragment } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { ChevronDown, ChevronUp } from 'lucide-react';
-import type { SubsonicArtist } from '../../api/subsonicTypes';
-import { useIsMobile } from '../../hooks/useIsMobile';
+import type { SubsonicArtist } from '@/api/subsonicTypes';
+import { useIsMobile } from '@/hooks/useIsMobile';
 
 interface Props {
   marginTop: string;

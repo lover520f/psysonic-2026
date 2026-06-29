@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { listen } from '@tauri-apps/api/event';
 import { invoke } from '@tauri-apps/api/core';
 import type { NavigateFunction } from 'react-router-dom';
-import { getSimilarSongs } from '../../api/subsonicArtists';
+import { getSimilarSongs } from '@/features/artist';
 import { getMusicFolders } from '../../api/subsonicLibrary';
 import { search as subsonicSearch } from '../../api/subsonicSearch';
 import { filterSongsForLuckyMixRatings, getMixMinRatingsConfigFromAuth } from '../../utils/mix/mixRatingFilter';

@@ -12,8 +12,8 @@ import { enqueueAndPlay } from '../utils/playback/playSong';
 import { useDragDrop } from '../contexts/DragDropContext';
 import { useOrbitSongRowBehavior } from '@/features/orbit';
 import { useNavigateToAlbum } from '../hooks/useNavigateToAlbum';
-import { useNavigateToArtist } from '../hooks/useNavigateToArtist';
-import { OpenArtistRefInline } from './OpenArtistRefInline';
+import { useNavigateToArtist } from '@/features/artist';
+import { OpenArtistRefInline } from '@/features/artist';
 import { resolveTrackArtistRefs } from '../utils/playback/trackArtistRefs';
 
 interface SongCardProps {

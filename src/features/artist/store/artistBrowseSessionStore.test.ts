@@ -3,7 +3,7 @@ import {
   DEFAULT_ARTIST_BROWSE_RETURN_STATE,
   peekArtistBrowseScrollRestore,
   useArtistBrowseSessionStore,
-} from './artistBrowseSessionStore';
+} from '@/features/artist/store/artistBrowseSessionStore';
 
 describe('artistBrowseSessionStore', () => {
   beforeEach(() => {

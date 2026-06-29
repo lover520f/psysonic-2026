@@ -1,5 +1,5 @@
 import { star, unstar } from '../api/subsonicStarRating';
-import { getArtist, getArtistInfo } from '../api/subsonicArtists';
+import { getArtist, getArtistInfo } from '@/features/artist';
 import type { SubsonicArtist, SubsonicAlbum, SubsonicArtistInfo } from '../api/subsonicTypes';
 import { useEffect, useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';

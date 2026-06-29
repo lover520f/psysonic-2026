@@ -2,7 +2,7 @@ import { describe, expect, it, beforeEach } from 'vitest';
 import {
   DEFAULT_ARTIST_ALBUM_YEAR_ORDER,
   useArtistAlbumYearSortStore,
-} from './artistAlbumYearSortStore';
+} from '@/features/artist/store/artistAlbumYearSortStore';
 
 describe('artistAlbumYearSortStore', () => {
   beforeEach(() => {

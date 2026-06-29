@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-import type { ArtistAlbumYearOrder } from '../utils/library/sortArtistAlbums';
+import type { ArtistAlbumYearOrder } from '@/features/artist/utils/sortArtistAlbums';
 
 export const DEFAULT_ARTIST_ALBUM_YEAR_ORDER: ArtistAlbumYearOrder = 'yearDesc';
 

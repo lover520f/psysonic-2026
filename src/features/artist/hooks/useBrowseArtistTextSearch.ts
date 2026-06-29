@@ -1,4 +1,4 @@
-import type { SubsonicArtist } from '../api/subsonicTypes';
+import type { SubsonicArtist } from '@/api/subsonicTypes';
 import { useEffect, useRef, useState } from 'react';
 import {
   BROWSE_TEXT_DEBOUNCE_NETWORK_MS,
@@ -8,7 +8,7 @@ import {
   runLocalBrowseArtists,
   runNetworkBrowseArtists,
   type LibrarySearchSurface,
-} from '../utils/library/browseTextSearch';
+} from '@/utils/library/browseTextSearch';
 import { useOfflineBrowseContext } from '@/features/offline';
 import { offlineLocalBrowseEnabled, searchOfflineLocalArtists } from '@/features/offline';
 

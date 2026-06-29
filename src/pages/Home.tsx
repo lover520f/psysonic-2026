@@ -1,4 +1,4 @@
-import { getArtists } from '../api/subsonicArtists';
+import { getArtists } from '@/features/artist';
 import { getAlbumList, getRandomSongs } from '../api/subsonicLibrary';
 import type { SubsonicAlbum, SubsonicArtist, SubsonicSong } from '../api/subsonicTypes';
 import { runLocalRandomSongs } from '../utils/library/browseTextSearch';

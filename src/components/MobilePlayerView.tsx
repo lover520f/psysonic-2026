@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 import { usePlayerStore } from '../store/playerStore';
 import { useCachedUrl } from '@/ui/CachedImage';
-import { OpenArtistRefInline } from './OpenArtistRefInline';
+import { OpenArtistRefInline } from '@/features/artist';
 import { formatTrackTime } from '../utils/format/formatDuration';
 import { resolveQueueTrack } from '../utils/library/queueTrackView';
 import {

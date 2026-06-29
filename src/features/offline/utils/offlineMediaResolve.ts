@@ -1,5 +1,5 @@
 import { getAlbumForServer } from '@/api/subsonicLibrary';
-import { getArtistForServer } from '@/api/subsonicArtists';
+import { getArtistForServer } from '@/features/artist';
 import { getPlaylistForServer } from '@/api/subsonicPlaylists';
 import type {
   SubsonicAlbum,

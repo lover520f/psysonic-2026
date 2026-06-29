@@ -1,12 +1,12 @@
 import type React from 'react';
 import type { TFunction } from 'i18next';
-import { uploadArtistImage } from '../../api/subsonicPlaylists';
-import { setRating, star, unstar } from '../../api/subsonicStarRating';
-import type { SubsonicArtist } from '../../api/subsonicTypes';
-import { useAuthStore } from '../../store/authStore';
-import { copyEntityShareLink } from '../share/copyEntityShareLink';
-import { invalidateCoverArt } from '../imageCache';
-import { showToast } from '../ui/toast';
+import { uploadArtistImage } from '@/api/subsonicPlaylists';
+import { setRating, star, unstar } from '@/api/subsonicStarRating';
+import type { SubsonicArtist } from '@/api/subsonicTypes';
+import { useAuthStore } from '@/store/authStore';
+import { copyEntityShareLink } from '@/utils/share/copyEntityShareLink';
+import { invalidateCoverArt } from '@/utils/imageCache';
+import { showToast } from '@/utils/ui/toast';
 
 export interface RunArtistEntityRatingDeps {
   artist: SubsonicArtist | null;

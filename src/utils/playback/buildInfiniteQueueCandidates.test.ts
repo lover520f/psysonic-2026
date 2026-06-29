@@ -6,12 +6,15 @@
  * refactor (2026-05-12). This test pins the artist-first / random-fallback
  * order, the dedup contract against existingIds, and the autoAdded flag.
  */
-import { getSimilarSongs2, getTopSongs } from '../../api/subsonicArtists';
+import { getSimilarSongs2, getTopSongs } from '@/features/artist';
 import { getRandomSongs } from '../../api/subsonicLibrary';
 import type { Track } from '../../store/playerStoreTypes';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-vi.mock('../../api/subsonicArtists', () => ({
+// Mock only the artist Subsonic API submodule (the pre-move target was
+// `api/subsonicArtists`); the barrel re-exports it, so consumers still get the
+// stubs while `coerceOpenArtistRefs` (used by songToTrack) stays real.
+vi.mock('@/features/artist/api/subsonicArtists', () => ({
   getSimilarSongs2: vi.fn(),
   getTopSongs: vi.fn(),
 }));

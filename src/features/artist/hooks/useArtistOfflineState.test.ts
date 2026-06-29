@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { renderHook } from '@testing-library/react';
-import { useLocalPlaybackStore } from '../store/localPlaybackStore';
+import { useLocalPlaybackStore } from '@/store/localPlaybackStore';
 import { useOfflineJobStore } from '@/features/offline';
-import { useArtistOfflineState } from './useArtistOfflineState';
+import { useArtistOfflineState } from '@/features/artist/hooks/useArtistOfflineState';
 
 describe('useArtistOfflineState', () => {
   beforeEach(() => {

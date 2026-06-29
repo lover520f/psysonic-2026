@@ -7,7 +7,10 @@ import type { SubsonicSong } from '../api/subsonicTypes';
 
 const navigateToArtist = vi.fn();
 
-vi.mock('../hooks/useNavigateToArtist', () => ({
+// Only navigate-to-artist is stubbed; mock that submodule directly so the
+// barrel re-exports the stub while coerceOpenArtistRefs (used by
+// trackArtistRefs, a different submodule) stays real.
+vi.mock('@/features/artist/hooks/useNavigateToArtist', () => ({
   useNavigateToArtist: () => navigateToArtist,
 }));
 

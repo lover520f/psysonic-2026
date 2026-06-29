@@ -1,6 +1,6 @@
 import { useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useArtistLayoutStore, type ArtistSectionConfig, type ArtistSectionId } from '@/store/artistLayoutStore';
+import { useArtistLayoutStore, type ArtistSectionConfig, type ArtistSectionId } from '@/features/artist';
 import { useListReorderDnd } from '@/hooks/useListReorderDnd';
 import { applyListReorderById, type ListReorderDropTarget } from '@/utils/componentHelpers/listReorder';
 import { ReorderGripHandle } from '@/features/settings/components/ReorderGripHandle';

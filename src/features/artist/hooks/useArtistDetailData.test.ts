@@ -13,14 +13,14 @@ import { renderHook, act, waitFor } from '@testing-library/react';
 import React from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { SubsonicArtistInfo } from '../api/subsonicTypes';
+import type { SubsonicArtistInfo } from '@/api/subsonicTypes';
 
-vi.mock('../api/subsonicArtists');
-vi.mock('../api/subsonicSearch');
+vi.mock('@/features/artist/api/subsonicArtists');
+vi.mock('@/api/subsonicSearch');
 
-import { getArtist, getArtistInfo, getTopSongs } from '../api/subsonicArtists';
-import { search } from '../api/subsonicSearch';
-import { useArtistDetailData } from './useArtistDetailData';
+import { getArtist, getArtistInfo, getTopSongs } from '@/features/artist/api/subsonicArtists';
+import { search } from '@/api/subsonicSearch';
+import { useArtistDetailData } from '@/features/artist/hooks/useArtistDetailData';
 
 const mockArtistInfo = vi.mocked(getArtistInfo) as unknown as {
   mockImplementation: (impl: (id: string) => Promise<SubsonicArtistInfo | null>) => void;

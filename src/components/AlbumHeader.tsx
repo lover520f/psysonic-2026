@@ -17,7 +17,7 @@ import { isAlbumRecentlyAdded } from '../utils/albumRecency';
 import { formatLongDuration } from '../utils/format/formatDuration';
 import { formatMb } from '../utils/format/formatBytes';
 import { sanitizeHtml } from '../utils/sanitizeHtml';
-import { OpenArtistRefInline } from './OpenArtistRefInline';
+import { OpenArtistRefInline } from '@/features/artist';
 import { tooltipAttrs } from '@/ui/tooltipAttrs';
 import { offlineActionPolicy, type OfflineActionPolicy } from '@/features/offline';
 import { deriveAlbumGenreTags } from '../utils/library/genreTags';

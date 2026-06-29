@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { Disc3, LayoutGrid, ListOrdered, ListTodo, PanelLeft, RotateCcw, Users } from 'lucide-react';
-import { useArtistLayoutStore } from '@/store/artistLayoutStore';
+import { useArtistLayoutStore } from '@/features/artist';
 import { useAuthStore } from '@/store/authStore';
 import type { QueueDisplayMode } from '@/store/authStoreTypes';
 import { useHomeStore } from '@/store/homeStore';

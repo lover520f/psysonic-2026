@@ -2,7 +2,7 @@ import type { SubsonicSong } from '../api/subsonicTypes';
 import { songToTrack } from '../utils/playback/songToTrack';
 import React, { memo } from 'react';
 import { useNavigateToAlbum } from '../hooks/useNavigateToAlbum';
-import { useNavigateToArtist } from '../hooks/useNavigateToArtist';
+import { useNavigateToArtist } from '@/features/artist';
 import { Play, ListPlus } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { usePlayerStore } from '../store/playerStore';

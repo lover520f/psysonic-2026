@@ -1,16 +1,16 @@
 import { useEffect, useRef, useState, type RefObject } from 'react';
 import { useLocation, useNavigationType, type NavigationType } from 'react-router-dom';
-import { useAuthStore } from '../store/authStore';
+import { useAuthStore } from '@/store/authStore';
 import {
   DEFAULT_ARTIST_BROWSE_RETURN_STATE,
   type ArtistBrowseReturnState,
   type ArtistBrowseViewMode,
   isArtistsBrowsePath,
   useArtistBrowseSessionStore,
-} from '../store/artistBrowseSessionStore';
-import { isArtistDetailPath } from '../store/albumBrowseSessionStore';
-import { shouldRestoreArtistBrowseSession } from '../utils/navigation/albumDetailNavigation';
-import { useLiveSearchScopeStore } from '../store/liveSearchScopeStore';
+} from '@/features/artist/store/artistBrowseSessionStore';
+import { isArtistDetailPath } from '@/store/albumBrowseSessionStore';
+import { shouldRestoreArtistBrowseSession } from '@/utils/navigation/albumDetailNavigation';
+import { useLiveSearchScopeStore } from '@/store/liveSearchScopeStore';
 
 export type ArtistBrowseScrollSnapshot = {
   scrollTop: number;

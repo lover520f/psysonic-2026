@@ -3,7 +3,7 @@ import { ALL_NAV_ITEMS } from '@/config/navItems';
 import type { LiveSearchScope } from '@/store/liveSearchScopeStore';
 import { isAlbumsBrowsePath, isNewReleasesBrowsePath } from '@/store/albumBrowseSessionStore';
 import { isTracksBrowsePath } from '@/store/advancedSearchSessionStore';
-import { isArtistsBrowsePath } from '@/store/artistBrowseSessionStore';
+import { isArtistsBrowsePath } from '@/features/artist';
 import { isComposersBrowsePath } from '@/store/composerBrowseSessionStore';
 
 export const SCOPE_NAV_ITEM: Record<LiveSearchScope, keyof typeof ALL_NAV_ITEMS> = {

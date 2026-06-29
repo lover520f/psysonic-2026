@@ -12,8 +12,8 @@ import { playSongNow } from '../../utils/playback/playSong';
 import { ndListSongs, ndInvalidateSongsCache } from '../../api/navidromeBrowse';
 import { usePerfProbeFlags } from '../../utils/perf/perfFlags';
 import { useNavigateToAlbum } from '../../hooks/useNavigateToAlbum';
-import { useNavigateToArtist } from '../../hooks/useNavigateToArtist';
-import { OpenArtistRefInline } from '../OpenArtistRefInline';
+import { useNavigateToArtist } from '@/features/artist';
+import { OpenArtistRefInline } from '@/features/artist';
 import { resolveTrackArtistRefs } from '../../utils/playback/trackArtistRefs';
 
 const RANDOM_RAIL_SIZE = 18;

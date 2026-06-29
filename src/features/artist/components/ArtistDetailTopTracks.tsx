@@ -1,14 +1,14 @@
 import React, { Fragment } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AudioLines, ChevronRight, Play, Square } from 'lucide-react';
-import type { SubsonicAlbum, SubsonicSong } from '../../api/subsonicTypes';
-import { usePlayerStore } from '../../store/playerStore';
-import { previewInputFromSong, usePreviewStore } from '../../store/previewStore';
+import type { SubsonicAlbum, SubsonicSong } from '@/api/subsonicTypes';
+import { usePlayerStore } from '@/store/playerStore';
+import { previewInputFromSong, usePreviewStore } from '@/store/previewStore';
 import { useOrbitSongRowBehavior } from '@/features/orbit';
-import { songToTrack } from '../../utils/playback/songToTrack';
-import { formatTrackTime } from '../../utils/format/formatDuration';
-import ArtistTopTrackCover from './ArtistTopTrackCover';
-import { topSongAlbumForCover } from './topSongAlbumForCover';
+import { songToTrack } from '@/utils/playback/songToTrack';
+import { formatTrackTime } from '@/utils/format/formatDuration';
+import ArtistTopTrackCover from '@/features/artist/components/ArtistTopTrackCover';
+import { topSongAlbumForCover } from '@/features/artist/components/topSongAlbumForCover';
 
 interface Props {
   topSongs: SubsonicSong[];

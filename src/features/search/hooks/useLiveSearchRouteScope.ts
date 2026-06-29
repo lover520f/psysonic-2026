@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { isAlbumsBrowsePath, isNewReleasesBrowsePath } from '@/store/albumBrowseSessionStore';
-import { isArtistsBrowsePath } from '@/store/artistBrowseSessionStore';
+import { isArtistsBrowsePath } from '@/features/artist';
 import { isTracksBrowsePath } from '@/store/advancedSearchSessionStore';
 import { isComposersBrowsePath } from '@/store/composerBrowseSessionStore';
 import { useLiveSearchScopeStore } from '@/store/liveSearchScopeStore';

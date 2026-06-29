@@ -2,7 +2,7 @@ import { buildDownloadUrl } from '../api/subsonicStreamUrl';
 import { setRating, star, unstar } from '../api/subsonicStarRating';
 import { queueSongStar, queueSongRating } from '../store/pendingStarSync';
 import { getAlbumForServer } from '../api/subsonicLibrary';
-import { getArtistInfo } from '../api/subsonicArtists';
+import { getArtistInfo } from '@/features/artist';
 import type { SubsonicSong } from '../api/subsonicTypes';
 import { songToTrack } from '../utils/playback/songToTrack';
 import { shuffleArray } from '../utils/playback/shuffleArray';

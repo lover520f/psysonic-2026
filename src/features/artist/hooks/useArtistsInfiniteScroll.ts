@@ -6,4 +6,4 @@ export {
   useClientSliceInfiniteScroll as useArtistsInfiniteScroll,
   type UseClientSliceInfiniteScrollArgs as UseArtistsInfiniteScrollArgs,
   type UseClientSliceInfiniteScrollResult as UseArtistsInfiniteScrollResult,
-} from './useClientSliceInfiniteScroll';
+} from '@/hooks/useClientSliceInfiniteScroll';

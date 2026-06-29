@@ -1,44 +1,44 @@
-import { useCoverArt } from '../cover/useCoverArt';
-import { useArtistCoverRef } from '../cover/useLibraryCoverRef';
-import type { SubsonicArtist, SubsonicAlbum } from '../api/subsonicTypes';
+import { useCoverArt } from '@/cover/useCoverArt';
+import { useArtistCoverRef } from '@/cover/useLibraryCoverRef';
+import type { SubsonicArtist, SubsonicAlbum } from '@/api/subsonicTypes';
 import { useEffect, useState, Fragment, useMemo } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
-import AlbumCard from '../components/AlbumCard';
+import AlbumCard from '@/components/AlbumCard';
 import { ArrowDownUp } from 'lucide-react';
 import { open } from '@tauri-apps/plugin-shell';
-import { usePlayerStore } from '../store/playerStore';
-import { useAuthStore } from '../store/authStore';
+import { usePlayerStore } from '@/store/playerStore';
+import { useAuthStore } from '@/store/authStore';
 import { useTranslation } from 'react-i18next';
-import { useArtistLayoutStore, type ArtistSectionId } from '../store/artistLayoutStore';
+import { useArtistLayoutStore, type ArtistSectionId } from '@/features/artist/store/artistLayoutStore';
 import {
   DEFAULT_ARTIST_ALBUM_YEAR_ORDER,
   useArtistAlbumYearSortStore,
-} from '../store/artistAlbumYearSortStore';
+} from '@/features/artist/store/artistAlbumYearSortStore';
 
-import { useArtistDetailData } from '../hooks/useArtistDetailData';
-import { useArtistSimilarArtists } from '../hooks/useArtistSimilarArtists';
+import { useArtistDetailData } from '@/features/artist/hooks/useArtistDetailData';
+import { useArtistSimilarArtists } from '@/features/artist/hooks/useArtistSimilarArtists';
 import {
   runArtistDetailPlayAll, runArtistDetailPlayTopSong, runArtistDetailShuffle, runArtistDetailStartRadio,
-} from '../utils/componentHelpers/runArtistDetailPlay';
+} from '@/features/artist/utils/runArtistDetailPlay';
 import { useOfflineBrowseContext } from '@/features/offline';
 import { offlineActionPolicy } from '@/features/offline';
 import {
   runArtistEntityRating, runArtistToggleStar, runArtistShare, runArtistImageUpload,
-} from '../utils/componentHelpers/runArtistDetailActions';
-import ArtistDetailHero from '../components/artistDetail/ArtistDetailHero';
-import ArtistDetailTopTracks from '../components/artistDetail/ArtistDetailTopTracks';
-import ArtistDetailSimilarArtists from '../components/artistDetail/ArtistDetailSimilarArtists';
+} from '@/features/artist/utils/runArtistDetailActions';
+import ArtistDetailHero from '@/features/artist/components/ArtistDetailHero';
+import ArtistDetailTopTracks from '@/features/artist/components/ArtistDetailTopTracks';
+import ArtistDetailSimilarArtists from '@/features/artist/components/ArtistDetailSimilarArtists';
 import { ArtistCard } from '@/features/nowPlaying';
-import LosslessModeBanner from '../components/LosslessModeBanner';
-import { usePerfProbeFlags } from '../utils/perf/perfFlags';
-import { albumGridWarmCovers, COVER_DENSE_GRID_MIN_CELL_CSS_PX, GRID_COVER_WARM_LIMIT } from '../cover/layoutSizes';
-import { artistDetailCoverWarmAlbums } from '../components/artistDetail/topSongAlbumForCover';
-import { useLibraryCoverPrefetch } from '../cover/useLibraryCoverPrefetch';
-import { useWarmGridCovers } from '../hooks/useWarmGridCovers';
-import { VirtualCardGrid } from '../components/VirtualCardGrid';
-import { LOSSLESS_MODE_QUERY } from '../utils/library/losslessMode';
-import { sortArtistAlbumsByYear } from '../utils/library/sortArtistAlbums';
-import { readDetailServerId } from '../utils/navigation/detailServerScope';
+import LosslessModeBanner from '@/components/LosslessModeBanner';
+import { usePerfProbeFlags } from '@/utils/perf/perfFlags';
+import { albumGridWarmCovers, COVER_DENSE_GRID_MIN_CELL_CSS_PX, GRID_COVER_WARM_LIMIT } from '@/cover/layoutSizes';
+import { artistDetailCoverWarmAlbums } from '@/features/artist/components/topSongAlbumForCover';
+import { useLibraryCoverPrefetch } from '@/cover/useLibraryCoverPrefetch';
+import { useWarmGridCovers } from '@/hooks/useWarmGridCovers';
+import { VirtualCardGrid } from '@/components/VirtualCardGrid';
+import { LOSSLESS_MODE_QUERY } from '@/utils/library/losslessMode';
+import { sortArtistAlbumsByYear } from '@/features/artist/utils/sortArtistAlbums';
+import { readDetailServerId } from '@/utils/navigation/detailServerScope';
 
 
 export default function ArtistDetail() {

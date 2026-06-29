@@ -1,4 +1,4 @@
-import { useLocalPlaybackStore } from '../store/localPlaybackStore';
+import { useLocalPlaybackStore } from '@/store/localPlaybackStore';
 import { useOfflineJobStore } from '@/features/offline';
 import { isOfflinePinComplete } from '@/features/offline';
 

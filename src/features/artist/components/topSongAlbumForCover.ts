@@ -1,4 +1,4 @@
-import type { SubsonicAlbum, SubsonicSong } from '../../api/subsonicTypes';
+import type { SubsonicAlbum, SubsonicSong } from '@/api/subsonicTypes';
 
 export type TopSongAlbumCoverSource = Pick<SubsonicAlbum, 'id' | 'coverArt' | 'name'>;
 

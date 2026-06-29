@@ -3,8 +3,8 @@ import { useLocation, useNavigationType, type NavigationType } from 'react-route
 import {
   peekArtistBrowseScrollRestore,
   useArtistBrowseSessionStore,
-} from '../store/artistBrowseSessionStore';
-import { shouldRestoreArtistBrowseSession } from '../utils/navigation/albumDetailNavigation';
+} from '@/features/artist/store/artistBrowseSessionStore';
+import { shouldRestoreArtistBrowseSession } from '@/utils/navigation/albumDetailNavigation';
 
 type PendingScroll = {
   scrollTop: number;

@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { navigateToArtistDetail } from '../utils/navigation/albumDetailNavigation';
+import { navigateToArtistDetail } from '@/utils/navigation/albumDetailNavigation';
 
 /** Navigate to artist detail, remembering the current page for the back button. */
 export function useNavigateToArtist() {

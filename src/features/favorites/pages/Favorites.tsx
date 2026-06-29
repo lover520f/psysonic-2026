@@ -10,7 +10,7 @@ import { useFavoritesSongFiltering } from '@/features/favorites/hooks/useFavorit
 import { useFavoritesSelection } from '@/features/favorites/hooks/useFavoritesSelection';
 import { useBulkPlPickerOutsideClick } from '@/hooks/useBulkPlPickerOutsideClick';
 import AlbumRow from '@/components/AlbumRow';
-import ArtistRow from '@/components/ArtistRow';
+import { ArtistRow } from '@/features/artist';
 import { usePlayerStore } from '@/store/playerStore';
 import { useTranslation } from 'react-i18next';
 import { useSelectionStore } from '@/store/selectionStore';

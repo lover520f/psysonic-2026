@@ -8,7 +8,7 @@ import {
   ALPHABET,
   sortKeyFromDisplayName,
   stripLeadingArticles,
-} from './artistsHelpers';
+} from '@/features/artist/utils/artistsHelpers';
 
 describe('stripLeadingArticles', () => {
   it('strips The from Beatles', () => {

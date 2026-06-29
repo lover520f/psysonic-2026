@@ -1,4 +1,4 @@
-import { getArtist, getArtistInfo } from '../api/subsonicArtists';
+import { getArtist, getArtistInfo } from '@/features/artist';
 import { filterAlbumsToActiveLibrary } from '../api/subsonicLibrary';
 import { resolveAlbum, resolveMediaServerId } from '@/features/offline';
 import type { SubsonicAlbum } from '../api/subsonicTypes';

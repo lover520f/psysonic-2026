@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { topSongAlbumForCover, topSongAlbumsForCoverWarm, artistDetailCoverWarmAlbums } from './topSongAlbumForCover';
+import { topSongAlbumForCover, topSongAlbumsForCoverWarm, artistDetailCoverWarmAlbums } from '@/features/artist/components/topSongAlbumForCover';
 
 describe('topSongAlbumForCover', () => {
   it('uses the artist album row when albumId matches', () => {

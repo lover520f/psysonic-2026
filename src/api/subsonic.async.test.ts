@@ -31,7 +31,7 @@ import { getAlbumInfo2 } from './subsonicAlbumInfo';
 import { getStarred } from './subsonicStarRating';
 import { search } from './subsonicSearch';
 import { getAlbum, getMusicDirectory, getMusicFolders, getMusicIndexes, getRandomSongs, getSong } from './subsonicLibrary';
-import { getArtists, getTopSongs } from './subsonicArtists';
+import { getArtists, getTopSongs } from '@/features/artist';
 import { useAuthStore } from '@/store/authStore';
 import { resetAuthStore } from '@/test/helpers/storeReset';
 

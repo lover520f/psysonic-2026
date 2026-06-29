@@ -1,13 +1,13 @@
-import type { SubsonicArtist } from '../api/subsonicTypes';
+import type { SubsonicArtist } from '@/api/subsonicTypes';
 import React, { useMemo } from 'react';
 import { Users } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { CoverArtImage } from '../cover/CoverArtImage';
-import { useArtistCoverRef } from '../cover/useLibraryCoverRef';
-import { COVER_DENSE_GRID_MIN_CELL_CSS_PX } from '../cover/layoutSizes';
-import { useNavigateToArtist } from '../hooks/useNavigateToArtist';
-import { coverServerScopeForServerId } from '../cover/serverScope';
-import { appendServerQuery } from '../utils/navigation/detailServerScope';
+import { CoverArtImage } from '@/cover/CoverArtImage';
+import { useArtistCoverRef } from '@/cover/useLibraryCoverRef';
+import { COVER_DENSE_GRID_MIN_CELL_CSS_PX } from '@/cover/layoutSizes';
+import { useNavigateToArtist } from '@/features/artist/hooks/useNavigateToArtist';
+import { coverServerScopeForServerId } from '@/cover/serverScope';
+import { appendServerQuery } from '@/utils/navigation/detailServerScope';
 
 interface Props {
   artist: SubsonicArtist;

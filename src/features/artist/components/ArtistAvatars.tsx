@@ -1,12 +1,12 @@
 import React from 'react';
-import type { SubsonicArtist } from '../../api/subsonicTypes';
-import { ArtistCoverArtImage } from '../../cover/ArtistCoverArtImage';
+import type { SubsonicArtist } from '@/api/subsonicTypes';
+import { ArtistCoverArtImage } from '@/cover/ArtistCoverArtImage';
 import {
   COVER_DENSE_ARTIST_LIST_CSS_PX,
   COVER_DENSE_GRID_MIN_CELL_CSS_PX,
-} from '../../cover/layoutSizes';
-import { ARTISTS_INPAGE_SCROLL_VIEWPORT_ID } from '../../constants/appScroll';
-import { nameColor, nameInitial } from '../../utils/componentHelpers/artistsHelpers';
+} from '@/cover/layoutSizes';
+import { ARTISTS_INPAGE_SCROLL_VIEWPORT_ID } from '@/constants/appScroll';
+import { nameColor, nameInitial } from '@/features/artist/utils/artistsHelpers';
 
 interface AvatarProps {
   artist: SubsonicArtist;

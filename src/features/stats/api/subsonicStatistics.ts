@@ -1,6 +1,6 @@
 import { useAuthStore } from '@/store/authStore';
 import { genreTagsFor } from '@/utils/library/genreTags';
-import { getArtists } from '@/api/subsonicArtists';
+import { getArtists } from '@/features/artist';
 import { getAlbumList, getRandomSongs } from '@/api/subsonicLibrary';
 import type {
   StatisticsFormatSample,

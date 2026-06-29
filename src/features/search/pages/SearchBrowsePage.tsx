@@ -7,7 +7,7 @@ import { useLocation, useNavigate, useNavigationType, useSearchParams } from 're
 import { SlidersVertical, Search, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import AlbumRow from '@/components/AlbumRow';
-import ArtistRow from '@/components/ArtistRow';
+import { ArtistRow } from '@/features/artist';
 import PagedSongList from '@/components/PagedSongList';
 import CustomSelect from '@/ui/CustomSelect';
 import StarFilterButton from '@/components/StarFilterButton';
