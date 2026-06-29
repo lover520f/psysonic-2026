@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { ArrowUp } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { APP_MAIN_SCROLL_VIEWPORT_ID } from '../constants/appScroll';
+import { APP_MAIN_SCROLL_VIEWPORT_ID } from '@/constants/appScroll';
 
 interface BackToTopButtonProps {
   /** Id of the scroll viewport to watch/scroll. Defaults to the main route scroller. */

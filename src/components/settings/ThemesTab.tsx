@@ -4,7 +4,7 @@ import { Clock, Palette, Store, Upload } from 'lucide-react';
 import { useThemeStore } from '../../store/themeStore';
 import { useInstalledThemesStore } from '../../store/installedThemesStore';
 import CustomSelect from '../CustomSelect';
-import BackToTopButton from '../BackToTopButton';
+import BackToTopButton from '@/ui/BackToTopButton';
 import { FIXED_THEMES } from './fixedThemes';
 import { InstalledThemes } from './InstalledThemes';
 import { ThemeImportSection } from './ThemeImportSection';
