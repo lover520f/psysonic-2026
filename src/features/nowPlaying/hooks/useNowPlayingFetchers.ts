@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react';
-import { getArtistInfoForServer } from '../api/subsonicArtists';
-import type { SubsonicAlbum, SubsonicArtistInfo, SubsonicSong } from '../api/subsonicTypes';
-import { resolveNpAlbum, resolveNpDiscography, resolveNpSongMeta, resolveNpTopSongs } from '../utils/library/nowPlayingMetadataResolve';
-import { fetchBandsintownEvents, type BandsintownEvent } from '../api/bandsintown';
-import type { ArtistStats, TrackStats } from '../music-network';
-import { getMusicNetworkRuntimeOrNull } from '../music-network';
-import { makeCache } from '../utils/cache/nowPlayingCache';
-import { shouldAttemptSubsonicForServer } from '../utils/network/subsonicNetworkGuard';
-import { useConnectionStatus } from './useConnectionStatus';
+import { getArtistInfoForServer } from '@/api/subsonicArtists';
+import type { SubsonicAlbum, SubsonicArtistInfo, SubsonicSong } from '@/api/subsonicTypes';
+import { resolveNpAlbum, resolveNpDiscography, resolveNpSongMeta, resolveNpTopSongs } from '@/features/nowPlaying/utils/nowPlayingMetadataResolve';
+import { fetchBandsintownEvents, type BandsintownEvent } from '@/api/bandsintown';
+import type { ArtistStats, TrackStats } from '@/music-network';
+import { getMusicNetworkRuntimeOrNull } from '@/music-network';
+import { makeCache } from '@/utils/cache/nowPlayingCache';
+import { shouldAttemptSubsonicForServer } from '@/utils/network/subsonicNetworkGuard';
+import { useConnectionStatus } from '@/hooks/useConnectionStatus';
 
 // Module-level TTL caches (shared across mounts)
 const songMetaCache    = makeCache<SubsonicSong | null>();

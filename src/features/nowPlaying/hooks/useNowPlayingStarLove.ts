@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
-import { queueSongStar } from '../store/pendingStarSync';
-import type { SubsonicSong } from '../api/subsonicTypes';
-import type { Track } from '../store/playerStoreTypes';
-import type { TrackStats } from '../music-network';
-import { getMusicNetworkRuntime } from '../music-network';
+import { queueSongStar } from '@/store/pendingStarSync';
+import type { SubsonicSong } from '@/api/subsonicTypes';
+import type { Track } from '@/store/playerStoreTypes';
+import type { TrackStats } from '@/music-network';
+import { getMusicNetworkRuntime } from '@/music-network';
 
 export interface NowPlayingStarLoveDeps {
   currentTrack: Pick<Track, 'id' | 'title' | 'artist' | 'serverId'> | null;

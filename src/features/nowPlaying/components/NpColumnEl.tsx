@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import type { NpCardId, NpColumn } from '../../store/nowPlayingLayoutStore';
+import type { NpCardId, NpColumn } from '@/features/nowPlaying/store/nowPlayingLayoutStore';
 
 interface NpColumnProps {
   col: NpColumn;

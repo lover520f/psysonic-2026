@@ -1,6 +1,6 @@
 import React from 'react';
-import { useDragSource } from '../../contexts/DragDropContext';
-import type { NpCardId } from '../../store/nowPlayingLayoutStore';
+import { useDragSource } from '@/contexts/DragDropContext';
+import type { NpCardId } from '@/features/nowPlaying/store/nowPlayingLayoutStore';
 
 interface NpCardWrapProps {
   id: NpCardId;

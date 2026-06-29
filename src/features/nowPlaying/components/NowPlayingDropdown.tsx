@@ -1,12 +1,12 @@
-import { TrackCoverArtImage } from '../cover/TrackCoverArtImage';
-import { getNowPlaying } from '../api/subsonicScrobble';
-import type { SubsonicNowPlaying } from '../api/subsonicTypes';
+import { TrackCoverArtImage } from '@/cover/TrackCoverArtImage';
+import { getNowPlaying } from '@/api/subsonicScrobble';
+import type { SubsonicNowPlaying } from '@/api/subsonicTypes';
 import React, { useState, useEffect, useRef, useCallback, useLayoutEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { PlayCircle, Pause, User, Radio, RefreshCw } from 'lucide-react';
-import { nowPlayingPresence } from '../api/nowPlayingPresence';
-import { useAuthStore } from '../store/authStore';
-import { usePlayerStore } from '../store/playerStore';
+import { nowPlayingPresence } from '@/features/nowPlaying/api/nowPlayingPresence';
+import { useAuthStore } from '@/store/authStore';
+import { usePlayerStore } from '@/store/playerStore';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 

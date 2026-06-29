@@ -1,17 +1,17 @@
 import { renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { coverCacheEnsure, coverCachePeekBatch } from '../api/coverCache';
-import { coverIndexKeyFromRef } from '../cover/storageKeys';
-import { useNowPlayingPrewarm } from './useNowPlayingPrewarm';
-import { prewarmNowPlayingFetchers } from './useNowPlayingFetchers';
-import { useAuthStore } from '../store/authStore';
-import { usePlayerStore } from '../store/playerStore';
-import { makeTrack } from '../test/helpers/factories';
-import { resetAllStores } from '../test/helpers/storeReset';
-import { toQueueItemRefs } from '../utils/library/queueItemRef';
+import { coverCacheEnsure, coverCachePeekBatch } from '@/api/coverCache';
+import { coverIndexKeyFromRef } from '@/cover/storageKeys';
+import { useNowPlayingPrewarm } from '@/features/nowPlaying/hooks/useNowPlayingPrewarm';
+import { prewarmNowPlayingFetchers } from '@/features/nowPlaying/hooks/useNowPlayingFetchers';
+import { useAuthStore } from '@/store/authStore';
+import { usePlayerStore } from '@/store/playerStore';
+import { makeTrack } from '@/test/helpers/factories';
+import { resetAllStores } from '@/test/helpers/storeReset';
+import { toQueueItemRefs } from '@/utils/library/queueItemRef';
 
-vi.mock('../api/coverCache', async importOriginal => {
-  const actual = await importOriginal<typeof import('../api/coverCache')>();
+vi.mock('@/api/coverCache', async importOriginal => {
+  const actual = await importOriginal<typeof import('@/api/coverCache')>();
   return {
     ...actual,
     coverCachePeekBatch: vi.fn(async () => ({})),
@@ -19,7 +19,7 @@ vi.mock('../api/coverCache', async importOriginal => {
   };
 });
 
-vi.mock('./useNowPlayingFetchers', () => ({
+vi.mock('@/features/nowPlaying/hooks/useNowPlayingFetchers', () => ({
   prewarmNowPlayingFetchers: vi.fn(async () => undefined),
 }));
 

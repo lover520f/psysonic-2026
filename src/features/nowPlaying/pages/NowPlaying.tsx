@@ -1,45 +1,45 @@
-import { useCoverArt } from '../cover/useCoverArt';
-import { albumCoverRef } from '../cover/ref';
-import { usePlaybackTrackCoverRef } from '../cover/useLibraryCoverRef';
-import { coverArtIdFromRadio } from '../cover/ids';
-import type { SubsonicArtistInfo, SubsonicSong } from '../api/subsonicTypes';
+import { useCoverArt } from '@/cover/useCoverArt';
+import { albumCoverRef } from '@/cover/ref';
+import { usePlaybackTrackCoverRef } from '@/cover/useLibraryCoverRef';
+import { coverArtIdFromRadio } from '@/cover/ids';
+import type { SubsonicArtistInfo, SubsonicSong } from '@/api/subsonicTypes';
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
-import { usePlaybackLibraryNavigate } from '../hooks/usePlaybackLibraryNavigate';
-import { usePlaybackServerId } from '../hooks/usePlaybackServerId';
+import { usePlaybackLibraryNavigate } from '@/hooks/usePlaybackLibraryNavigate';
+import { usePlaybackServerId } from '@/hooks/usePlaybackServerId';
 import { useTranslation } from 'react-i18next';
 import { Music, EyeOff, LayoutGrid, RotateCcw, Eye } from 'lucide-react';
-import { usePlayerStore } from '../store/playerStore';
-import { useAuthStore } from '../store/authStore';
-import { useLyricsStore } from '../store/lyricsStore';
-import { songToTrack } from '../utils/playback/songToTrack';
+import { usePlayerStore } from '@/store/playerStore';
+import { useAuthStore } from '@/store/authStore';
+import { useLyricsStore } from '@/store/lyricsStore';
+import { songToTrack } from '@/utils/playback/songToTrack';
 import { useRadioMetadata } from '@/features/radio';
-import { useDragDrop } from '../contexts/DragDropContext';
+import { useDragDrop } from '@/contexts/DragDropContext';
 import OverlayScrollArea from '@/ui/OverlayScrollArea';
 import {
   useNpLayoutStore, NP_CARD_IDS,
   type NpCardId, type NpColumn,
-} from '../store/nowPlayingLayoutStore';
+} from '@/features/nowPlaying/store/nowPlayingLayoutStore';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 import {
   buildContributorRows,
-} from '../utils/componentHelpers/nowPlayingHelpers';
-import NpCardWrap from '../components/nowPlaying/NpCardWrap';
-import NpColumnEl from '../components/nowPlaying/NpColumnEl';
-import RadioView from '../components/nowPlaying/RadioView';
-import Hero from '../components/nowPlaying/Hero';
-import ArtistCard from '../components/nowPlaying/ArtistCard';
-import AlbumCard from '../components/nowPlaying/AlbumCard';
-import TopSongsCard from '../components/nowPlaying/TopSongsCard';
-import CreditsCard from '../components/nowPlaying/CreditsCard';
-import TourCard from '../components/nowPlaying/TourCard';
-import DiscographyCard from '../components/nowPlaying/DiscographyCard';
-import { useNowPlayingFetchers } from '../hooks/useNowPlayingFetchers';
-import { useNowPlayingStarLove } from '../hooks/useNowPlayingStarLove';
-import { useArtistInfoBatch } from '../hooks/useArtistInfoBatch';
-import { primaryTrackArtistRef, resolveTrackArtistRefs } from '../utils/playback/trackArtistRefs';
-import type { ArtistCardTab } from '../components/nowPlaying/ArtistCard';
+} from '@/utils/componentHelpers/nowPlayingHelpers';
+import NpCardWrap from '@/features/nowPlaying/components/NpCardWrap';
+import NpColumnEl from '@/features/nowPlaying/components/NpColumnEl';
+import RadioView from '@/features/nowPlaying/components/RadioView';
+import Hero from '@/features/nowPlaying/components/Hero';
+import ArtistCard from '@/features/nowPlaying/components/ArtistCard';
+import AlbumCard from '@/features/nowPlaying/components/AlbumCard';
+import TopSongsCard from '@/features/nowPlaying/components/TopSongsCard';
+import CreditsCard from '@/features/nowPlaying/components/CreditsCard';
+import TourCard from '@/features/nowPlaying/components/TourCard';
+import DiscographyCard from '@/features/nowPlaying/components/DiscographyCard';
+import { useNowPlayingFetchers } from '@/features/nowPlaying/hooks/useNowPlayingFetchers';
+import { useNowPlayingStarLove } from '@/features/nowPlaying/hooks/useNowPlayingStarLove';
+import { useArtistInfoBatch } from '@/hooks/useArtistInfoBatch';
+import { primaryTrackArtistRef, resolveTrackArtistRefs } from '@/utils/playback/trackArtistRefs';
+import type { ArtistCardTab } from '@/features/nowPlaying/components/ArtistCard';
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 

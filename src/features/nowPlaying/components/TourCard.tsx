@@ -2,8 +2,8 @@ import React, { memo, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Calendar, Info } from 'lucide-react';
 import { open as shellOpen } from '@tauri-apps/plugin-shell';
-import type { BandsintownEvent } from '../../api/bandsintown';
-import { isoToParts } from '../../utils/componentHelpers/nowPlayingHelpers';
+import type { BandsintownEvent } from '@/api/bandsintown';
+import { isoToParts } from '@/utils/componentHelpers/nowPlayingHelpers';
 
 interface TourCardProps {
   artistName: string;

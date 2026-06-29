@@ -26,7 +26,7 @@ const RandomAlbums = lazy(() => import('../pages/RandomAlbums'));
 const LuckyMixPage = lazy(() => import('../pages/LuckyMix'));
 const Playlists = lazy(() => import('../pages/Playlists'));
 const PlaylistDetail = lazy(() => import('../pages/PlaylistDetail'));
-const NowPlayingPage = lazy(() => import('../pages/NowPlaying'));
+const NowPlayingPage = lazy(() => import('@/features/nowPlaying/pages/NowPlaying'));
 const Settings = lazy(() => import('../pages/Settings'));
 const Statistics = lazy(() => import('@/features/stats/pages/Statistics'));
 const Help = lazy(() => import('../pages/Help'));

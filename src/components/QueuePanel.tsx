@@ -20,7 +20,7 @@ import { showToast } from '../utils/ui/toast';
 import { useThemeStore } from '../store/themeStore';
 import { useLyricsStore } from '../store/lyricsStore';
 import LyricsPane from './LyricsPane';
-import NowPlayingInfo from './NowPlayingInfo';
+import { NowPlayingInfo } from '@/features/nowPlaying';
 import { useLuckyMixStore } from '../store/luckyMixStore';
 import { useQueueToolbarStore } from '../store/queueToolbarStore';
 import { SavePlaylistModal } from './queuePanel/SavePlaylistModal';

@@ -1,18 +1,18 @@
 import { useEffect } from 'react';
-import { coverCacheEnsure, coverCachePeekBatch } from '../api/coverCache';
-import { albumCoverRef } from '../cover/ref';
-import { resolvePlaybackCoverScope } from '../cover/ref';
-import { resolveTrackCoverRefFromLibrary } from '../cover/resolveEntryLibrary';
-import { getDiskSrc, rememberDiskSrc } from '../cover/diskSrcCache';
-import { coverStorageKeyFromRef } from '../cover/storageKeys';
-import { resolveCoverDisplayTier } from '../cover/tiers';
-import { coverArtIdFromRadio } from '../cover/ids';
-import type { CoverArtRef } from '../cover/types';
-import { prewarmNowPlayingFetchers } from './useNowPlayingFetchers';
-import { useAuthStore } from '../store/authStore';
-import { usePlayerStore } from '../store/playerStore';
-import { usePlaybackServerId } from './usePlaybackServerId';
-import { primaryTrackArtistRef } from '../utils/playback/trackArtistRefs';
+import { coverCacheEnsure, coverCachePeekBatch } from '@/api/coverCache';
+import { albumCoverRef } from '@/cover/ref';
+import { resolvePlaybackCoverScope } from '@/cover/ref';
+import { resolveTrackCoverRefFromLibrary } from '@/cover/resolveEntryLibrary';
+import { getDiskSrc, rememberDiskSrc } from '@/cover/diskSrcCache';
+import { coverStorageKeyFromRef } from '@/cover/storageKeys';
+import { resolveCoverDisplayTier } from '@/cover/tiers';
+import { coverArtIdFromRadio } from '@/cover/ids';
+import type { CoverArtRef } from '@/cover/types';
+import { prewarmNowPlayingFetchers } from '@/features/nowPlaying/hooks/useNowPlayingFetchers';
+import { useAuthStore } from '@/store/authStore';
+import { usePlayerStore } from '@/store/playerStore';
+import { usePlaybackServerId } from '@/hooks/usePlaybackServerId';
+import { primaryTrackArtistRef } from '@/utils/playback/trackArtistRefs';
 
 const NOW_PLAYING_COVER_CSS_PX = 800;
 

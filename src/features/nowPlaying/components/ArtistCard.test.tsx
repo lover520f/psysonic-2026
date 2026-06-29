@@ -7,8 +7,8 @@
 import { describe, it, expect, vi } from 'vitest';
 import { fireEvent } from '@testing-library/react';
 import { renderWithProviders } from '@/test/helpers/renderWithProviders';
-import ArtistCard from './ArtistCard';
-import type { SubsonicArtistInfo } from '../../api/subsonicTypes';
+import ArtistCard from '@/features/nowPlaying/components/ArtistCard';
+import type { SubsonicArtistInfo } from '@/api/subsonicTypes';
 
 const infoWithImage: SubsonicArtistInfo = {
   biography: 'Some bio text here.',

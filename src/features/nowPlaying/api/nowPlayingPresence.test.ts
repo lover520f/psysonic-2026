@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { nowPlayingPresence, NOW_PLAYING_IDLE_MINUTES } from './nowPlayingPresence';
-import type { SubsonicNowPlaying, PlaybackReportState } from './subsonicTypes';
+import { nowPlayingPresence, NOW_PLAYING_IDLE_MINUTES } from '@/features/nowPlaying/api/nowPlayingPresence';
+import type { SubsonicNowPlaying, PlaybackReportState } from '@/api/subsonicTypes';
 
 // The function only reads `state` and `minutesAgo`; cast a minimal fixture.
 function entry(partial: { state?: PlaybackReportState; minutesAgo?: number }): SubsonicNowPlaying {

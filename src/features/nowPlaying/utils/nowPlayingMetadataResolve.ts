@@ -16,14 +16,14 @@
  * `artistInfo` (bio / similar) has no index source and stays network-only — it
  * is intentionally absent here.
  */
-import { libraryGetTrack, libraryGetTracksByAlbum } from '../../api/library';
-import { getArtistForServer, getTopSongsForServer } from '../../api/subsonicArtists';
-import { getAlbumForServer, getSongForServer } from '../../api/subsonicLibrary';
-import type { SubsonicAlbum, SubsonicSong } from '../../api/subsonicTypes';
-import { shouldAttemptSubsonicForServer } from '../network/subsonicNetworkGuard';
-import { loadAlbumFromLibraryIndex, loadArtistFromLibraryIndex } from '../offline/offlineLibraryIndexLoad';
-import { trackToSong } from './advancedSearchLocal';
-import { libraryIsReady } from './libraryReady';
+import { libraryGetTrack, libraryGetTracksByAlbum } from '@/api/library';
+import { getArtistForServer, getTopSongsForServer } from '@/api/subsonicArtists';
+import { getAlbumForServer, getSongForServer } from '@/api/subsonicLibrary';
+import type { SubsonicAlbum, SubsonicSong } from '@/api/subsonicTypes';
+import { shouldAttemptSubsonicForServer } from '@/utils/network/subsonicNetworkGuard';
+import { loadAlbumFromLibraryIndex, loadArtistFromLibraryIndex } from '@/utils/offline/offlineLibraryIndexLoad';
+import { trackToSong } from '@/utils/library/advancedSearchLocal';
+import { libraryIsReady } from '@/utils/library/libraryReady';
 
 const TOP_SONGS_LIMIT = 5;
 

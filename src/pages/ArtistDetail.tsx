@@ -28,7 +28,7 @@ import {
 import ArtistDetailHero from '../components/artistDetail/ArtistDetailHero';
 import ArtistDetailTopTracks from '../components/artistDetail/ArtistDetailTopTracks';
 import ArtistDetailSimilarArtists from '../components/artistDetail/ArtistDetailSimilarArtists';
-import ArtistCard from '../components/nowPlaying/ArtistCard';
+import { ArtistCard } from '@/features/nowPlaying';
 import LosslessModeBanner from '../components/LosslessModeBanner';
 import { usePerfProbeFlags } from '../utils/perf/perfFlags';
 import { albumGridWarmCovers, COVER_DENSE_GRID_MIN_CELL_CSS_PX, GRID_COVER_WARM_LIMIT } from '../cover/layoutSizes';

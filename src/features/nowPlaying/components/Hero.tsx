@@ -1,15 +1,15 @@
 import React, { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Headphones, Heart, MicVocal, Music, Star } from 'lucide-react';
-import { CoverArtImage } from '../../cover/CoverArtImage';
-import type { CoverArtRef } from '../../cover/types';
-import type { ArtistStats, TrackStats } from '../../music-network';
-import type { SubsonicOpenArtistRef } from '../../api/subsonicTypes';
-import { OpenArtistRefInline } from '../OpenArtistRefInline';
-import { formatTrackTime } from '../../utils/format/formatDuration';
-import { useEnrichmentPrimaryLabel } from '../../hooks/useEnrichmentPrimaryLabel';
-import { useEnrichmentPrimaryIcon } from '../../hooks/useEnrichmentPrimaryIcon';
-import { renderPresetIcon } from '../settings/musicNetwork/presetIcon';
+import { CoverArtImage } from '@/cover/CoverArtImage';
+import type { CoverArtRef } from '@/cover/types';
+import type { ArtistStats, TrackStats } from '@/music-network';
+import type { SubsonicOpenArtistRef } from '@/api/subsonicTypes';
+import { OpenArtistRefInline } from '@/components/OpenArtistRefInline';
+import { formatTrackTime } from '@/utils/format/formatDuration';
+import { useEnrichmentPrimaryLabel } from '@/hooks/useEnrichmentPrimaryLabel';
+import { useEnrichmentPrimaryIcon } from '@/hooks/useEnrichmentPrimaryIcon';
+import { renderPresetIcon } from '@/components/settings/musicNetwork/presetIcon';
 
 interface HeroProps {
   track: { title: string; artist: string; album: string; year?: number;

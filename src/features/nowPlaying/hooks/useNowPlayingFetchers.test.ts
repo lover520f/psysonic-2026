@@ -11,20 +11,20 @@
  */
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { SubsonicArtistInfo, SubsonicSong, SubsonicAlbum, SubsonicArtist } from '../api/subsonicTypes';
+import type { SubsonicArtistInfo, SubsonicSong, SubsonicAlbum, SubsonicArtist } from '@/api/subsonicTypes';
 
-vi.mock('../api/subsonicArtists');
-vi.mock('../api/subsonicLibrary');
-vi.mock('../api/bandsintown');
-vi.mock('../utils/network/subsonicNetworkGuard', () => ({
+vi.mock('@/api/subsonicArtists');
+vi.mock('@/api/subsonicLibrary');
+vi.mock('@/api/bandsintown');
+vi.mock('@/utils/network/subsonicNetworkGuard', () => ({
   shouldAttemptSubsonicForServer: vi.fn(() => true),
 }));
 
-import { shouldAttemptSubsonicForServer } from '../utils/network/subsonicNetworkGuard';
-import { getArtistForServer, getArtistInfoForServer, getTopSongsForServer } from '../api/subsonicArtists';
-import { getAlbumForServer, getSongForServer } from '../api/subsonicLibrary';
-import { fetchBandsintownEvents } from '../api/bandsintown';
-import { useNowPlayingFetchers, type NowPlayingFetchersDeps } from './useNowPlayingFetchers';
+import { shouldAttemptSubsonicForServer } from '@/utils/network/subsonicNetworkGuard';
+import { getArtistForServer, getArtistInfoForServer, getTopSongsForServer } from '@/api/subsonicArtists';
+import { getAlbumForServer, getSongForServer } from '@/api/subsonicLibrary';
+import { fetchBandsintownEvents } from '@/api/bandsintown';
+import { useNowPlayingFetchers, type NowPlayingFetchersDeps } from '@/features/nowPlaying/hooks/useNowPlayingFetchers';
 
 // Resolved return shapes of the mocked API calls — used to cast deliberately
 // partial test fixtures without `any`.

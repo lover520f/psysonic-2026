@@ -22,7 +22,7 @@ import {
   resolveNpDiscography,
   resolveNpTopSongs,
   resolveNpSongMeta,
-} from './nowPlayingMetadataResolve';
+} from '@/features/nowPlaying/utils/nowPlayingMetadataResolve';
 
 const guard = vi.mocked(shouldAttemptSubsonicForServer);
 

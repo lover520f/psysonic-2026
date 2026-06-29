@@ -1,4 +1,4 @@
-import type { SubsonicNowPlaying } from './subsonicTypes';
+import type { SubsonicNowPlaying } from '@/api/subsonicTypes';
 
 /**
  * Derived liveness of a now-playing entry, surfaced as the indicator dot in the
