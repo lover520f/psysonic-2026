@@ -1,29 +1,29 @@
-import { usePlaybackCoverArt } from '../hooks/usePlaybackCoverArt';
-import { usePlaybackTrackCoverRef } from '../cover/useLibraryCoverRef';
+import { usePlaybackCoverArt } from '@/hooks/usePlaybackCoverArt';
+import { usePlaybackTrackCoverRef } from '@/cover/useLibraryCoverRef';
 import { useEffect, useRef, useState } from 'react';
 import { emit } from '@tauri-apps/api/event';
 import { invoke } from '@tauri-apps/api/core';
 import { useTranslation } from 'react-i18next';
-import { usePlayerStore } from '../store/playerStore';
-import { registerQueueDragHitTest } from '../contexts/DragDropContext';
-import MiniContextMenu from './MiniContextMenu';
-import type { MiniSyncPayload, MiniControlAction, MiniTrackInfo } from '../utils/miniPlayerBridge';
+import { usePlayerStore } from '@/store/playerStore';
+import { registerQueueDragHitTest } from '@/contexts/DragDropContext';
+import MiniContextMenu from '@/features/miniPlayer/components/MiniContextMenu';
+import type { MiniSyncPayload, MiniControlAction, MiniTrackInfo } from '@/features/miniPlayer/utils/miniPlayerBridge';
 import {
   COLLAPSED_SIZE, EXPANDED_SIZE, COLLAPSED_MIN, EXPANDED_MIN,
   EXPANDED_H_KEY, QUEUE_OPEN_KEY,
   readStoredExpandedHeight, readQueueOpen, initialSnapshot,
-} from '../utils/componentHelpers/miniPlayerHelpers';
-import { MiniTitlebar } from './miniPlayer/MiniTitlebar';
-import { MiniMeta } from './miniPlayer/MiniMeta';
-import { MiniControls } from './miniPlayer/MiniControls';
-import { MiniToolbar } from './miniPlayer/MiniToolbar';
-import { MiniQueue } from './miniPlayer/MiniQueue';
-import { useMiniVolumePopover } from '../hooks/useMiniVolumePopover';
-import { useMiniCrossfadePopover } from '../hooks/useMiniCrossfadePopover';
-import { useMiniQueueDrag } from '../hooks/useMiniQueueDrag';
-import { useMiniSync } from '../hooks/useMiniSync';
-import { useMiniWindowSetup } from '../hooks/useMiniWindowSetup';
-import { useMiniKeyboardShortcuts } from '../hooks/useMiniKeyboardShortcuts';
+} from '@/features/miniPlayer/utils/miniPlayerHelpers';
+import { MiniTitlebar } from '@/features/miniPlayer/components/MiniTitlebar';
+import { MiniMeta } from '@/features/miniPlayer/components/MiniMeta';
+import { MiniControls } from '@/features/miniPlayer/components/MiniControls';
+import { MiniToolbar } from '@/features/miniPlayer/components/MiniToolbar';
+import { MiniQueue } from '@/features/miniPlayer/components/MiniQueue';
+import { useMiniVolumePopover } from '@/features/miniPlayer/hooks/useMiniVolumePopover';
+import { useMiniCrossfadePopover } from '@/features/miniPlayer/hooks/useMiniCrossfadePopover';
+import { useMiniQueueDrag } from '@/features/miniPlayer/hooks/useMiniQueueDrag';
+import { useMiniSync } from '@/features/miniPlayer/hooks/useMiniSync';
+import { useMiniWindowSetup } from '@/features/miniPlayer/hooks/useMiniWindowSetup';
+import { useMiniKeyboardShortcuts } from '@/features/miniPlayer/hooks/useMiniKeyboardShortcuts';
 
 export default function MiniPlayer() {
   const { t } = useTranslation();

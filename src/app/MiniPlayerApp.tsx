@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { DragDropProvider } from '../contexts/DragDropContext';
-import MiniPlayer from '../components/MiniPlayer';
+import MiniPlayer from '@/features/miniPlayer';
 import GlobalConfirmModal from '../components/GlobalConfirmModal';
 import TooltipPortal from '@/ui/TooltipPortal';
 import FpsOverlay from '../components/FpsOverlay';

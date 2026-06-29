@@ -1,4 +1,4 @@
-import { useMiniAnchoredPopover } from './useMiniAnchoredPopover';
+import { useMiniAnchoredPopover } from '@/features/miniPlayer/hooks/useMiniAnchoredPopover';
 
 /** Open-state, refs, and fixed positioning of the portaled mini-player volume
  *  popover. Thin wrapper over {@link useMiniAnchoredPopover} that preserves the

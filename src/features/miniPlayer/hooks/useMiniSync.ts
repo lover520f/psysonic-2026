@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { emit, listen } from '@tauri-apps/api/event';
-import { useWindowVisibility } from './useWindowVisibility';
-import type { MiniSyncPayload } from '../utils/miniPlayerBridge';
+import { useWindowVisibility } from '@/hooks/useWindowVisibility';
+import type { MiniSyncPayload } from '@/features/miniPlayer/utils/miniPlayerBridge';
 
 interface ProgressPayload {
   current_time: number;

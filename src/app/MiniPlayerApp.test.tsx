@@ -28,7 +28,7 @@ vi.mock('../utils/perf/perfFlags', () => ({
 vi.mock('../i18n', () => ({
   default: { changeLanguage: vi.fn() },
 }));
-vi.mock('../components/MiniPlayer', () => ({ default: () => <div data-testid="mini-player" /> }));
+vi.mock('@/features/miniPlayer', () => ({ default: () => <div data-testid="mini-player" /> }));
 vi.mock('../components/GlobalConfirmModal', () => ({ default: () => <div data-testid="confirm-modal" /> }));
 vi.mock('@/ui/TooltipPortal', () => ({ default: () => <div data-testid="tooltip-portal" /> }));
 vi.mock('../components/FpsOverlay', () => ({ default: () => <div data-testid="fps-overlay" /> }));

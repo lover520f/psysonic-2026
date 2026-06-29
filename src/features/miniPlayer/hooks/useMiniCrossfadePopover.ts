@@ -1,4 +1,4 @@
-import { useMiniAnchoredPopover } from './useMiniAnchoredPopover';
+import { useMiniAnchoredPopover } from '@/features/miniPlayer/hooks/useMiniAnchoredPopover';
 
 /** Open-state, refs, and fixed positioning of the portaled mini-player
  *  crossfade settings popover (seconds slider + trim-silence toggle). Opened by

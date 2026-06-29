@@ -19,7 +19,7 @@ import { initPinnedOfflineSync } from '../utils/offline/pinnedOfflineSync';
 import { initResumeIncompleteOfflinePins, scheduleResumeIncompleteOfflinePins } from '../utils/offline/resumeIncompleteOfflinePins';
 import { runLegacyOfflineFileMigration } from '../utils/migrations/legacyOfflineFileMigration';
 import { reconcileLibraryTierForServer } from '../utils/offline/libraryTierReconcile';
-import { initMiniPlayerBridgeOnMain } from '../utils/miniPlayerBridge';
+import { initMiniPlayerBridgeOnMain } from '@/features/miniPlayer';
 import { runAdvancedModeMigration } from '../utils/migrations/advancedModeMigration';
 import { bootstrapAllIndexedServers } from '../utils/library/librarySession';
 import { hydrateQueueFromIndex } from '../utils/library/queueRestore';

@@ -1,6 +1,6 @@
 import { Maximize2, Pin, PinOff, X } from 'lucide-react';
 import type { TFunction } from 'i18next';
-import { IS_LINUX } from '../../utils/platform';
+import { IS_LINUX } from '@/utils/platform';
 
 interface Props {
   trackTitle: string | undefined;

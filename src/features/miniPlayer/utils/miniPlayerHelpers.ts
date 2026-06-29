@@ -1,7 +1,7 @@
-import { usePlayerStore } from '../../store/playerStore';
-import { resolveQueueTrack } from '../library/queueTrackView';
-import type { MiniSyncPayload, MiniTrackInfo } from '../miniPlayerBridge';
-import type { Track } from '../../store/playerStoreTypes';
+import { usePlayerStore } from '@/store/playerStore';
+import { resolveQueueTrack } from '@/utils/library/queueTrackView';
+import type { MiniSyncPayload, MiniTrackInfo } from '@/features/miniPlayer/utils/miniPlayerBridge';
+import type { Track } from '@/store/playerStoreTypes';
 
 /** Half-width of the mini initial-snapshot queue window (matches the bridge). */
 const MINI_SNAPSHOT_HALF = 100;

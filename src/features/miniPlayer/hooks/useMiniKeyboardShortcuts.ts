@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { emit } from '@tauri-apps/api/event';
-import { useKeybindingsStore, matchInAppBinding } from '../store/keybindingsStore';
+import { useKeybindingsStore, matchInAppBinding } from '@/store/keybindingsStore';
 
 /** Mini-window keyboard shortcuts. Space/Arrow{Left,Right} run the standard
  *  play-pause/next/prev shortcut actions (source: 'mini-window' so the bridge

@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { emit } from '@tauri-apps/api/event';
-import { useDragDrop } from '../contexts/DragDropContext';
-import { usePlayerStore } from '../store/playerStore';
+import { useDragDrop } from '@/contexts/DragDropContext';
+import { usePlayerStore } from '@/store/playerStore';
 
 interface Args {
   queueOpen: boolean;

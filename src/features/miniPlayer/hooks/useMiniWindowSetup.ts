@@ -1,10 +1,10 @@
 import { useEffect } from 'react';
 import { invoke } from '@tauri-apps/api/core';
-import { useAuthStore } from '../store/authStore';
-import { IS_LINUX } from '../utils/platform';
+import { useAuthStore } from '@/store/authStore';
+import { IS_LINUX } from '@/utils/platform';
 import {
   EXPANDED_SIZE, EXPANDED_MIN, readStoredExpandedHeight,
-} from '../utils/componentHelpers/miniPlayerHelpers';
+} from '@/features/miniPlayer/utils/miniPlayerHelpers';
 
 /** Three window-bound setup effects bundled together:
  *  - Linux WebKitGTK smooth-scroll per-window (re-applies after auth hydrates

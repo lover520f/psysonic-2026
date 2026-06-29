@@ -1,10 +1,10 @@
-import { star, unstar } from '../api/subsonicStarRating';
+import { star, unstar } from '@/api/subsonicStarRating';
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { emit } from '@tauri-apps/api/event';
 import { useTranslation } from 'react-i18next';
 import { Play, Trash2, Disc3, User, Heart, Info } from 'lucide-react';
-import type { MiniTrackInfo } from '../utils/miniPlayerBridge';
+import type { MiniTrackInfo } from '@/features/miniPlayer/utils/miniPlayerBridge';
 
 interface Props {
   x: number;
