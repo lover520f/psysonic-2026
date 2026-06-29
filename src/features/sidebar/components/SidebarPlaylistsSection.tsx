@@ -5,9 +5,9 @@ import { ChevronRight, Folder, PlayCircle, Sparkles } from 'lucide-react';
 import { displayPlaylistName, isSmartPlaylistName } from '@/features/sidebar/utils/sidebarHelpers';
 import { useAuthStore } from '@/store/authStore';
 import { usePlayerStore } from '@/store/playerStore';
-import { usePlaylistStore } from '@/store/playlistStore';
-import { EMPTY_SERVER_FOLDERS, usePlaylistFolderStore } from '@/store/playlistFolderStore';
-import { groupPlaylistsByFolder } from '@/utils/playlist/playlistFolders';
+import { usePlaylistStore } from '@/features/playlist';
+import { EMPTY_SERVER_FOLDERS, usePlaylistFolderStore } from '@/features/playlist';
+import { groupPlaylistsByFolder } from '@/features/playlist';
 
 interface SidebarPlaylist {
   id: string;

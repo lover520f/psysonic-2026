@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { Play, ChevronRight, FolderTree, ListMusic, Trash2 } from 'lucide-react';
 import type { SubsonicPlaylist } from '../../api/subsonicTypes';
-import { usePlaylistStore } from '../../store/playlistStore';
+import { usePlaylistStore } from '@/features/playlist';
 import { MultiPlaylistToPlaylistSubmenu, SinglePlaylistToPlaylistSubmenu } from './PlaylistToPlaylistSubmenus';
 import MoveToFolderSubmenu from './MoveToFolderSubmenu';
 import type { ContextMenuItemsProps } from './contextMenuItemTypes';
@@ -23,7 +23,7 @@ export default function PlaylistContextItems(props: ContextMenuItemsProps) {
           return (
             <>
               <div className="context-menu-item" onClick={() => handleAction(async () => {
-                const { playPlaylistById } = await import('../../utils/playlist/playPlaylistById');
+                const { playPlaylistById } = await import('@/features/playlist');
                 try {
                   await playPlaylistById(playlist.id);
                 } catch {
@@ -65,7 +65,7 @@ export default function PlaylistContextItems(props: ContextMenuItemsProps) {
               <div className="context-menu-divider" />
               <div className="context-menu-item" style={{ color: 'var(--danger)' }} onClick={() => handleAction(async () => {
                 const { showToast } = await import('../../utils/ui/toast');
-                const { deletePlaylist } = await import('../../api/subsonicPlaylists');
+                const { deletePlaylist } = await import('@/features/playlist');
                 const { removeId } = usePlaylistStore.getState();
                 try {
                   await deletePlaylist(playlist.id);
@@ -113,7 +113,7 @@ export default function PlaylistContextItems(props: ContextMenuItemsProps) {
               {offlinePolicy.canEditPlaylist && (
               <div className="context-menu-item" style={{ color: 'var(--danger)' }} onClick={() => handleAction(async () => {
                 const { showToast } = await import('../../utils/ui/toast');
-                const { deletePlaylist } = await import('../../api/subsonicPlaylists');
+                const { deletePlaylist } = await import('@/features/playlist');
                 const { removeId } = usePlaylistStore.getState();
                 const deletedIds: string[] = [];
                 for (const pl of selectedPlaylists) {

@@ -1,6 +1,6 @@
 import { libraryGetTracksByAlbum, subscribeLibrarySyncIdle } from '@/api/library';
 import { getAlbumForServer, filterSongsToServerLibrary } from '@/api/subsonicLibrary';
-import { getPlaylistForServer } from '@/api/subsonicPlaylists';
+import { getPlaylistForServer } from '@/features/playlist';
 import { getArtistForServer } from '@/features/artist';
 import type { SubsonicSong } from '@/api/subsonicTypes';
 import { invoke } from '@tauri-apps/api/core';
@@ -8,7 +8,7 @@ import { useAuthStore } from '@/store/authStore';
 import type { PinSource } from '@/store/localPlaybackStore';
 import { useLocalPlaybackStore } from '@/store/localPlaybackStore';
 import { useOfflineStore } from '@/features/offline/store/offlineStore';
-import { usePlaylistStore } from '@/store/playlistStore';
+import { usePlaylistStore } from '@/features/playlist';
 import { isSmartPlaylistName } from '@/utils/componentHelpers/playlistDetailHelpers';
 import { getMediaDir } from '@/utils/media/mediaDir';
 import {

@@ -2,7 +2,7 @@ import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 're
 import { useTranslation } from 'react-i18next';
 import { Check, Folder, FolderMinus, Plus } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
-import { EMPTY_SERVER_FOLDERS, usePlaylistFolderStore } from '../../store/playlistFolderStore';
+import { EMPTY_SERVER_FOLDERS, usePlaylistFolderStore } from '@/features/playlist';
 
 interface Props {
   playlistId: string;

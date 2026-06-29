@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { Download, FileUp, HardDrive, Lightbulb, Search } from 'lucide-react';
-import { usePlaylistLayoutStore, type PlaylistLayoutItemId } from '@/store/playlistLayoutStore';
+import { usePlaylistLayoutStore, type PlaylistLayoutItemId } from '@/features/playlist';
 
 const PLAYLIST_LAYOUT_ICONS: Record<PlaylistLayoutItemId, typeof Search> = {
   addSongs:     Search,

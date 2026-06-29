@@ -1,5 +1,5 @@
 import { Play } from 'lucide-react';
-import { updatePlaylist } from '../api/subsonicPlaylists';
+import { updatePlaylist } from '@/features/playlist';
 import { resolvePlaylist, resolveMediaServerId } from '@/features/offline';
 import { songToTrack } from '../utils/playback/songToTrack';
 import type { Track } from '../store/playerStoreTypes';
@@ -8,7 +8,7 @@ import { usePlayerStore } from '../store/playerStore';
 import { useOrbitStore } from '@/features/orbit';
 import { OrbitGuestQueue, OrbitQueueHead } from '@/features/orbit';
 import HostApprovalQueue from './HostApprovalQueue';
-import { usePlaylistStore } from '../store/playlistStore';
+import { usePlaylistStore } from '@/features/playlist';
 import { useTranslation } from 'react-i18next';
 import { usePlaybackLibraryNavigate } from '../hooks/usePlaybackLibraryNavigate';
 import { useAuthStore } from '../store/authStore';

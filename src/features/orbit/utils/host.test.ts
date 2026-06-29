@@ -24,7 +24,7 @@ vi.mock('@/features/orbit/utils/remote', () => ({
 vi.mock('@/features/orbit/store/orbitStore', () => ({ useOrbitStore: { getState: () => orbitStore } }));
 vi.mock('@/store/authStore', () => ({ useAuthStore: { getState: () => ({}) } }));
 vi.mock('@/store/playerStore', () => ({ usePlayerStore: { getState: () => ({ enqueue: vi.fn() }) } }));
-vi.mock('@/api/subsonicPlaylists', () => ({ createPlaylist: vi.fn(), deletePlaylist: vi.fn() }));
+vi.mock('@/features/playlist', () => ({ createPlaylist: vi.fn(), deletePlaylist: vi.fn() }));
 vi.mock('@/api/subsonicLibrary', () => ({ getSong: vi.fn() }));
 vi.mock('@/utils/playback/songToTrack', () => ({ songToTrack: vi.fn() }));
 

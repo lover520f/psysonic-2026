@@ -7,7 +7,7 @@ import { queueSongStar } from '../../store/pendingStarSync';
 import { getMusicNetworkRuntime, useEnrichmentPrimary } from '../../music-network';
 import type { Track } from '../../store/playerStoreTypes';
 import { useAuthStore } from '../../store/authStore';
-import { usePlaylistStore } from '../../store/playlistStore';
+import { usePlaylistStore } from '@/features/playlist';
 import { songToTrack } from '../../utils/playback/songToTrack';
 import { showToast } from '../../utils/ui/toast';
 import { suggestOrbitTrack, hostEnqueueToOrbit, evaluateOrbitSuggestGate, OrbitSuggestBlockedError } from '@/features/orbit';
@@ -178,7 +178,7 @@ export default function SongContextItems(props: ContextMenuItemsProps) {
               </div>
               {offlinePolicy.canEditPlaylist && playlistId && playlistSongIndex !== undefined && (
                 <div className="context-menu-item" style={{ color: 'var(--danger)' }} onClick={() => handleAction(async () => {
-                  const { updatePlaylist } = await import('../../api/subsonicPlaylists');
+                  const { updatePlaylist } = await import('@/features/playlist');
                   const { showToast } = await import('../../utils/ui/toast');
                   const touchPlaylist = usePlaylistStore.getState().touchPlaylist;
                   try {

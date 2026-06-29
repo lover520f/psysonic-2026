@@ -11,7 +11,7 @@ import { useTranslation } from 'react-i18next';
 import { PanelLeft, PanelLeftClose, Trash2 } from 'lucide-react';
 import PsysonicLogo from '@/components/PsysonicLogo';
 import PSmallLogo from '@/components/PSmallLogo';
-import { usePlaylistStore } from '@/store/playlistStore';
+import { usePlaylistStore } from '@/features/playlist';
 import OverlayScrollArea from '@/ui/OverlayScrollArea';
 import {
   getLibraryItemsForReorder,

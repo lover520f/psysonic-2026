@@ -5,7 +5,7 @@ import { useAuthStore } from '@/store/authStore';
 import type { QueueDisplayMode } from '@/store/authStoreTypes';
 import { useHomeStore } from '@/store/homeStore';
 import { usePlayerBarLayoutStore } from '@/store/playerBarLayoutStore';
-import { usePlaylistLayoutStore } from '@/store/playlistLayoutStore';
+import { usePlaylistLayoutStore } from '@/features/playlist';
 import { useQueueToolbarStore } from '@/store/queueToolbarStore';
 import { useSidebarStore } from '@/features/sidebar';
 import SettingsSubSection from '@/features/settings/components/SettingsSubSection';

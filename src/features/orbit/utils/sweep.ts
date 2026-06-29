@@ -1,4 +1,4 @@
-import { getPlaylist, getPlaylists, updatePlaylist } from '@/api/subsonicPlaylists';
+import { getPlaylist, getPlaylists, updatePlaylist } from '@/features/playlist';
 import { type OrbitOutboxMeta } from '@/features/orbit/api/orbit';
 import { parseOutboxPlaylistName } from '@/features/orbit/utils/helpers';
 import { type OutboxSnapshot } from '@/features/orbit/utils/stateMath';

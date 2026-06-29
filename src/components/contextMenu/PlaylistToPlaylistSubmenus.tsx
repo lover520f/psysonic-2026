@@ -1,7 +1,7 @@
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ListMusic, Plus } from 'lucide-react';
-import { usePlaylistStore } from '../../store/playlistStore';
+import { usePlaylistStore } from '@/features/playlist';
 import { showToast } from '../../utils/ui/toast';
 import { isSmartPlaylistName } from '../../utils/componentHelpers/contextMenuHelpers';
 
@@ -41,7 +41,7 @@ export function SinglePlaylistToPlaylistSubmenu({ playlist, onDone, triggerId }:
 
   const handleCreate = async () => {
     if (!newName.trim()) return;
-    const { createPlaylist } = await import('../../api/subsonicPlaylists');
+    const { createPlaylist } = await import('@/features/playlist');
     try {
       const newPl = await createPlaylist(newName.trim(), []);
       if (newPl?.id) {
@@ -55,7 +55,7 @@ export function SinglePlaylistToPlaylistSubmenu({ playlist, onDone, triggerId }:
   };
 
   const handleAddToNewPlaylist = async (targetId: string, targetName: string) => {
-    const { getPlaylist, updatePlaylist } = await import('../../api/subsonicPlaylists');
+    const { getPlaylist, updatePlaylist } = await import('@/features/playlist');
     const touchPlaylist = usePlaylistStore.getState().touchPlaylist;
 
     try {
@@ -73,7 +73,7 @@ export function SinglePlaylistToPlaylistSubmenu({ playlist, onDone, triggerId }:
   };
 
   const handleAdd = async (targetId: string, targetName: string) => {
-    const { getPlaylist, updatePlaylist } = await import('../../api/subsonicPlaylists');
+    const { getPlaylist, updatePlaylist } = await import('@/features/playlist');
     const touchPlaylist = usePlaylistStore.getState().touchPlaylist;
 
     try {
@@ -180,7 +180,7 @@ export function MultiPlaylistToPlaylistSubmenu({ playlists, onDone, triggerId }:
 
   const handleCreate = async () => {
     if (!newName.trim()) return;
-    const { createPlaylist } = await import('../../api/subsonicPlaylists');
+    const { createPlaylist } = await import('@/features/playlist');
     try {
       const newPl = await createPlaylist(newName.trim(), []);
       if (newPl?.id) {
@@ -194,7 +194,7 @@ export function MultiPlaylistToPlaylistSubmenu({ playlists, onDone, triggerId }:
   };
 
   const handleMergeToNewPlaylist = async (targetId: string, targetName: string) => {
-    const { getPlaylist, updatePlaylist } = await import('../../api/subsonicPlaylists');
+    const { getPlaylist, updatePlaylist } = await import('@/features/playlist');
     const touchPlaylist = usePlaylistStore.getState().touchPlaylist;
 
     try {
@@ -223,7 +223,7 @@ export function MultiPlaylistToPlaylistSubmenu({ playlists, onDone, triggerId }:
   };
 
   const handleMerge = async (targetId: string, targetName: string) => {
-    const { getPlaylist, updatePlaylist } = await import('../../api/subsonicPlaylists');
+    const { getPlaylist, updatePlaylist } = await import('@/features/playlist');
     const touchPlaylist = usePlaylistStore.getState().touchPlaylist;
 
     try {

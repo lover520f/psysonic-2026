@@ -1,6 +1,6 @@
 import type React from 'react';
 import type { TFunction } from 'i18next';
-import { uploadArtistImage } from '@/api/subsonicPlaylists';
+import { uploadArtistImage } from '@/features/playlist';
 import { setRating, star, unstar } from '@/api/subsonicStarRating';
 import type { SubsonicArtist } from '@/api/subsonicTypes';
 import { useAuthStore } from '@/store/authStore';

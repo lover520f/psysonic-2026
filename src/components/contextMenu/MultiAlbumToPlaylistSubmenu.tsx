@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { ListMusic, Plus } from 'lucide-react';
 import { resolveAlbum, resolveMediaServerId, resolvePlaylist } from '@/features/offline';
 import type { SubsonicPlaylist } from '../../api/subsonicTypes';
-import { usePlaylistStore } from '../../store/playlistStore';
+import { usePlaylistStore } from '@/features/playlist';
 import { showToast } from '../../utils/ui/toast';
 import {
   confirmAddAllDuplicates,
@@ -39,7 +39,7 @@ export function MultiAlbumToPlaylistSubmenu({ albumIds, onDone, triggerId: _trig
   }, [albumIds]);
 
   const handleAddWithToast = async (pl: SubsonicPlaylist, songIds: string[]) => {
-    const { updatePlaylist } = await import('../../api/subsonicPlaylists');
+    const { updatePlaylist } = await import('@/features/playlist');
     const touchPlaylist = usePlaylistStore.getState().touchPlaylist;
 
     try {
@@ -125,7 +125,7 @@ export function MultiAlbumToPlaylistSubmenu({ albumIds, onDone, triggerId: _trig
     const handleCreate = async () => {
       const name = newName.trim() || t('playlists.unnamed');
       try {
-        const { createPlaylist } = await import('../../api/subsonicPlaylists');
+        const { createPlaylist } = await import('@/features/playlist');
         const pl = await createPlaylist(name, songIds);
         if (pl?.id) {
           usePlaylistStore.getState().touchPlaylist(pl.id);
