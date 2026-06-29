@@ -6,7 +6,7 @@ import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useSta
 import { useLocation, useNavigate, useNavigationType, useSearchParams } from 'react-router-dom';
 import { SlidersVertical, Search, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import AlbumRow from '@/components/AlbumRow';
+import { AlbumRow } from '@/features/album';
 import { ArtistRow } from '@/features/artist';
 import PagedSongList from '@/components/PagedSongList';
 import CustomSelect from '@/ui/CustomSelect';
@@ -15,7 +15,7 @@ import { tooltipAttrs } from '@/ui/tooltipAttrs';
 import { APP_MAIN_SCROLL_VIEWPORT_ID } from '@/constants/appScroll';
 import { useAuthStore } from '@/store/authStore';
 import { usePlayerStore } from '@/store/playerStore';
-import { isAdvancedSearchLeaveTargetPath } from '@/store/albumBrowseSessionStore';
+import { isAdvancedSearchLeaveTargetPath } from '@/features/album';
 import {
   isAdvancedSearchPath,
   isAdvancedSearchPanelPath,

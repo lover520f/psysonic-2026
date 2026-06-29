@@ -7,7 +7,7 @@ import {
   isAlbumDetailPath,
   isArtistDetailPath,
   isComposerDetailPath,
-} from '../../store/albumBrowseSessionStore';
+} from '@/features/album';
 import {
   peekPersistedAdvancedSearchLeaveSnapshot,
   saveAdvancedSearchLeaveSnapshot,

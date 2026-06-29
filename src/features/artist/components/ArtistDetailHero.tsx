@@ -1,6 +1,6 @@
 import React, { useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useAlbumDetailBack } from '@/hooks/useAlbumDetailBack';
+import { useAlbumDetailBack } from '@/features/album';
 import {
   ArrowLeft, Camera, Check, HardDriveDownload, Heart,
   Loader2, Play, Radio, Share2, Shuffle, Users,

@@ -4,10 +4,10 @@ import type { SubsonicAlbum, SubsonicArtist, SubsonicSong } from '../api/subsoni
 import { runLocalRandomSongs } from '../utils/library/browseTextSearch';
 import React, { useEffect, useState } from 'react';
 import Hero from '../components/Hero';
-import AlbumRow from '../components/AlbumRow';
+import { AlbumRow } from '@/features/album';
 import SongRail from '../components/SongRail';
 import BecauseYouLikeRail from '../components/BecauseYouLikeRail';
-import LosslessAlbumsRail from '../components/LosslessAlbumsRail';
+import { LosslessAlbumsRail } from '@/features/album';
 import { useTranslation } from 'react-i18next';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { ChevronRight } from 'lucide-react';

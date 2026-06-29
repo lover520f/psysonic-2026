@@ -11,7 +11,7 @@ import { COVER_DENSE_RAIL_CELL_CSS_PX } from '../cover/layoutSizes';
 import { enqueueAndPlay } from '../utils/playback/playSong';
 import { useDragDrop } from '../contexts/DragDropContext';
 import { useOrbitSongRowBehavior } from '@/features/orbit';
-import { useNavigateToAlbum } from '../hooks/useNavigateToAlbum';
+import { useNavigateToAlbum } from '@/features/album';
 import { useNavigateToArtist } from '@/features/artist';
 import { OpenArtistRefInline } from '@/features/artist';
 import { resolveTrackArtistRefs } from '../utils/playback/trackArtistRefs';

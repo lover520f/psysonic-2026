@@ -4,7 +4,7 @@ import type { SubsonicArtist, SubsonicAlbum, SubsonicArtistInfo } from '../api/s
 import { useEffect, useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ndListAlbumsByArtistRole } from '../api/navidromeBrowse';
-import AlbumCard from '../components/AlbumCard';
+import { AlbumCard } from '@/features/album';
 import { ArtistHeroCover } from '../cover/artistHero';
 import { coverArtRef } from '../cover/ref';
 import { useCoverLightboxSrc } from '../cover/lightbox';

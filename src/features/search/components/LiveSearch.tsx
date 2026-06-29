@@ -22,13 +22,13 @@ import {
 } from '@/utils/library/libraryDevLog';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useNavigateToAlbum } from '@/hooks/useNavigateToAlbum';
+import { useNavigateToAlbum } from '@/features/album';
 import { Search, Disc3, Users, Music, TextSearch, Database, Globe } from 'lucide-react';
 import { usePlayerStore } from '@/store/playerStore';
 import { useAuthStore } from '@/store/authStore';
 import { useLibraryIndexStore } from '@/store/libraryIndexStore';
 import { useTranslation } from 'react-i18next';
-import { albumArtistDisplayName } from '@/utils/album/deriveAlbumHeaderArtistRefs';
+import { albumArtistDisplayName } from '@/features/album';
 import { FETCH_QUEUE_BIAS_SEARCH_ARTIST_OVER_ALBUM } from '@/ui/CachedImage';
 import type { SubsonicSong } from '@/api/subsonicTypes';
 import { AlbumCoverArtImage } from '@/cover/AlbumCoverArtImage';

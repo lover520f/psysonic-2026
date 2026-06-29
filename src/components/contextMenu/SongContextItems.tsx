@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { Play, ListPlus, Radio, Heart, ChevronRight, ChevronsRight, User, Disc3, ListMusic, Info, Sparkles, Star, Trash2, HeartCrack, Share2, Orbit as OrbitIcon } from 'lucide-react';
-import { useNavigateToAlbum } from '../../hooks/useNavigateToAlbum';
+import { useNavigateToAlbum } from '@/features/album';
 import { useNavigateToArtist } from '@/features/artist';
 import { resolveAlbum, resolveMediaServerId, resolvePlaylist } from '@/features/offline';
 import { queueSongStar } from '../../store/pendingStarSync';

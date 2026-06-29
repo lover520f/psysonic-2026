@@ -11,7 +11,7 @@ import SongRail from '../SongRail';
 import { playSongNow } from '../../utils/playback/playSong';
 import { ndListSongs, ndInvalidateSongsCache } from '../../api/navidromeBrowse';
 import { usePerfProbeFlags } from '../../utils/perf/perfFlags';
-import { useNavigateToAlbum } from '../../hooks/useNavigateToAlbum';
+import { useNavigateToAlbum } from '@/features/album';
 import { useNavigateToArtist } from '@/features/artist';
 import { OpenArtistRefInline } from '@/features/artist';
 import { resolveTrackArtistRefs } from '../../utils/playback/trackArtistRefs';

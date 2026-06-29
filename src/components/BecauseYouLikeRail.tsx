@@ -24,8 +24,8 @@ import { playAlbum, playAlbumShuffled } from '../utils/playback/playAlbum';
 import { useLongPressAction } from '../hooks/useLongPressAction';
 import { LongPressWaveOverlay } from './LongPressWaveOverlay';
 import { formatHumanHoursMinutes } from '../utils/format/formatHumanDuration';
-import AlbumRow from './AlbumRow';
-import { albumArtistDisplayName } from '../utils/album/deriveAlbumHeaderArtistRefs';
+import { AlbumRow } from '@/features/album';
+import { albumArtistDisplayName } from '@/features/album';
 
 const ANCHOR_HISTORY_KEY_PREFIX = 'psysonic_because_anchor_history:';
 const PICKS_HISTORY_KEY_PREFIX = 'psysonic_because_picks:';

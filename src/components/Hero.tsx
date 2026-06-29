@@ -3,7 +3,7 @@ import { resolveAlbum, resolveMediaServerId } from '@/features/offline';
 import type { SubsonicAlbum } from '../api/subsonicTypes';
 import { songToTrack } from '../utils/playback/songToTrack';
 import React, { useEffect, useState, useRef, useCallback, useMemo } from 'react';
-import { useNavigateToAlbum } from '../hooks/useNavigateToAlbum';
+import { useNavigateToAlbum } from '@/features/album';
 import { Play, ListPlus, ChevronLeft, ChevronRight } from 'lucide-react';
 import { CoverArtImage } from '../cover/CoverArtImage';
 import { useAlbumCoverRef } from '../cover/useLibraryCoverRef';
@@ -22,7 +22,7 @@ import { usePerfProbeFlags } from '../utils/perf/perfFlags';
 import { playAlbum, playAlbumShuffled } from '../utils/playback/playAlbum';
 import { useLongPressAction } from '../hooks/useLongPressAction';
 import { LongPressWaveOverlay } from './LongPressWaveOverlay';
-import { albumArtistDisplayName, deriveAlbumArtistRefs } from '../utils/album/deriveAlbumHeaderArtistRefs';
+import { albumArtistDisplayName, deriveAlbumArtistRefs } from '@/features/album';
 
 const INTERVAL_MS = 10000;
 const HERO_ALBUM_COUNT = 8;

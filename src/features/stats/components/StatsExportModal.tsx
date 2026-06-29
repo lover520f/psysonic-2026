@@ -12,7 +12,7 @@ import {
   renderAlbumCardCanvas,
   ExportFormat,
   ExportGridSize,
-} from '@/utils/export/exportAlbumCard';
+} from '@/features/album';
 
 interface Props {
   open: boolean;

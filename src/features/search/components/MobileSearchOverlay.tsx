@@ -16,7 +16,7 @@ import { ArtistCoverArtImage } from '@/cover/ArtistCoverArtImage';
 import { CoverArtImage } from '@/cover/CoverArtImage';
 import { albumCoverRefForSong } from '@/cover/ref';
 import { showToast } from '@/utils/ui/toast';
-import { albumArtistDisplayName } from '@/utils/album/deriveAlbumHeaderArtistRefs';
+import { albumArtistDisplayName } from '@/features/album';
 import { useShareSearch } from '@/features/search/hooks/useShareSearch';
 import ShareSearchResults from '@/features/search/components/ShareSearchResults';
 import {

@@ -1,7 +1,7 @@
 import type { KeyboardEvent, MouseEvent } from 'react';
 import { ALL_NAV_ITEMS } from '@/config/navItems';
 import type { LiveSearchScope } from '@/store/liveSearchScopeStore';
-import { isAlbumsBrowsePath, isNewReleasesBrowsePath } from '@/store/albumBrowseSessionStore';
+import { isAlbumsBrowsePath, isNewReleasesBrowsePath } from '@/features/album';
 import { isTracksBrowsePath } from '@/store/advancedSearchSessionStore';
 import { isArtistsBrowsePath } from '@/features/artist';
 import { isComposersBrowsePath } from '@/store/composerBrowseSessionStore';

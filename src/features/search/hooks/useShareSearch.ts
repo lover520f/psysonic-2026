@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useNavigateToAlbum } from '@/hooks/useNavigateToAlbum';
+import { useNavigateToAlbum } from '@/features/album';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/store/authStore';
 import {

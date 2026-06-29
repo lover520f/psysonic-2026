@@ -8,7 +8,7 @@ import {
   isArtistsBrowsePath,
   useArtistBrowseSessionStore,
 } from '@/features/artist/store/artistBrowseSessionStore';
-import { isArtistDetailPath } from '@/store/albumBrowseSessionStore';
+import { isArtistDetailPath } from '@/features/album';
 import { shouldRestoreArtistBrowseSession } from '@/utils/navigation/albumDetailNavigation';
 import { useLiveSearchScopeStore } from '@/store/liveSearchScopeStore';
 

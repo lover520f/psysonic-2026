@@ -5,7 +5,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Share2 } from 'lucide-react';
 import { formatHumanHoursMinutes } from '@/utils/format/formatHumanDuration';
-import AlbumRow from '@/components/AlbumRow';
+import { AlbumRow } from '@/features/album';
 import StatsExportModal from '@/features/stats/components/StatsExportModal';
 import PlayerStatisticsPanel from '@/features/stats/components/PlayerStatisticsPanel';
 import StatisticsTabBar from '@/features/stats/components/StatisticsTabBar';

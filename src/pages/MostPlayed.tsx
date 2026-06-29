@@ -13,7 +13,7 @@ import { playAlbum, playAlbumShuffled } from '../utils/playback/playAlbum';
 import { useLongPressAction } from '../hooks/useLongPressAction';
 import { LongPressWaveOverlay } from '../components/LongPressWaveOverlay';
 import { useTranslation } from 'react-i18next';
-import { albumArtistDisplayName } from '../utils/album/deriveAlbumHeaderArtistRefs';
+import { albumArtistDisplayName } from '@/features/album';
 
 const PAGE_SIZE = 50;
 

@@ -9,7 +9,7 @@ import { useFavoritesData } from '@/features/favorites/hooks/useFavoritesData';
 import { useFavoritesSongFiltering } from '@/features/favorites/hooks/useFavoritesSongFiltering';
 import { useFavoritesSelection } from '@/features/favorites/hooks/useFavoritesSelection';
 import { useBulkPlPickerOutsideClick } from '@/hooks/useBulkPlPickerOutsideClick';
-import AlbumRow from '@/components/AlbumRow';
+import { AlbumRow } from '@/features/album';
 import { ArtistRow } from '@/features/artist';
 import { usePlayerStore } from '@/store/playerStore';
 import { useTranslation } from 'react-i18next';

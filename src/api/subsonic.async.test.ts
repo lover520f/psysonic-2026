@@ -27,7 +27,7 @@ vi.mock('../utils/network/subsonicNetworkGuard', () => ({
 
 import axios from 'axios';
 import { pingWithCredentials, pingWithCredentialsForProfile, ping } from './subsonic';
-import { getAlbumInfo2 } from './subsonicAlbumInfo';
+import { getAlbumInfo2 } from '@/features/album';
 import { getStarred } from './subsonicStarRating';
 import { search } from './subsonicSearch';
 import { getAlbum, getMusicDirectory, getMusicFolders, getMusicIndexes, getRandomSongs, getSong } from './subsonicLibrary';

@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import type { SubsonicPlaylist, SubsonicSong } from '../../api/subsonicTypes';
 import type { ZipDownload } from '@/features/offline';
-import type { AlbumOfflineStatus } from '../../hooks/useAlbumOfflineState';
+import type { AlbumOfflineStatus } from '@/features/album';
 import { dequeueOfflinePin } from '@/features/offline';
 import { useThemeStore } from '../../store/themeStore';
 import { usePlaylistLayoutStore, type PlaylistLayoutItemId } from '../../store/playlistLayoutStore';

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type RefObject } from 'react';
 import { useLocation, useNavigationType, type NavigationType } from 'react-router-dom';
-import { isComposerDetailPath } from '../store/albumBrowseSessionStore';
+import { isComposerDetailPath } from '@/features/album';
 import {
   DEFAULT_COMPOSER_BROWSE_RETURN_STATE,
   type ComposerBrowseReturnState,

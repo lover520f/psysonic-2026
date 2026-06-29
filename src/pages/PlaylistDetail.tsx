@@ -8,7 +8,7 @@ import { useShallow } from 'zustand/react/shallow';
 import { usePlaylistStore } from '../store/playlistStore';
 import { useOfflineStore } from '@/features/offline';
 import { useLocalPlaybackStore } from '../store/localPlaybackStore';
-import { useAlbumOfflineState } from '../hooks/useAlbumOfflineState';
+import { useAlbumOfflineState } from '@/features/album';
 import { useAuthStore } from '../store/authStore';
 import { useDownloadModalStore } from '@/features/offline';
 import { useZipDownloadStore } from '@/features/offline';
