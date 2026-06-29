@@ -1,6 +1,6 @@
 import { describe, expect, it, beforeEach } from 'vitest';
-import { useLiveSearchScopeStore } from '../store/liveSearchScopeStore';
-import { syncLiveSearchRouteScope } from './useLiveSearchRouteScope';
+import { useLiveSearchScopeStore } from '@/store/liveSearchScopeStore';
+import { syncLiveSearchRouteScope } from '@/features/search/hooks/useLiveSearchRouteScope';
 
 describe('syncLiveSearchRouteScope', () => {
   beforeEach(() => {

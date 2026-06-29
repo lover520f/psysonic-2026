@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
-import type { SubsonicAlbum, SubsonicArtist, SubsonicSong } from '../api/subsonicTypes';
+import type { SubsonicAlbum, SubsonicArtist, SubsonicSong } from '@/api/subsonicTypes';
 import {
   resolveShareSearchAlbum,
   resolveShareSearchArtist,
   resolveShareSearchPayload,
-} from '../utils/share/enqueueShareSearchPayload';
-import type { ShareSearchMatch } from '../utils/share/shareSearch';
+} from '@/utils/share/enqueueShareSearchPayload';
+import type { ShareSearchMatch } from '@/utils/share/shareSearch';
 
 export interface ShareSearchPreviewState {
   shareTrackSong: SubsonicSong | null;

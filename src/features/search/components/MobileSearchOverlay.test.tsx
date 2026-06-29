@@ -1,21 +1,21 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { renderWithProviders } from '../test/helpers/renderWithProviders';
-import MobileSearchOverlay from './MobileSearchOverlay';
-import { useLiveSearchScopeStore } from '../store/liveSearchScopeStore';
+import { renderWithProviders } from '@/test/helpers/renderWithProviders';
+import MobileSearchOverlay from '@/features/search/components/MobileSearchOverlay';
+import { useLiveSearchScopeStore } from '@/store/liveSearchScopeStore';
 
 // The overlay's only behaviour-bearing change in PR #1165 was renaming the
 // recent-search handler `useRecent` → `applyRecentSearch` (it was a plain
 // function mis-flagged as a hook). Smoke-test that the recent-search path still
 // applies the term to the live-search store. Heavy collaborators are stubbed.
-vi.mock('../hooks/useShareSearch', () => ({ useShareSearch: () => ({ shareMatch: null }) }));
-vi.mock('../api/subsonicSearch', () => ({
+vi.mock('@/features/search/hooks/useShareSearch', () => ({ useShareSearch: () => ({ shareMatch: null }) }));
+vi.mock('@/api/subsonicSearch', () => ({
   search: vi.fn(() => Promise.resolve({ artists: [], albums: [], songs: [] })),
 }));
-vi.mock('../cover/AlbumCoverArtImage', () => ({ AlbumCoverArtImage: () => null }));
-vi.mock('../cover/ArtistCoverArtImage', () => ({ ArtistCoverArtImage: () => null }));
-vi.mock('../cover/CoverArtImage', () => ({ CoverArtImage: () => null }));
+vi.mock('@/cover/AlbumCoverArtImage', () => ({ AlbumCoverArtImage: () => null }));
+vi.mock('@/cover/ArtistCoverArtImage', () => ({ ArtistCoverArtImage: () => null }));
+vi.mock('@/cover/CoverArtImage', () => ({ CoverArtImage: () => null }));
 
 const RECENT_KEY = 'psysonic_recent_searches';
 

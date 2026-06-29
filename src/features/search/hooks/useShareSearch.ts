@@ -1,18 +1,18 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useNavigateToAlbum } from './useNavigateToAlbum';
+import { useNavigateToAlbum } from '@/hooks/useNavigateToAlbum';
 import { useTranslation } from 'react-i18next';
-import { useAuthStore } from '../store/authStore';
+import { useAuthStore } from '@/store/authStore';
 import {
   activateShareSearchServer,
   enqueueShareSearchPayload,
-} from '../utils/share/enqueueShareSearchPayload';
-import type { ServerProfile } from '../store/authStoreTypes';
-import { findServerIdForShareUrl } from '../utils/share/shareLink';
-import { shareServerOriginLabel } from '../utils/share/shareServerOriginLabel';
-import { parseShareSearchText } from '../utils/share/shareSearch';
-import { serverIndexKeyFromUrl } from '../utils/server/serverIndexKey';
-import { useShareSearchPreview } from './useShareSearchPreview';
+} from '@/utils/share/enqueueShareSearchPayload';
+import type { ServerProfile } from '@/store/authStoreTypes';
+import { findServerIdForShareUrl } from '@/utils/share/shareLink';
+import { shareServerOriginLabel } from '@/utils/share/shareServerOriginLabel';
+import { parseShareSearchText } from '@/utils/share/shareSearch';
+import { serverIndexKeyFromUrl } from '@/utils/server/serverIndexKey';
+import { useShareSearchPreview } from '@/features/search/hooks/useShareSearchPreview';
 
 export function useShareSearch(query: string, onSuccess?: () => void) {
   const { t } = useTranslation();

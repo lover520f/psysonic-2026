@@ -1,28 +1,28 @@
-import { search } from '../api/subsonicSearch';
-import type { SearchResults, SubsonicArtist } from '../api/subsonicTypes';
-import { songToTrack } from '../utils/playback/songToTrack';
-import { useLiveSearchScopeStore } from '../store/liveSearchScopeStore';
+import { search } from '@/api/subsonicSearch';
+import type { SearchResults, SubsonicArtist } from '@/api/subsonicTypes';
+import { songToTrack } from '@/utils/playback/songToTrack';
+import { useLiveSearchScopeStore } from '@/store/liveSearchScopeStore';
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { navigatePathWithAlbumReturnTo } from '../utils/navigation/albumDetailNavigation';
+import { navigatePathWithAlbumReturnTo } from '@/utils/navigation/albumDetailNavigation';
 import { X, Search, Disc3, Users, Music, Music2, Clock, ChevronRight } from 'lucide-react';
-import { usePlayerStore } from '../store/playerStore';
-import { useAuthStore } from '../store/authStore';
+import { usePlayerStore } from '@/store/playerStore';
+import { useAuthStore } from '@/store/authStore';
 import { useTranslation } from 'react-i18next';
 import { FETCH_QUEUE_BIAS_SEARCH_ARTIST_OVER_ALBUM } from '@/ui/CachedImage';
-import { AlbumCoverArtImage } from '../cover/AlbumCoverArtImage';
-import { ArtistCoverArtImage } from '../cover/ArtistCoverArtImage';
-import { CoverArtImage } from '../cover/CoverArtImage';
-import { albumCoverRefForSong } from '../cover/ref';
-import { showToast } from '../utils/ui/toast';
-import { albumArtistDisplayName } from '../utils/album/deriveAlbumHeaderArtistRefs';
-import { useShareSearch } from '../hooks/useShareSearch';
-import ShareSearchResults from './search/ShareSearchResults';
+import { AlbumCoverArtImage } from '@/cover/AlbumCoverArtImage';
+import { ArtistCoverArtImage } from '@/cover/ArtistCoverArtImage';
+import { CoverArtImage } from '@/cover/CoverArtImage';
+import { albumCoverRefForSong } from '@/cover/ref';
+import { showToast } from '@/utils/ui/toast';
+import { albumArtistDisplayName } from '@/utils/album/deriveAlbumHeaderArtistRefs';
+import { useShareSearch } from '@/features/search/hooks/useShareSearch';
+import ShareSearchResults from '@/features/search/components/ShareSearchResults';
 import {
   LiveSearchScopeBadge,
   LiveSearchScopeGhostBadge,
-} from './search/liveSearchScopeUi';
+} from '@/features/search/components/liveSearchScopeUi';
 import {
   createLiveSearchScopeBackspaceState,
   handleLiveSearchScopeBackspace,
@@ -32,7 +32,7 @@ import {
   noteLiveSearchScopeQueryInput,
   resetLiveSearchScopeBackspaceState,
   resolveLiveSearchScopeGhost,
-} from './search/liveSearchScope';
+} from '@/features/search/components/liveSearchScope';
 
 const STORAGE_KEY = 'psysonic_recent_searches';
 const MAX_RECENT = 6;

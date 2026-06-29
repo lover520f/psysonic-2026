@@ -8,8 +8,8 @@ import { decodeServerMagicStringFromText } from '../utils/server/serverMagicStri
 import { applySharePastePayload, applySharePasteQueue } from '../utils/share/applySharePaste';
 import { shareQueueServerContext } from '../utils/share/shareServerOriginLabel';
 import { showToast } from '../utils/ui/toast';
-import { useShareQueuePreview } from '../hooks/useShareQueuePreview';
-import ShareQueuePreviewModal from './search/ShareQueuePreviewModal';
+import { useShareQueuePreview } from '@/features/search';
+import { ShareQueuePreviewModal } from '@/features/search';
 import {
   parseOrbitShareLink,
   joinOrbitSession,

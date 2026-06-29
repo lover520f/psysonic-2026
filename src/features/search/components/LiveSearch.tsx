@@ -1,6 +1,6 @@
-import { subscribeLibrarySyncIdle, subscribeLibrarySyncProgress } from '../api/library';
-import type { SearchResults, SubsonicArtist } from '../api/subsonicTypes';
-import { songToTrack } from '../utils/playback/songToTrack';
+import { subscribeLibrarySyncIdle, subscribeLibrarySyncProgress } from '@/api/library';
+import type { SearchResults, SubsonicArtist } from '@/api/subsonicTypes';
+import { songToTrack } from '@/utils/playback/songToTrack';
 import {
   LIVE_SEARCH_DEBOUNCE_NETWORK_MS,
   LIVE_SEARCH_DEBOUNCE_RACE_MS,
@@ -9,40 +9,40 @@ import {
   mergeLiveSearchResults,
   runLocalLiveSearch,
   runNetworkLiveSearch,
-} from '../utils/library/liveSearchLocal';
-import { raceLiveSearch } from '../utils/library/searchRace';
-import { libraryIsReady } from '../utils/library/libraryReady';
+} from '@/utils/library/liveSearchLocal';
+import { raceLiveSearch } from '@/utils/library/searchRace';
+import { libraryIsReady } from '@/utils/library/libraryReady';
 import {
   emitLiveSearchDebug,
   searchHitCounts,
   searchResultSamples,
-} from '../utils/library/liveSearchDebug';
+} from '@/utils/library/liveSearchDebug';
 import {
   logLibrarySearch,
-} from '../utils/library/libraryDevLog';
+} from '@/utils/library/libraryDevLog';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useNavigateToAlbum } from '../hooks/useNavigateToAlbum';
+import { useNavigateToAlbum } from '@/hooks/useNavigateToAlbum';
 import { Search, Disc3, Users, Music, TextSearch, Database, Globe } from 'lucide-react';
-import { usePlayerStore } from '../store/playerStore';
-import { useAuthStore } from '../store/authStore';
-import { useLibraryIndexStore } from '../store/libraryIndexStore';
+import { usePlayerStore } from '@/store/playerStore';
+import { useAuthStore } from '@/store/authStore';
+import { useLibraryIndexStore } from '@/store/libraryIndexStore';
 import { useTranslation } from 'react-i18next';
-import { albumArtistDisplayName } from '../utils/album/deriveAlbumHeaderArtistRefs';
+import { albumArtistDisplayName } from '@/utils/album/deriveAlbumHeaderArtistRefs';
 import { FETCH_QUEUE_BIAS_SEARCH_ARTIST_OVER_ALBUM } from '@/ui/CachedImage';
-import type { SubsonicSong } from '../api/subsonicTypes';
-import { AlbumCoverArtImage } from '../cover/AlbumCoverArtImage';
-import { ArtistCoverArtImage } from '../cover/ArtistCoverArtImage';
-import { CoverArtImage } from '../cover/CoverArtImage';
-import { COVER_DENSE_SEARCH_CSS_PX } from '../cover/layoutSizes';
-import { albumCoverRef } from '../cover/ref';
-import { showToast } from '../utils/ui/toast';
-import { useShareSearch } from '../hooks/useShareSearch';
-import ShareSearchResults from './search/ShareSearchResults';
+import type { SubsonicSong } from '@/api/subsonicTypes';
+import { AlbumCoverArtImage } from '@/cover/AlbumCoverArtImage';
+import { ArtistCoverArtImage } from '@/cover/ArtistCoverArtImage';
+import { CoverArtImage } from '@/cover/CoverArtImage';
+import { COVER_DENSE_SEARCH_CSS_PX } from '@/cover/layoutSizes';
+import { albumCoverRef } from '@/cover/ref';
+import { showToast } from '@/utils/ui/toast';
+import { useShareSearch } from '@/features/search/hooks/useShareSearch';
+import ShareSearchResults from '@/features/search/components/ShareSearchResults';
 import {
   LiveSearchScopeBadge,
   LiveSearchScopeGhostBadge,
-} from './search/liveSearchScopeUi';
+} from '@/features/search/components/liveSearchScopeUi';
 import {
   createLiveSearchScopeBackspaceState,
   handleLiveSearchScopeBackspace,
@@ -52,9 +52,9 @@ import {
   noteLiveSearchScopeQueryInput,
   resetLiveSearchScopeBackspaceState,
   resolveLiveSearchScopeGhost,
-} from './search/liveSearchScope';
-import { useLiveSearchScopeStore } from '../store/liveSearchScopeStore';
-import { resolveIndexKey } from '../utils/server/serverIndexKey';
+} from '@/features/search/components/liveSearchScope';
+import { useLiveSearchScopeStore } from '@/store/liveSearchScopeStore';
+import { resolveIndexKey } from '@/utils/server/serverIndexKey';
 
 type LiveSearchSource = 'local' | 'network';
 

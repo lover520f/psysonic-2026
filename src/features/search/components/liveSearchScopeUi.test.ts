@@ -11,7 +11,7 @@ import {
   noteLiveSearchScopeQueryInput,
   resetLiveSearchScopeBackspaceState,
   resolveLiveSearchScopeGhost,
-} from './liveSearchScope';
+} from '@/features/search/components/liveSearchScope';
 
 function keyEvent(
   key: string,

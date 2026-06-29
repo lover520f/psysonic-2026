@@ -1,13 +1,13 @@
 import { useTranslation } from 'react-i18next';
-import { ALL_NAV_ITEMS } from '../../config/navItems';
-import type { LiveSearchScope } from '../../store/liveSearchScopeStore';
+import { ALL_NAV_ITEMS } from '@/config/navItems';
+import type { LiveSearchScope } from '@/store/liveSearchScopeStore';
 import {
   SCOPE_NAV_ITEM,
   handleLiveSearchScopeBadgeClick,
   handleLiveSearchScopeGhostClick,
   liveSearchScopeBadgeTooltipKey,
   liveSearchScopeGhostTooltipKey,
-} from './liveSearchScope';
+} from '@/features/search/components/liveSearchScope';
 
 type LiveSearchScopeIconProps = {
   scope: LiveSearchScope;

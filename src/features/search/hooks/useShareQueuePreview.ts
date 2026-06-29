@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
-import type { SubsonicSong } from '../api/subsonicTypes';
+import type { SubsonicSong } from '@/api/subsonicTypes';
 import {
   resolveShareSearchPayload,
   type ShareSearchResolveResult,
-} from '../utils/share/enqueueShareSearchPayload';
-import type { QueueableShareSearchPayload } from '../utils/share/shareSearch';
+} from '@/utils/share/enqueueShareSearchPayload';
+import type { QueueableShareSearchPayload } from '@/utils/share/shareSearch';
 
 export type ShareQueuePreviewState =
   | { status: 'idle' }

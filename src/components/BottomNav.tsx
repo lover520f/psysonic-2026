@@ -3,7 +3,7 @@ import { NavLink } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Disc3, Search, Music4, AudioLines, MoreHorizontal } from 'lucide-react';
 import { usePlayerStore } from '../store/playerStore';
-import MobileSearchOverlay from './MobileSearchOverlay';
+import { MobileSearchOverlay } from '@/features/search';
 import MobileMoreOverlay from './MobileMoreOverlay';
 
 const NAV_ITEMS = [

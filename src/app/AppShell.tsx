@@ -9,7 +9,7 @@ import Sidebar from '@/features/sidebar';
 import PlayerBar from '../components/PlayerBar';
 import BottomNav from '../components/BottomNav';
 import { useIsMobile } from '../hooks/useIsMobile';
-import LiveSearch from '../components/LiveSearch';
+import { LiveSearch } from '@/features/search';
 import DevNetworkModeToggle from '../components/DevNetworkModeToggle';
 import { NowPlayingDropdown } from '@/features/nowPlaying';
 import QueuePanel from '../components/QueuePanel';
@@ -51,7 +51,7 @@ import { useGlobalDndAndSelectionBlockers } from '../hooks/useGlobalDndAndSelect
 import { useAppActivityTracking } from '../hooks/useAppActivityTracking';
 import { useMainScrollingIndicator } from '../hooks/useMainScrollingIndicator';
 import { useCoverNavigationPriority } from '../hooks/useCoverNavigationPriority';
-import { useLiveSearchRouteScope } from '../hooks/useLiveSearchRouteScope';
+import { useLiveSearchRouteScope } from '@/features/search';
 import { useNowPlayingPrewarm } from '@/features/nowPlaying';
 import { useOfflineAutoNav } from '../hooks/useOfflineAutoNav';
 import { useOfflineLibraryFilterSuspend } from '../hooks/useOfflineLibraryFilterSuspend';

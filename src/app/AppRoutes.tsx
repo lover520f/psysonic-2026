@@ -34,7 +34,7 @@ const WhatsNew = lazy(() => import('../pages/WhatsNew'));
 const DeviceSync = lazy(() => import('@/features/deviceSync/pages/DeviceSync'));
 const OfflineLibrary = lazy(() => import('../pages/OfflineLibrary'));
 const LabelAlbums = lazy(() => import('../pages/LabelAlbums'));
-const SearchBrowsePage = lazy(() => import('../pages/SearchBrowsePage'));
+const SearchBrowsePage = lazy(() => import('@/features/search/pages/SearchBrowsePage'));
 const FolderBrowser = lazy(() => import('../pages/FolderBrowser'));
 const InternetRadio = lazy(() => import('@/features/radio/pages/InternetRadio'));
 const Genres = lazy(() => import('../pages/Genres'));

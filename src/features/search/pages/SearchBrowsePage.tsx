@@ -1,32 +1,32 @@
-import { getGenres, getAlbumsByGenre } from '../api/subsonicGenres';
-import { search, searchSongsPaged } from '../api/subsonicSearch';
-import { getRandomSongs } from '../api/subsonicLibrary';
-import type { SubsonicGenre, SubsonicArtist, SubsonicAlbum, SubsonicSong } from '../api/subsonicTypes';
+import { getGenres, getAlbumsByGenre } from '@/api/subsonicGenres';
+import { search, searchSongsPaged } from '@/api/subsonicSearch';
+import { getRandomSongs } from '@/api/subsonicLibrary';
+import type { SubsonicGenre, SubsonicArtist, SubsonicAlbum, SubsonicSong } from '@/api/subsonicTypes';
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate, useNavigationType, useSearchParams } from 'react-router-dom';
 import { SlidersVertical, Search, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import AlbumRow from '../components/AlbumRow';
-import ArtistRow from '../components/ArtistRow';
-import PagedSongList from '../components/PagedSongList';
+import AlbumRow from '@/components/AlbumRow';
+import ArtistRow from '@/components/ArtistRow';
+import PagedSongList from '@/components/PagedSongList';
 import CustomSelect from '@/ui/CustomSelect';
-import StarFilterButton from '../components/StarFilterButton';
+import StarFilterButton from '@/components/StarFilterButton';
 import { tooltipAttrs } from '@/ui/tooltipAttrs';
-import { APP_MAIN_SCROLL_VIEWPORT_ID } from '../constants/appScroll';
-import { useAuthStore } from '../store/authStore';
-import { usePlayerStore } from '../store/playerStore';
-import { isAdvancedSearchLeaveTargetPath } from '../store/albumBrowseSessionStore';
+import { APP_MAIN_SCROLL_VIEWPORT_ID } from '@/constants/appScroll';
+import { useAuthStore } from '@/store/authStore';
+import { usePlayerStore } from '@/store/playerStore';
+import { isAdvancedSearchLeaveTargetPath } from '@/store/albumBrowseSessionStore';
 import {
   isAdvancedSearchPath,
   isAdvancedSearchPanelPath,
   isTracksBrowsePath,
   useAdvancedSearchSessionStore,
   type AdvancedSearchSessionStash,
-} from '../store/advancedSearchSessionStore';
+} from '@/store/advancedSearchSessionStore';
 import {
   readAdvancedSearchRestore,
   shouldRestoreAdvancedSearchSession,
-} from '../utils/navigation/albumDetailNavigation';
+} from '@/utils/navigation/albumDetailNavigation';
 import {
   clearAdvancedSearchLeaveSnapshots,
   consumeAdvancedSearchLeavingForDetail,
@@ -35,36 +35,36 @@ import {
   registerAdvancedSearchSessionProvider,
   resolveAdvancedSearchLeaveSnapshot,
   type AdvancedSearchLeaveSnapshot,
-} from '../utils/navigation/advancedSearchScrollSnapshot';
-import { restoreMainViewportScroll } from '../utils/navigation/restoreMainViewportScroll';
+} from '@/utils/navigation/advancedSearchScrollSnapshot';
+import { restoreMainViewportScroll } from '@/utils/navigation/restoreMainViewportScroll';
 import {
   loadMoreLocalSongs,
   runNetworkAdvancedTextSearch,
   runNetworkAdvancedYearAlbums,
   tryRunLocalAdvancedSearch,
-} from '../utils/library/advancedSearchLocal';
-import { isLosslessSuffix } from '../utils/library/losslessFormats';
-import { LOSSLESS_MODE_QUERY } from '../utils/library/losslessMode';
-import { OXIMEDIA_MOOD_SEARCH_ENABLED } from '../utils/library/trackEnrichment';
-import { raceSearchSources } from '../utils/library/searchRace';
-import { logLibrarySearch } from '../utils/library/libraryDevLog';
+} from '@/utils/library/advancedSearchLocal';
+import { isLosslessSuffix } from '@/utils/library/losslessFormats';
+import { LOSSLESS_MODE_QUERY } from '@/utils/library/losslessMode';
+import { OXIMEDIA_MOOD_SEARCH_ENABLED } from '@/utils/library/trackEnrichment';
+import { raceSearchSources } from '@/utils/library/searchRace';
+import { logLibrarySearch } from '@/utils/library/libraryDevLog';
 import {
   browseRaceCountsFullSearch,
   loadMoreLocalBrowseSongs,
   raceBrowseWithLocalFallback,
   runLocalBrowseFullSearch,
   runNetworkBrowseFullSearch,
-} from '../utils/library/browseTextSearch';
-import { useLibraryIndexStore } from '../store/libraryIndexStore';
-import { MOOD_GROUP_IDS } from '../config/moodGroups';
-import { usePerfProbeFlags } from '../utils/perf/perfFlags';
-import { useSongBrowseList, type SongBrowseListRestore } from '../hooks/useSongBrowseList';
-import TracksPageChrome from '../components/tracks/TracksPageChrome';
-import SongBrowseSection from '../components/tracks/SongBrowseSection';
+} from '@/utils/library/browseTextSearch';
+import { useLibraryIndexStore } from '@/store/libraryIndexStore';
+import { MOOD_GROUP_IDS } from '@/config/moodGroups';
+import { usePerfProbeFlags } from '@/utils/perf/perfFlags';
+import { useSongBrowseList, type SongBrowseListRestore } from '@/hooks/useSongBrowseList';
+import TracksPageChrome from '@/components/tracks/TracksPageChrome';
+import SongBrowseSection from '@/components/tracks/SongBrowseSection';
 import {
   useLiveSearchScopeStore,
   useScopedBrowseSearchQuery,
-} from '../store/liveSearchScopeStore';
+} from '@/store/liveSearchScopeStore';
 
 const MOOD_UI_ENABLED = OXIMEDIA_MOOD_SEARCH_ENABLED;
 

@@ -2,16 +2,16 @@ import React, { useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Music, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import type { SubsonicSong } from '../../api/subsonicTypes';
-import type { ServerProfile } from '../../store/authStoreTypes';
-import { formatTrackTime } from '../../utils/format/formatDuration';
-import type { ShareQueuePreviewState } from '../../hooks/useShareQueuePreview';
-import { sharePayloadTotal, type QueueableShareSearchPayload } from '../../utils/share/shareSearch';
+import type { SubsonicSong } from '@/api/subsonicTypes';
+import type { ServerProfile } from '@/store/authStoreTypes';
+import { formatTrackTime } from '@/utils/format/formatDuration';
+import type { ShareQueuePreviewState } from '@/features/search/hooks/useShareQueuePreview';
+import { sharePayloadTotal, type QueueableShareSearchPayload } from '@/utils/share/shareSearch';
 import OverlayScrollArea from '@/ui/OverlayScrollArea';
-import { usePlayerStore } from '../../store/playerStore';
-import { COVER_DENSE_SEARCH_CSS_PX } from '../../cover/layoutSizes';
-import { COVER_SCOPE_ACTIVE, type CoverServerScope } from '../../cover/types';
-import { AlbumCoverArtImage } from '../../cover/AlbumCoverArtImage';
+import { usePlayerStore } from '@/store/playerStore';
+import { COVER_DENSE_SEARCH_CSS_PX } from '@/cover/layoutSizes';
+import { COVER_SCOPE_ACTIVE, type CoverServerScope } from '@/cover/types';
+import { AlbumCoverArtImage } from '@/cover/AlbumCoverArtImage';
 
 type ShareQueuePreviewModalProps = {
   open: boolean;
