@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import {
   AlertCircle, FolderOpen, HardDriveUpload, RefreshCw, Usb,
 } from 'lucide-react';
-import CustomSelect from '../CustomSelect';
+import CustomSelect from '@/ui/CustomSelect';
 import type { RemovableDrive } from '../../utils/deviceSync/deviceSyncHelpers';
 import { formatBytes } from '../../utils/deviceSync/deviceSyncHelpers';
 import type { DeviceSyncSource } from '../../store/deviceSyncStore';

@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import CustomSelect from '../CustomSelect';
+import CustomSelect from '@/ui/CustomSelect';
 
 export type RadioSortBy = 'manual' | 'az' | 'za' | 'newest';
 

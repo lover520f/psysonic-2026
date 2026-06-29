@@ -2,7 +2,7 @@ import React from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { AudioLines, RotateCcw } from 'lucide-react';
 import type { TFunction } from 'i18next';
-import CustomSelect from '../../CustomSelect';
+import CustomSelect from '@/ui/CustomSelect';
 import SettingsSubSection from '../../SettingsSubSection';
 import { SettingsGroup } from '../SettingsGroup';
 import { SettingsToggle } from '../SettingsToggle';

@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import CustomSelect from '../../CustomSelect';
+import CustomSelect from '@/ui/CustomSelect';
 import { SettingsGroup } from '../SettingsGroup';
 import type { Account } from '../../../music-network';
 

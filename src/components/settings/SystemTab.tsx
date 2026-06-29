@@ -12,7 +12,7 @@ import type { ClockFormat, LinuxWaylandTextRenderProfile, LoggingMode } from '..
 import { IS_LINUX } from '../../utils/platform';
 import { showToast } from '../../utils/ui/toast';
 import { AboutPsysonicBrandHeader } from '../AboutPsysonicLol';
-import CustomSelect from '../CustomSelect';
+import CustomSelect from '@/ui/CustomSelect';
 import LicensesPanel from '../LicensesPanel';
 import SettingsSubSection from '../SettingsSubSection';
 import { SettingsGroup } from './SettingsGroup';

@@ -5,7 +5,7 @@ import { open as openUrl } from '@tauri-apps/plugin-shell';
 import CoverLightbox from '../CoverLightbox';
 import { useThemeAnimationRisk } from '../../hooks/useThemeAnimationRisk';
 import { AnimatedThemeBadge } from './AnimatedThemeBadge';
-import CustomSelect from '../CustomSelect';
+import CustomSelect from '@/ui/CustomSelect';
 import { formatRelativeTime } from '../../utils/format/relativeTime';
 import { useThemeStore } from '../../store/themeStore';
 import { useInstalledThemesStore, type InstalledTheme } from '../../store/installedThemesStore';

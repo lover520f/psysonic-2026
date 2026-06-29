@@ -9,7 +9,7 @@ import { useTranslation } from 'react-i18next';
 import AlbumRow from '../components/AlbumRow';
 import ArtistRow from '../components/ArtistRow';
 import PagedSongList from '../components/PagedSongList';
-import CustomSelect from '../components/CustomSelect';
+import CustomSelect from '@/ui/CustomSelect';
 import StarFilterButton from '../components/StarFilterButton';
 import { tooltipAttrs } from '@/ui/tooltipAttrs';
 import { APP_MAIN_SCROLL_VIEWPORT_ID } from '../constants/appScroll';

@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Clock, Palette, Store, Upload } from 'lucide-react';
 import { useThemeStore } from '../../store/themeStore';
 import { useInstalledThemesStore } from '../../store/installedThemesStore';
-import CustomSelect from '../CustomSelect';
+import CustomSelect from '@/ui/CustomSelect';
 import BackToTopButton from '@/ui/BackToTopButton';
 import { FIXED_THEMES } from './fixedThemes';
 import { InstalledThemes } from './InstalledThemes';

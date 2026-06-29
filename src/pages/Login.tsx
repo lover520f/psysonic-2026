@@ -13,7 +13,7 @@ import {
 import { syncServerHttpContextForProfile } from '../utils/server/syncServerHttpContext';
 import { useTranslation } from 'react-i18next';
 import i18n from '../i18n';
-import CustomSelect from '../components/CustomSelect';
+import CustomSelect from '@/ui/CustomSelect';
 import {
   decodeServerMagicString,
   DECODED_PASSWORD_VISUAL_MASK,

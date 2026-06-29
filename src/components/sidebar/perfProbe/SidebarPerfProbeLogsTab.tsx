@@ -15,7 +15,7 @@ import { getLoggingMode, tailRuntimeLogs, type RuntimeLogLine } from '../../../a
 import { invoke } from '@tauri-apps/api/core';
 import { useAuthStore } from '../../../store/authStore';
 import type { LoggingMode } from '../../../store/authStoreTypes';
-import CustomSelect from '../../CustomSelect';
+import CustomSelect from '@/ui/CustomSelect';
 import { filterLogLines } from '../../../utils/perf/filterLogLines';
 import { sanitizeLogLine } from '../../../utils/perf/sanitizeLogLine';
 

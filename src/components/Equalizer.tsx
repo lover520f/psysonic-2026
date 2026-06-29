@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Save, Trash2, RotateCcw } from 'lucide-react';
-import CustomSelect from './CustomSelect';
+import CustomSelect from '@/ui/CustomSelect';
 import { useEqStore, EQ_BANDS, BUILTIN_PRESETS } from '../store/eqStore';
 import { useThemeStore } from '../store/themeStore';
 import { drawCurve } from '../utils/audio/eqCurve';
