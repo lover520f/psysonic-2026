@@ -1,9 +1,9 @@
 import { renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { invoke } from '@tauri-apps/api/core';
-import { useRadioMprisSync } from './useRadioMprisSync';
-import type { RadioMetadata } from './useRadioMetadata';
-import type { InternetRadioStation } from '../api/subsonicTypes';
+import { useRadioMprisSync } from '@/features/radio/hooks/useRadioMprisSync';
+import type { RadioMetadata } from '@/features/radio/hooks/useRadioMetadata';
+import type { InternetRadioStation } from '@/api/subsonicTypes';
 
 vi.mock('@tauri-apps/api/core', () => ({ invoke: vi.fn(async () => undefined) }));
 const invokeMock = vi.mocked(invoke);

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { getInternetRadioStations } from '@/api/subsonicRadio';
+import { getInternetRadioStations } from '@/features/radio';
 import { getStarred } from '@/api/subsonicStarRating';
 import type {
   InternetRadioStation, SubsonicAlbum, SubsonicArtist, SubsonicSong,

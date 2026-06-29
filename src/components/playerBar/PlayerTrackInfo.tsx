@@ -3,7 +3,7 @@ import type { TFunction } from 'i18next';
 import { queueSongRating } from '../../store/pendingStarSync';
 import type { InternetRadioStation, SubsonicOpenArtistRef } from '../../api/subsonicTypes';
 import type { PlayerState, Track } from '../../store/playerStoreTypes';
-import type { RadioMetadata } from '../../hooks/useRadioMetadata';
+import type { RadioMetadata } from '@/features/radio';
 import type { PreviewingTrack } from '../../store/previewStore';
 import { CoverArtImage } from '../../cover/CoverArtImage';
 import { albumCoverRef } from '../../cover/ref';

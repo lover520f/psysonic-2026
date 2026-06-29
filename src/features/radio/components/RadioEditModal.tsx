@@ -2,10 +2,10 @@ import React, { useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { Camera, Cast, Loader2, X } from 'lucide-react';
-import type { InternetRadioStation } from '../../api/subsonicTypes';
-import { CoverArtImage } from '../../cover/CoverArtImage';
-import { albumCoverRef } from '../../cover/ref';
-import { coverArtIdFromRadio } from '../../cover/ids';
+import type { InternetRadioStation } from '@/api/subsonicTypes';
+import { CoverArtImage } from '@/cover/CoverArtImage';
+import { albumCoverRef } from '@/cover/ref';
+import { coverArtIdFromRadio } from '@/cover/ids';
 
 interface RadioEditModalProps {
   station: InternetRadioStation | null; // null = create new

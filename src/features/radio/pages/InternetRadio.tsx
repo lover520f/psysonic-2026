@@ -1,21 +1,21 @@
-import { getInternetRadioStations, createInternetRadioStation, updateInternetRadioStation, deleteInternetRadioStation, uploadRadioCoverArt, deleteRadioCoverArt } from '../api/subsonicRadio';
-import { type InternetRadioStation } from '../api/subsonicTypes';
+import { getInternetRadioStations, createInternetRadioStation, updateInternetRadioStation, deleteInternetRadioStation, uploadRadioCoverArt, deleteRadioCoverArt } from '@/features/radio/api/subsonicRadio';
+import { type InternetRadioStation } from '@/api/subsonicTypes';
 import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { Plus, Search } from 'lucide-react';
-import { usePlayerStore } from '../store/playerStore';
-import { setRadioVolume } from '../store/radioPlayer';
-import { fadeOut } from '../utils/playback/fadeOut';
-import { invalidateCoverArt } from '../utils/imageCache';
+import { usePlayerStore } from '@/store/playerStore';
+import { setRadioVolume } from '@/store/radioPlayer';
+import { fadeOut } from '@/utils/playback/fadeOut';
+import { invalidateCoverArt } from '@/utils/imageCache';
 import { useTranslation } from 'react-i18next';
-import { showToast } from '../utils/ui/toast';
-import RadioToolbar from '../components/internetRadio/RadioToolbar';
-import AlphabetFilterBar from '../components/internetRadio/AlphabetFilterBar';
-import RadioCard from '../components/internetRadio/RadioCard';
-import RadioEditModal from '../components/internetRadio/RadioEditModal';
-import RadioDirectoryModal from '../components/internetRadio/RadioDirectoryModal';
-import { usePerfProbeFlags } from '../utils/perf/perfFlags';
-import { VirtualCardGrid } from '../components/VirtualCardGrid';
-import { useNavidromeAdminRole, canManageNavidromeRadio } from '../hooks/useNavidromeAdminRole';
+import { showToast } from '@/utils/ui/toast';
+import RadioToolbar from '@/features/radio/components/RadioToolbar';
+import AlphabetFilterBar from '@/features/radio/components/AlphabetFilterBar';
+import RadioCard from '@/features/radio/components/RadioCard';
+import RadioEditModal from '@/features/radio/components/RadioEditModal';
+import RadioDirectoryModal from '@/features/radio/components/RadioDirectoryModal';
+import { usePerfProbeFlags } from '@/utils/perf/perfFlags';
+import { VirtualCardGrid } from '@/components/VirtualCardGrid';
+import { useNavidromeAdminRole, canManageNavidromeRadio } from '@/hooks/useNavidromeAdminRole';
 
 export default function InternetRadio() {
   const { t } = useTranslation();

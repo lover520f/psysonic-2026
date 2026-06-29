@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { invoke } from '@tauri-apps/api/core';
-import type { InternetRadioStation } from '../api/subsonicTypes';
-import type { RadioMetadata } from './useRadioMetadata';
+import type { InternetRadioStation } from '@/api/subsonicTypes';
+import type { RadioMetadata } from '@/features/radio/hooks/useRadioMetadata';
 
 /**
  * Internet radio → OS media controls (MPRIS / SMTC / Now Playing).

@@ -12,7 +12,7 @@ import { usePlayerStore } from '../store/playerStore';
 import { useAuthStore } from '../store/authStore';
 import { useLyricsStore } from '../store/lyricsStore';
 import { songToTrack } from '../utils/playback/songToTrack';
-import { useRadioMetadata } from '../hooks/useRadioMetadata';
+import { useRadioMetadata } from '@/features/radio';
 import { useDragDrop } from '../contexts/DragDropContext';
 import OverlayScrollArea from '@/ui/OverlayScrollArea';
 import {

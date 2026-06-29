@@ -1,14 +1,14 @@
-import type { InternetRadioStation } from '../api/subsonicTypes';
+import type { InternetRadioStation } from '@/api/subsonicTypes';
 import { useEffect, useRef, useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
-import { usePerfProbeFlags } from '../utils/perf/perfFlags';
+import { usePerfProbeFlags } from '@/utils/perf/perfFlags';
 import {
   guessAzuraCastApiUrl,
   normaliseAzuraCastHomepageUrl,
   fetchAzuraCastNowPlaying,
   type AzuraCastNowPlaying,
   type AzuraCastSong,
-} from '../api/azuracast';
+} from '@/api/azuracast';
 
 // ─── Public types ─────────────────────────────────────────────────────────────
 

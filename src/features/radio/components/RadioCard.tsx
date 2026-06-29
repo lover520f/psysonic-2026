@@ -2,12 +2,12 @@ import React, { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Cast, Globe, Heart, Square, Trash2, X } from 'lucide-react';
 import { open } from '@tauri-apps/plugin-shell';
-import type { InternetRadioStation } from '../../api/subsonicTypes';
-import { useDragDrop, useDragSource } from '../../contexts/DragDropContext';
-import { CoverArtImage } from '../../cover/CoverArtImage';
-import { albumCoverRef } from '../../cover/ref';
-import { coverArtIdFromRadio } from '../../cover/ids';
-import { COVER_DENSE_GRID_MIN_CELL_CSS_PX } from '../../cover/layoutSizes';
+import type { InternetRadioStation } from '@/api/subsonicTypes';
+import { useDragDrop, useDragSource } from '@/contexts/DragDropContext';
+import { CoverArtImage } from '@/cover/CoverArtImage';
+import { albumCoverRef } from '@/cover/ref';
+import { coverArtIdFromRadio } from '@/cover/ids';
+import { COVER_DENSE_GRID_MIN_CELL_CSS_PX } from '@/cover/layoutSizes';
 
 interface RadioCardProps {
   s: InternetRadioStation;

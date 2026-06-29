@@ -1,7 +1,7 @@
 import { invoke } from '@tauri-apps/api/core';
-import { useAuthStore } from '../store/authStore';
-import { api } from './subsonicClient';
-import type { InternetRadioStation, RadioBrowserStation } from './subsonicTypes';
+import { useAuthStore } from '@/store/authStore';
+import { api } from '@/api/subsonicClient';
+import type { InternetRadioStation, RadioBrowserStation } from '@/api/subsonicTypes';
 
 export async function getInternetRadioStations(): Promise<InternetRadioStation[]> {
   try {
