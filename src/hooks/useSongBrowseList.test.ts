@@ -18,7 +18,10 @@ vi.mock('../utils/library/advancedSearchLocal', () => ({
   runLocalSongBrowse: vi.fn(async () => []),
 }));
 
-vi.mock('@/features/offline', () => ({
+// Only the reload-token hook was stubbed pre-move (its own module); mock that
+// submodule directly so the barrel re-exports the stub while the real
+// `useOfflineBrowseContext` (a different submodule) stays live.
+vi.mock('@/features/offline/hooks/useOfflineBrowseReloadToken', () => ({
   useOfflineBrowseReloadToken: () => undefined,
 }));
 
