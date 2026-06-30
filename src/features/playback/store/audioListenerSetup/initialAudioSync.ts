@@ -1,5 +1,5 @@
 import { invoke } from '@tauri-apps/api/core';
-import { effectiveLoudnessPreAnalysisAttenuationDb } from '@/utils/audio/loudnessPreAnalysisSlider';
+import { effectiveLoudnessPreAnalysisAttenuationDb } from '@/lib/audio/loudnessPreAnalysisSlider';
 import { useAuthStore } from '@/store/authStore';
 import { emitNormalizationDebug } from '@/features/playback/store/normalizationDebug';
 import { invokeAudioSetNormalizationDeduped } from '@/features/playback/store/normalizationIpcDedupe';

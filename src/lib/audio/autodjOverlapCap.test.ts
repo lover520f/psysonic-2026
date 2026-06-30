@@ -3,7 +3,7 @@ import {
   autodjMaxOverlapCapSec,
   DEFAULT_AUTODJ_OVERLAP_CAP_SEC,
   sanitizeAutodjOverlapCapSec,
-} from './autodjOverlapCap';
+} from '@/lib/audio/autodjOverlapCap';
 
 describe('autodjOverlapCap', () => {
   it('sanitizes cap seconds to 2–30', () => {

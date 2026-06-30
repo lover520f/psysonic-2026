@@ -1,13 +1,13 @@
 import { IS_LINUX } from '@/lib/util/platform';
-import { sanitizeHiResCrossfadeResampleHz } from '../utils/audio/hiResCrossfadeResample';
+import { sanitizeHiResCrossfadeResampleHz } from '@/lib/audio/hiResCrossfadeResample';
 import {
   sanitizeAutodjOverlapCapMode,
   sanitizeAutodjOverlapCapSec,
-} from '../utils/playback/autodjOverlapCap';
+} from '@/lib/audio/autodjOverlapCap';
 import {
   LOUDNESS_PRE_ANALYSIS_REF_TARGET_LUFS,
   clampStoredLoudnessPreAnalysisAttenuationRefDb,
-} from '../utils/audio/loudnessPreAnalysisSlider';
+} from '@/lib/audio/loudnessPreAnalysisSlider';
 import { DEFAULT_LOUDNESS_PRE_ANALYSIS_ATTENUATION_DB } from './authStoreDefaults';
 import {
   clampMixFilterMinStars,

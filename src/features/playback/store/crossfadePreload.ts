@@ -1,6 +1,6 @@
 import { invoke } from '@tauri-apps/api/core';
 import { useAuthStore } from '@/store/authStore';
-import { autodjMaxOverlapCapSec } from '@/utils/playback/autodjOverlapCap';
+import { autodjMaxOverlapCapSec } from '@/lib/audio/autodjOverlapCap';
 import { computeWaveformSilence, planCrossfadeTransition } from '@/lib/waveform/waveformSilence';
 import { findLocalPlaybackUrl } from '@/store/localPlaybackResolve';
 import { playbackCacheKeyForRef } from '@/features/playback/utils/playback/playbackServer';

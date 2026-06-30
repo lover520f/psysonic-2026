@@ -28,7 +28,7 @@ import {
 } from '@/features/playback/utils/playback/playbackServer';
 import { resolvePlaybackUrl } from '@/features/playback/utils/playback/resolvePlaybackUrl';
 import { resolveReplayGainDb } from '@/features/playback/utils/audio/resolveReplayGainDb';
-import { audioPlayHiResBlendArgs } from '@/utils/audio/hiResCrossfadeResample';
+import { audioPlayHiResBlendArgs } from '@/lib/audio/hiResCrossfadeResample';
 import { showToast } from '@/utils/ui/toast';
 import { useAuthStore } from '@/store/authStore';
 import { getPlayGeneration, setIsAudioPaused } from '@/features/playback/store/engineState';
@@ -89,7 +89,7 @@ import {
 } from '@/features/playback/store/seekTargetState';
 import { refreshWaveformForTrack } from '@/features/playback/store/waveformRefresh';
 import { analyzeBoundary, computeWaveformSilence } from '@/lib/waveform/waveformSilence';
-import { autodjMaxOverlapCapSec } from '@/utils/playback/autodjOverlapCap';
+import { autodjMaxOverlapCapSec } from '@/lib/audio/autodjOverlapCap';
 import {
   autodjJsTriggerAtSec,
   clampCrossfadeSecs,

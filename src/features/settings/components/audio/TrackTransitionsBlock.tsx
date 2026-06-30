@@ -5,7 +5,7 @@ import { useOrbitStore } from '@/features/orbit';
 import {
   AUTODJ_OVERLAP_CAP_MAX_SEC,
   AUTODJ_OVERLAP_CAP_MIN_SEC,
-} from '@/utils/playback/autodjOverlapCap';
+} from '@/lib/audio/autodjOverlapCap';
 import {
   getTransitionMode,
   setTransitionMode,

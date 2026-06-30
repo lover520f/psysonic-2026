@@ -33,7 +33,7 @@ import {
 } from '@/store/localPlaybackResolve';
 import { resolvePlaybackUrl } from '@/features/playback/utils/playback/resolvePlaybackUrl';
 import { resolveReplayGainDb } from '@/features/playback/utils/audio/resolveReplayGainDb';
-import { audioPlayHiResBlendArgs } from '@/utils/audio/hiResCrossfadeResample';
+import { audioPlayHiResBlendArgs } from '@/lib/audio/hiResCrossfadeResample';
 import { useAuthStore } from '@/store/authStore';
 import { consumeCrossfadeDynamicOverlap, getCrossfadeTransition, peekArmedCrossfadeDynamicOverlap } from '@/features/playback/store/crossfadeTrimCache';
 import {

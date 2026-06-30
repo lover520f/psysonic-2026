@@ -9,7 +9,7 @@ import {
   renderStars,
 } from '@/utils/componentHelpers/queuePanelHelpers';
 import { loudnessGainPlaceholderUntilCacheDb } from '@/features/playback/utils/audio/loudnessPlaceholder';
-import { effectiveLoudnessPreAnalysisAttenuationDb } from '@/utils/audio/loudnessPreAnalysisSlider';
+import { effectiveLoudnessPreAnalysisAttenuationDb } from '@/lib/audio/loudnessPreAnalysisSlider';
 import { formatQueueBpmTech, formatQueueMoodLabels } from '@/lib/library/trackEnrichment';
 import { useQueueTrackEnrichment } from '@/features/queue/hooks/useQueueTrackEnrichment';
 import { QueueLufsTargetMenu } from '@/features/queue/components/QueueLufsTargetMenu';

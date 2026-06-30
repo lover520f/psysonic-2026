@@ -3,7 +3,7 @@ import {
   DEFAULT_HI_RES_CROSSFADE_RESAMPLE_HZ,
   audioPlayHiResBlendArgs,
   sanitizeHiResCrossfadeResampleHz,
-} from './hiResCrossfadeResample';
+} from '@/lib/audio/hiResCrossfadeResample';
 
 describe('hiResCrossfadeResample', () => {
   it('defaults unknown values to 44.1 kHz', () => {

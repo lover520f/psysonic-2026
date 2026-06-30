@@ -1,5 +1,5 @@
 import { useAuthStore } from '@/store/authStore';
-import { autodjMaxOverlapCapSec } from '@/utils/playback/autodjOverlapCap';
+import { autodjMaxOverlapCapSec } from '@/lib/audio/autodjOverlapCap';
 import {
   analyzeBoundary,
   planCrossfadeTransition,

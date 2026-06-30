@@ -1,8 +1,8 @@
-import { clampStoredLoudnessPreAnalysisAttenuationRefDb } from '../utils/audio/loudnessPreAnalysisSlider';
+import { clampStoredLoudnessPreAnalysisAttenuationRefDb } from '@/lib/audio/loudnessPreAnalysisSlider';
 import {
   sanitizeAutodjOverlapCapMode,
   sanitizeAutodjOverlapCapSec,
-} from '../utils/playback/autodjOverlapCap';
+} from '@/lib/audio/autodjOverlapCap';
 import { DEFAULT_LOUDNESS_PRE_ANALYSIS_ATTENUATION_DB } from './authStoreDefaults';
 import { updateReplayGainForCurrentTrack } from './playbackEngineBridge';
 import type { AuthState } from './authStoreTypes';

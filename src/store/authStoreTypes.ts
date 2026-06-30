@@ -1,4 +1,4 @@
-import type { HiResCrossfadeResampleHz } from '../utils/audio/hiResCrossfadeResample';
+import type { HiResCrossfadeResampleHz } from '@/lib/audio/hiResCrossfadeResample';
 import type { EntityRatingSupportLevel } from '@/lib/api/subsonicTypes';
 import type {
   AudiomusePluginProbeResult,

@@ -2,7 +2,7 @@ import {
   HI_RES_CROSSFADE_RESAMPLE_OPTIONS,
   type HiResCrossfadeResampleHz,
   sanitizeHiResCrossfadeResampleHz,
-} from '@/utils/audio/hiResCrossfadeResample';
+} from '@/lib/audio/hiResCrossfadeResample';
 import type { TFunction } from 'i18next';
 import { SettingsSubCard, SettingsField } from '@/features/settings/components/SettingsSubCard';
 

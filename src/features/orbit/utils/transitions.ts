@@ -3,7 +3,7 @@ import type { OrbitTransitionSettings } from '@/features/orbit/api/orbit';
 import {
   sanitizeAutodjOverlapCapMode,
   sanitizeAutodjOverlapCapSec,
-} from '@/utils/playback/autodjOverlapCap';
+} from '@/lib/audio/autodjOverlapCap';
 
 /**
  * Bridge between the local playback-transition settings (in `authStore`) and

@@ -7,7 +7,7 @@ import {
 } from '@/features/playback/utils/playback/playbackServer';
 import { resolvePlaybackUrl } from '@/features/playback/utils/playback/resolvePlaybackUrl';
 import { resolveReplayGainDb } from '@/features/playback/utils/audio/resolveReplayGainDb';
-import { audioPlayHiResBlendArgs } from '@/utils/audio/hiResCrossfadeResample';
+import { audioPlayHiResBlendArgs } from '@/lib/audio/hiResCrossfadeResample';
 import { useAuthStore } from '@/store/authStore';
 import { getPlayGeneration, setIsAudioPaused } from '@/features/playback/store/engineState';
 import { touchHotCacheOnPlayback } from '@/features/playback/store/hotCacheTouch';
