@@ -9,7 +9,7 @@ import { buildCapabilityContext } from '@/serverCapabilities/context';
 import { useLibraryIndexStore } from '@/store/libraryIndexStore';
 import { libraryDeleteServerData, librarySyncClearSession } from '@/lib/api/library';
 import { bootstrapIndexedServer } from '@/lib/library/librarySession';
-import { useLibraryIndexSync } from '@/hooks/useLibraryIndexSync';
+import { useLibraryIndexSync } from '@/lib/library/hooks/useLibraryIndexSync';
 import ServerLibraryIndexControls from '@/features/settings/components/ServerLibraryIndexControls';
 import type { ServerProfile } from '@/store/authStoreTypes';
 import { pingWithCredentialsForProfile, scheduleInstantMixProbeForServer } from '@/lib/api/subsonic';

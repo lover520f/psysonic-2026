@@ -24,7 +24,7 @@ import { initMiniPlayerBridgeOnMain } from '@/features/miniPlayer';
 import { runAdvancedModeMigration } from '../utils/migrations/advancedModeMigration';
 import { bootstrapAllIndexedServers } from '@/lib/library/librarySession';
 import { hydrateQueueFromIndex } from '@/features/playback/store/queueRestore';
-import { useLibraryAnalysisBackfill } from '../hooks/useLibraryAnalysisBackfill';
+import { useLibraryAnalysisBackfill } from '@/lib/library/hooks/useLibraryAnalysisBackfill';
 import { useCoverArtPrefetch } from '../cover/useCoverArtPrefetch';
 import { useLibraryCoverBackfill } from '../hooks/useLibraryCoverBackfill';
 import { useCoverRevalidateScheduler } from '../cover/useCoverRevalidateScheduler';

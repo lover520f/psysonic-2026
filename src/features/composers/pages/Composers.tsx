@@ -21,7 +21,7 @@ import { useScopedBrowseSearchQuery } from '@/store/liveSearchScopeStore';
 import { readComposerBrowseRestore } from '@/utils/navigation/albumDetailNavigation';
 import { filterArtistsWithRoleAlbumCredits } from '@/lib/library/composerBrowse';
 import { ALL_SENTINEL, artistLetterBucket } from '@/features/artist';
-import { useLibraryIgnoredArticles } from '@/hooks/useLibraryIgnoredArticles';
+import { useLibraryIgnoredArticles } from '@/lib/library/hooks/useLibraryIgnoredArticles';
 import { usePerfProbeFlags } from '@/utils/perf/perfFlags';
 import { VirtualCardGrid } from '@/ui/VirtualCardGrid';
 import OverlayScrollArea from '@/ui/OverlayScrollArea';

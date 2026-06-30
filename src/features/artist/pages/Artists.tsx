@@ -21,7 +21,7 @@ import {
   ARTIST_LIST_ROW_EST,
 } from '@/features/artist/utils/artistsHelpers';
 import { useArtistsFiltering } from '@/features/artist/hooks/useArtistsFiltering';
-import { useLibraryIgnoredArticles } from '@/hooks/useLibraryIgnoredArticles';
+import { useLibraryIgnoredArticles } from '@/lib/library/hooks/useLibraryIgnoredArticles';
 import { useArtistsBrowseCatalog } from '@/features/artist/hooks/useArtistsBrowseCatalog';
 import { useBrowseArtistTextSearch } from '@/features/artist/hooks/useBrowseArtistTextSearch';
 import { useMainstageInpageHeaderTight } from '@/lib/hooks/useMainstageInpageHeaderTight';

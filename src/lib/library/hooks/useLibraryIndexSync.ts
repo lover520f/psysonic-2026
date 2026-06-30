@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useAuthStore } from '../store/authStore';
-import { useLibraryIndexStore } from '../store/libraryIndexStore';
-import { showToast } from '../utils/ui/toast';
-import { resolveIndexKey, serverIndexKeyForProfile } from '../utils/server/serverIndexKey';
+import { useAuthStore } from '@/store/authStore';
+import { useLibraryIndexStore } from '@/store/libraryIndexStore';
+import { showToast } from '@/utils/ui/toast';
+import { resolveIndexKey, serverIndexKeyForProfile } from '@/utils/server/serverIndexKey';
 import {
   libraryGetStatus,
   librarySyncCancel,
