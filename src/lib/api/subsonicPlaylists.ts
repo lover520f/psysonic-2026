@@ -88,23 +88,6 @@ export async function uploadPlaylistCoverArt(id: string, file: File): Promise<vo
   });
 }
 
-export async function uploadArtistImage(id: string, file: File): Promise<void> {
-  // Navidrome-specific endpoint — handled in Rust to bypass browser CORS restrictions.
-  const { getBaseUrl, getActiveServer } = useAuthStore.getState();
-  const server = getActiveServer();
-  const baseUrl = getBaseUrl();
-  const buffer = await file.arrayBuffer();
-  const fileBytes = Array.from(new Uint8Array(buffer));
-  await invoke('upload_artist_image', {
-    serverUrl: baseUrl,
-    artistId: id,
-    username: server?.username ?? '',
-    password: server?.password ?? '',
-    fileBytes,
-    mimeType: file.type || 'image/jpeg',
-  });
-}
-
 export async function deletePlaylist(id: string): Promise<void> {
   await api('deletePlaylist.view', { id });
 }
