@@ -4,7 +4,7 @@ import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 're
 import { createPortal } from 'react-dom';
 import { Check, Filter, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import FilterQuickClear from './FilterQuickClear';
+import FilterQuickClear from '@/ui/FilterQuickClear';
 import { tooltipAttrs } from '@/ui/tooltipAttrs';
 
 type GenreRow = GenreFilterOption;

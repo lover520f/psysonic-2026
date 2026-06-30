@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import SelectionToggleButton from './SelectionToggleButton';
+import SelectionToggleButton from '@/ui/SelectionToggleButton';
 
 describe('SelectionToggleButton', () => {
   it('shows the select label and calls onToggle on click', async () => {

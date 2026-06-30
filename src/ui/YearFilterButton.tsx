@@ -2,7 +2,7 @@ import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { CalendarRange, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import FilterQuickClear from './FilterQuickClear';
+import FilterQuickClear from '@/ui/FilterQuickClear';
 import { tooltipAttrs } from '@/ui/tooltipAttrs';
 import {
   ALBUM_YEAR_MAX,

@@ -10,7 +10,7 @@ import { AlbumRow } from '@/features/album';
 import { ArtistRow } from '@/features/artist';
 import PagedSongList from '@/components/PagedSongList';
 import CustomSelect from '@/ui/CustomSelect';
-import StarFilterButton from '@/components/StarFilterButton';
+import StarFilterButton from '@/ui/StarFilterButton';
 import { tooltipAttrs } from '@/ui/tooltipAttrs';
 import { APP_MAIN_SCROLL_VIEWPORT_ID } from '@/constants/appScroll';
 import { useAuthStore } from '@/store/authStore';

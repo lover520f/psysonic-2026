@@ -7,7 +7,7 @@ import { dedupeById } from '@/lib/util/dedupeById';
 import { shuffleArray } from '@/lib/util/shuffleArray';
 import React, { useEffect, useLayoutEffect, useState, useCallback, useRef } from 'react';
 import { RefreshCw, Download, HardDriveDownload } from 'lucide-react';
-import SelectionToggleButton from '@/components/SelectionToggleButton';
+import SelectionToggleButton from '@/ui/SelectionToggleButton';
 import AlbumCard from '@/features/album/components/AlbumCard';
 import GenreFilterBar from '@/components/GenreFilterBar';
 import { useTranslation } from 'react-i18next';

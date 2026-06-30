@@ -3,7 +3,7 @@ import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ndListArtistsByRole } from '@/lib/api/navidromeBrowse';
 import { LayoutGrid, List } from 'lucide-react';
-import StarFilterButton from '@/components/StarFilterButton';
+import StarFilterButton from '@/ui/StarFilterButton';
 import { usePlayerStore } from '@/features/playback/store/playerStore';
 import { useAuthStore } from '@/store/authStore';
 import { useTranslation } from 'react-i18next';
@@ -28,7 +28,7 @@ import OverlayScrollArea from '@/ui/OverlayScrollArea';
 import { useVirtualizerScrollMargin } from '@/lib/hooks/useVirtualizerScrollMargin';
 import { useClientSliceInfiniteScroll } from '@/hooks/useClientSliceInfiniteScroll';
 import { useInpageScrollViewport } from '@/hooks/useInpageScrollViewport';
-import InpageScrollSentinel from '@/components/InpageScrollSentinel';
+import InpageScrollSentinel from '@/ui/InpageScrollSentinel';
 
 const ALPHABET = [ALL_SENTINEL, '#', ...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('')];
 

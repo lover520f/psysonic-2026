@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { ArrowLeft, Disc3, Play, ListPlus, Loader2 } from 'lucide-react';
 import { AlbumCard } from '@/features/album';
 import { LongPressWaveOverlay } from '@/components/LongPressWaveOverlay';
-import InpageScrollSentinel from '@/components/InpageScrollSentinel';
+import InpageScrollSentinel from '@/ui/InpageScrollSentinel';
 import OverlayScrollArea from '@/ui/OverlayScrollArea';
 import { VirtualCardGrid } from '@/components/VirtualCardGrid';
 import { GENRE_DETAIL_INPAGE_SCROLL_VIEWPORT_ID } from '@/constants/appScroll';

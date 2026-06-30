@@ -10,7 +10,7 @@ import { CoverArtImage } from '../../cover/CoverArtImage';
 import { albumCoverRef } from '../../cover/ref';
 import { useAlbumCoverRef } from '../../cover/useLibraryCoverRef';
 import { usePlaybackTrackCoverRef } from '../../cover/useLibraryCoverRef';
-import MarqueeText from '../MarqueeText';
+import MarqueeText from '@/ui/MarqueeText';
 import { OpenArtistRefInline } from '@/features/artist';
 import StarRating from '../StarRating';
 import { PlaybackBufferingOverlay } from '../playback/PlaybackBufferingOverlay';

@@ -19,16 +19,16 @@ import { showToast } from '@/utils/ui/toast';
 import { invoke } from '@tauri-apps/api/core';
 import { join } from '@tauri-apps/api/path';
 import { Download, HardDriveDownload, ListPlus } from 'lucide-react';
-import SelectionToggleButton from '@/components/SelectionToggleButton';
+import SelectionToggleButton from '@/ui/SelectionToggleButton';
 import { albumGridWarmCovers } from '@/cover/layoutSizes';
 import { VirtualCardGrid } from '@/components/VirtualCardGrid';
 import OverlayScrollArea from '@/ui/OverlayScrollArea';
 import { LOSSLESS_ALBUMS_INPAGE_SCROLL_VIEWPORT_ID } from '@/constants/appScroll';
 import { useInpageScrollSentinel } from '@/hooks/useInpageScrollSentinel';
 import { useInpageScrollViewport } from '@/hooks/useInpageScrollViewport';
-import InpageScrollSentinel from '@/components/InpageScrollSentinel';
+import InpageScrollSentinel from '@/ui/InpageScrollSentinel';
 import { useLibraryIndexStore } from '@/store/libraryIndexStore';
-import SortDropdown from '@/components/SortDropdown';
+import SortDropdown from '@/ui/SortDropdown';
 import { albumArtistDisplayName } from '@/features/album/utils/deriveAlbumHeaderArtistRefs';
 import {
   albumBrowseSortForServer,

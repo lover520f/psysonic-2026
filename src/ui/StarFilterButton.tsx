@@ -1,6 +1,6 @@
 import { Star } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import FilterQuickClear from './FilterQuickClear';
+import FilterQuickClear from '@/ui/FilterQuickClear';
 
 interface Props {
   active: boolean;

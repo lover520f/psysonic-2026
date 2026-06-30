@@ -1,7 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Search, X } from 'lucide-react';
-import SortDropdown, { type SortOption } from '@/components/SortDropdown';
+import SortDropdown, { type SortOption } from '@/ui/SortDropdown';
 import type { PlaylistSortKey, PlaylistSortDir } from '@/features/playlist/utils/playlistDisplayedSongs';
 
 type PlaylistSortValue =
