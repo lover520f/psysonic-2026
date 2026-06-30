@@ -11,7 +11,7 @@ import {
   resolvePlaybackCoverScope,
 } from './ref';
 import { coverServerScopeForServerId } from './serverScope';
-import { resolveServerIdForIndexKey } from '../utils/server/serverLookup';
+import { resolveServerIdForIndexKey } from '@/lib/server/serverLookup';
 import { sameQueueTrackId } from '@/features/playback/utils/playback/queueIdentity';
 import {
   resolveAlbumCoverRefFromLibrary,

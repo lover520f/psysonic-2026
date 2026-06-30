@@ -7,7 +7,7 @@ vi.mock('@/lib/api/subsonicPlayQueue', () => ({
   getPlayQueueForServer: (...args: unknown[]) => getPlayQueueForServerMock(...args),
 }));
 
-vi.mock('@/utils/server/serverLookup', () => ({
+vi.mock('@/lib/server/serverLookup', () => ({
   resolveServerIdForIndexKey: (id: string) => id,
 }));
 

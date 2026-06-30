@@ -10,7 +10,7 @@ import { ndGetSongPath } from '@/lib/api/navidromeAdmin';
 import { useAuthStore } from '../store/authStore';
 import { useLibraryIndexStore } from '../store/libraryIndexStore';
 import { useTranslation } from 'react-i18next';
-import { copyTextToClipboard } from '../utils/server/serverMagicString';
+import { copyTextToClipboard } from '@/lib/server/serverMagicString';
 import { showToast } from '@/lib/dom/toast';
 import { formatTrackTime } from '@/lib/format/formatDuration';
 import { formatLastSeen } from '../utils/componentHelpers/userMgmtHelpers';

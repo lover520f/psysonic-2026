@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { useAuthStore } from '../../store/authStore';
-import { appendServerQuery, readDetailServerId } from './detailServerScope';
+import { useAuthStore } from '@/store/authStore';
+import { appendServerQuery, readDetailServerId } from '@/lib/navigation/detailServerScope';
 
 describe('detailServerScope', () => {
   beforeEach(() => {

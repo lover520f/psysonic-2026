@@ -4,7 +4,7 @@ import type {
   AudiomusePluginProbeResult,
   InstantMixProbeResult,
   SubsonicServerIdentity,
-} from '../utils/server/subsonicServerIdentity';
+} from '@/lib/server/subsonicServerIdentity';
 import type { PersistedAccount } from '../music-network';
 
 export type CustomHeaderEntry = {

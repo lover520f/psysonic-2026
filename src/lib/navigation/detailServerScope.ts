@@ -1,4 +1,4 @@
-import { useAuthStore } from '../../store/authStore';
+import { useAuthStore } from '@/store/authStore';
 
 /** Resolve `?server=` on album/artist detail routes; falls back when absent or unknown. */
 export function readDetailServerId(

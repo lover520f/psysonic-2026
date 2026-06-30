@@ -7,8 +7,8 @@ import { layoutFingerprintFromLibraryTrack } from '@/lib/media/mediaLayout';
 import { getMediaDir } from '@/lib/media/mediaDir';
 import { runLegacyOfflineFileMigration } from '@/features/offline';
 import { reconcileLibraryTierForServer } from '@/features/offline';
-import { resolveServerIdForIndexKey } from './utils/server/serverLookup';
-import { serverIndexKeyFromUrl } from './utils/server/serverIndexKey';
+import { resolveServerIdForIndexKey } from '@/lib/server/serverLookup';
+import { serverIndexKeyFromUrl } from '@/lib/server/serverIndexKey';
 
 async function invalidateEntriesForLibraryServer(libraryServerId: string): Promise<void> {
   const store = useLocalPlaybackStore.getState();

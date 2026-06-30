@@ -16,7 +16,7 @@ import {
   loadArtistFromLocalPlayback,
   offlineLocalBrowseEnabled,
 } from '@/features/offline';
-import { readDetailServerId } from '@/utils/navigation/detailServerScope';
+import { readDetailServerId } from '@/lib/navigation/detailServerScope';
 import { libraryIsReady } from '@/lib/library/libraryReady';
 import {
   shouldAttemptSubsonicForActiveServer,

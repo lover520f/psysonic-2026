@@ -12,8 +12,8 @@ import { showToast } from '@/lib/dom/toast';
 import {
   copyTextToClipboard,
   encodeServerMagicString,
-} from '@/utils/server/serverMagicString';
-import { shortHostFromServerUrl } from '@/utils/server/serverDisplayName';
+} from '@/lib/server/serverMagicString';
+import { shortHostFromServerUrl } from '@/lib/server/serverDisplayName';
 import type { UserFormState } from '@/features/settings/components/UserForm';
 
 interface UseUserMgmtActionsArgs {

@@ -38,7 +38,7 @@ import { useWarmGridCovers } from '@/cover/useWarmGridCovers';
 import { VirtualCardGrid } from '@/ui/VirtualCardGrid';
 import { LOSSLESS_MODE_QUERY } from '@/lib/library/losslessMode';
 import { sortArtistAlbumsByYear } from '@/features/artist/utils/sortArtistAlbums';
-import { readDetailServerId } from '@/utils/navigation/detailServerScope';
+import { readDetailServerId } from '@/lib/navigation/detailServerScope';
 
 
 export default function ArtistDetail() {

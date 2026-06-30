@@ -6,7 +6,7 @@ import {
   decodeServerMagicString,
   decodeServerMagicStringFromText,
   encodeServerMagicString,
-} from './serverMagicString';
+} from '@/lib/server/serverMagicString';
 
 describe('DECODED_PASSWORD_VISUAL_MASK', () => {
   it('has fixed length independent of real passwords', () => {

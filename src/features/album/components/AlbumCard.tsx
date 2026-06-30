@@ -23,7 +23,7 @@ import { useDragDrop } from '@/lib/dnd/DragDropContext';
 import { isAlbumRecentlyAdded } from '@/features/album/utils/albumRecency';
 import { albumArtistDisplayName, deriveAlbumArtistRefs } from '@/features/album/utils/deriveAlbumHeaderArtistRefs';
 import { coverServerScopeForServerId } from '@/cover/serverScope';
-import { appendServerQuery } from '@/utils/navigation/detailServerScope';
+import { appendServerQuery } from '@/lib/navigation/detailServerScope';
 
 interface AlbumCardProps {
   album: SubsonicAlbum;

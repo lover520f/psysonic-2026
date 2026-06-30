@@ -10,7 +10,7 @@ import { useConnectionStatus } from '@/hooks/useConnectionStatus';
 import { loadArtistFromLibraryIndex } from '@/features/offline';
 import { useOfflineBrowseContext } from '@/features/offline';
 import { loadArtistFromLocalPlayback, offlineLocalBrowseEnabled } from '@/features/offline';
-import { readDetailServerId } from '@/utils/navigation/detailServerScope';
+import { readDetailServerId } from '@/lib/navigation/detailServerScope';
 import { runLocalArtistLosslessBrowse } from '@/lib/library/browseTextSearch';
 import { isLosslessSuffix } from '@/lib/library/losslessFormats';
 

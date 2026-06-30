@@ -9,8 +9,8 @@
 import { invoke } from '@tauri-apps/api/core';
 import { listen, type UnlistenFn } from '@tauri-apps/api/event';
 import { useAuthStore } from '@/store/authStore';
-import { serverIndexKeyFromUrl } from '@/utils/server/serverIndexKey';
-import { resolveServerIdForIndexKey } from '@/utils/server/serverLookup';
+import { serverIndexKeyFromUrl } from '@/lib/server/serverIndexKey';
+import { resolveServerIdForIndexKey } from '@/lib/server/serverLookup';
 
 // ── DTO mirrors (camelCase, matching the Rust `#[serde(rename_all = "camelCase")]`) ─
 

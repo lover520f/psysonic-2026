@@ -3,8 +3,8 @@ import { getSongForServer } from '@/lib/api/subsonicLibrary';
 import { usePlayerStore } from '@/features/playback/store/playerStore';
 import type { QueueItemRef, Track } from '@/lib/media/trackTypes';
 import { songToTrack } from '@/lib/media/songToTrack';
-import { resolveServerIdForIndexKey } from '@/utils/server/serverLookup';
-import { canonicalQueueServerKey } from '@/utils/server/serverIndexKey';
+import { resolveServerIdForIndexKey } from '@/lib/server/serverLookup';
+import { canonicalQueueServerKey } from '@/lib/server/serverIndexKey';
 import { trackToSong } from '@/lib/library/advancedSearchLocal';
 import { libraryIsReady } from '@/lib/library/libraryReady';
 

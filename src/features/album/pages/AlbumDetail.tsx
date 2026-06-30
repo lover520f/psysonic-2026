@@ -45,7 +45,7 @@ import { VirtualCardGrid } from '@/ui/VirtualCardGrid';
 import LosslessModeBanner from '@/ui/LosslessModeBanner';
 import { isLosslessSuffix } from '@/lib/library/losslessFormats';
 import { isLosslessMode } from '@/lib/library/losslessMode';
-import { readDetailServerId } from '@/utils/navigation/detailServerScope';
+import { readDetailServerId } from '@/lib/navigation/detailServerScope';
 import { useOfflineBrowseContext } from '@/features/offline';
 import { offlineActionPolicy } from '@/features/offline';
 

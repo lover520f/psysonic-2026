@@ -6,9 +6,9 @@ import { enqueueLibrarySync, queueInitialSyncIfNeeded } from './librarySyncQueue
 import type { ServerProfile } from '@/store/authStoreTypes';
 import { useAuthStore } from '@/store/authStore';
 import { useLibraryIndexStore } from '@/store/libraryIndexStore';
-import { ensureConnectUrlResolved } from '@/utils/server/serverEndpoint';
-import { serverIndexKeyForProfile } from '@/utils/server/serverIndexKey';
-import { syncServerHttpContextForProfile } from '@/utils/server/syncServerHttpContext';
+import { ensureConnectUrlResolved } from '@/lib/server/serverEndpoint';
+import { serverIndexKeyForProfile } from '@/lib/server/serverIndexKey';
+import { syncServerHttpContextForProfile } from '@/lib/server/syncServerHttpContext';
 import { libraryDevEnabled, logLibraryStatus, logLibrarySync, timed } from './libraryDevLog';
 
 export type BindServerResult = 'bound' | 'offline' | 'error';

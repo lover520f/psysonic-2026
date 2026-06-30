@@ -1,13 +1,13 @@
 import { useState, useEffect, useCallback, useRef, useMemo, useSyncExternalStore } from 'react';
 import { useAuthStore } from '../store/authStore';
 import { scheduleInstantMixProbeForServer } from '@/lib/api/subsonic';
-import { serverListDisplayLabel } from '../utils/server/serverDisplayName';
+import { serverListDisplayLabel } from '@/lib/server/serverDisplayName';
 import {
   ensureConnectUrlResolved,
   invalidateReachableEndpointCache,
   isLanUrl,
   type ServerEndpointKind,
-} from '../utils/server/serverEndpoint';
+} from '@/lib/server/serverEndpoint';
 import {
   getConnectionStatus,
   setActiveServerReachable,

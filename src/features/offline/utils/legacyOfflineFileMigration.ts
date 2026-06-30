@@ -6,8 +6,8 @@ import { useLocalPlaybackStore, type LocalPlaybackEntry, type PinSource } from '
 import { localPlaybackEntryKey } from '@/store/localPlaybackKeys';
 import { importLegacyLocalPlayback } from '@/store/localPlaybackMigration';
 import { getMediaDir } from '@/lib/media/mediaDir';
-import { resolveServerIdForIndexKey } from '@/utils/server/serverLookup';
-import { resolveIndexKey } from '@/utils/server/serverIndexKey';
+import { resolveServerIdForIndexKey } from '@/lib/server/serverLookup';
+import { resolveIndexKey } from '@/lib/server/serverIndexKey';
 
 interface LegacyOfflineMigrationResult {
   trackId: string;

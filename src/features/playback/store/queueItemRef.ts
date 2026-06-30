@@ -1,6 +1,6 @@
 import type { QueueItemRef, Track } from '@/lib/media/trackTypes';
 import { stampTrackServerId } from '@/lib/media/trackServerScope';
-import { canonicalQueueServerKey } from '@/utils/server/serverIndexKey';
+import { canonicalQueueServerKey } from '@/lib/server/serverIndexKey';
 
 /**
  * Derive thin `QueueItemRef`s from a `Track[]` queue (thin-state). Per-item

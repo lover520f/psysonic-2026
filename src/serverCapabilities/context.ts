@@ -2,7 +2,7 @@ import {
   isNavidromeServer,
   parseLeadingSemver,
   type SubsonicServerIdentity,
-} from '../utils/server/subsonicServerIdentity';
+} from '@/lib/server/subsonicServerIdentity';
 import type { CapabilityContext, Semver } from './types';
 
 function semverGte(a: Semver, b: Semver): boolean {

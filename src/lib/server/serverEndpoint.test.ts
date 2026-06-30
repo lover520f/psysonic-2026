@@ -17,8 +17,8 @@ import {
   serverAddressEndpoints,
   serverShareBaseUrl,
   subscribeConnectCache,
-} from './serverEndpoint';
-import type { ServerProfile } from '../../store/authStoreTypes';
+} from '@/lib/server/serverEndpoint';
+import type { ServerProfile } from '@/store/authStoreTypes';
 
 function makeProfile(overrides: Partial<ServerProfile> = {}): ServerProfile {
   return {

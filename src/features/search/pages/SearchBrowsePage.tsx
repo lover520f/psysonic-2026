@@ -35,8 +35,8 @@ import {
   registerAdvancedSearchSessionProvider,
   resolveAdvancedSearchLeaveSnapshot,
   type AdvancedSearchLeaveSnapshot,
-} from '@/utils/navigation/advancedSearchScrollSnapshot';
-import { restoreMainViewportScroll } from '@/utils/navigation/restoreMainViewportScroll';
+} from '@/lib/navigation/advancedSearchScrollSnapshot';
+import { restoreMainViewportScroll } from '@/lib/navigation/restoreMainViewportScroll';
 import {
   loadMoreLocalSongs,
   runNetworkAdvancedTextSearch,

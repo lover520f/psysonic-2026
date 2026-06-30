@@ -1,7 +1,7 @@
 import { useAuthStore } from '../store/authStore';
 import type {
   InstantMixProbeResult,
-} from '../utils/server/subsonicServerIdentity';
+} from '@/lib/server/subsonicServerIdentity';
 import { buildCapabilityContext } from './context';
 import {
   PROBE_LEGACY_INSTANT_MIX,

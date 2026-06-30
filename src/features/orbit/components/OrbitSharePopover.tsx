@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { useOrbitStore } from '@/features/orbit/store/orbitStore';
 import { useAuthStore } from '@/store/authStore';
 import { buildOrbitShareLink } from '@/features/orbit/utils/orbit';
-import { serverShareBaseUrl } from '@/utils/server/serverEndpoint';
+import { serverShareBaseUrl } from '@/lib/server/serverEndpoint';
 
 interface Props {
   anchorRef: React.RefObject<HTMLElement | null>;

@@ -13,7 +13,7 @@ import type { QueueItemRef } from '@/lib/media/trackTypes';
 import type { PlayerState } from '@/features/playback/store/playerStoreTypes';
 import { resolveQueueTrack } from '@/features/playback/store/queueTrackView';
 import { seedQueueResolver } from '@/features/playback/store/queueTrackResolver';
-import { canonicalQueueServerKey } from '@/utils/server/serverIndexKey';
+import { canonicalQueueServerKey } from '@/lib/server/serverIndexKey';
 import { sameQueueTrackId } from '@/features/playback/utils/playback/queueIdentity';
 import { queueUndoRestoreAudioEngine } from '@/features/playback/store/queueUndoAudioRestore';
 import {

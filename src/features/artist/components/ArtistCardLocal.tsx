@@ -7,7 +7,7 @@ import { useArtistCoverRef } from '@/cover/useLibraryCoverRef';
 import { COVER_DENSE_GRID_MIN_CELL_CSS_PX } from '@/cover/layoutSizes';
 import { useNavigateToArtist } from '@/features/artist/hooks/useNavigateToArtist';
 import { coverServerScopeForServerId } from '@/cover/serverScope';
-import { appendServerQuery } from '@/utils/navigation/detailServerScope';
+import { appendServerQuery } from '@/lib/navigation/detailServerScope';
 
 interface Props {
   artist: SubsonicArtist;

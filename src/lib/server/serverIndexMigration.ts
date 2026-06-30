@@ -1,5 +1,5 @@
-import { useAuthStore } from '../../store/authStore';
-import { rewriteFrontendStoreKeys } from './rewriteFrontendStoreKeys';
+import { useAuthStore } from '@/store/authStore';
+import { rewriteFrontendStoreKeys } from '@/utils/server/rewriteFrontendStoreKeys';
 
 /**
  * Legacy compatibility shim. The migration lifecycle now runs through

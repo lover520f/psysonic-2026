@@ -5,7 +5,7 @@
 import { useAuthStore } from '@/store/authStore';
 import type { LocalPlaybackEntry } from '@/store/localPlaybackStore';
 import { useLocalPlaybackStore } from '@/store/localPlaybackStore';
-import { resolveIndexKey, serverIndexKeyForProfile } from '@/utils/server/serverIndexKey';
+import { resolveIndexKey, serverIndexKeyForProfile } from '@/lib/server/serverIndexKey';
 
 function serverIndexKeysForServerId(serverId: string): string[] {
   const servers = useAuthStore.getState().servers;

@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/store/authStore';
 import { useLibraryIndexStore } from '@/store/libraryIndexStore';
 import { showToast } from '@/lib/dom/toast';
-import { resolveIndexKey, serverIndexKeyForProfile } from '@/utils/server/serverIndexKey';
+import { resolveIndexKey, serverIndexKeyForProfile } from '@/lib/server/serverIndexKey';
 import {
   libraryGetStatus,
   librarySyncCancel,

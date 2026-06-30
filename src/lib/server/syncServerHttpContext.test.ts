@@ -4,7 +4,7 @@ const invokeMock = vi.hoisted(() => vi.fn(async () => undefined));
 
 vi.mock('@tauri-apps/api/core', () => ({ invoke: invokeMock }));
 
-import { syncServerHttpContextForProfile } from './syncServerHttpContext';
+import { syncServerHttpContextForProfile } from '@/lib/server/syncServerHttpContext';
 
 const server = {
   id: 'app-uuid-1',

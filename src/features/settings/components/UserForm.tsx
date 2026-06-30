@@ -7,8 +7,8 @@ import {
   copyTextToClipboard,
   encodeServerMagicString,
   magicPayloadAddressFields,
-} from '@/utils/server/serverMagicString';
-import { shortHostFromServerUrl } from '@/utils/server/serverDisplayName';
+} from '@/lib/server/serverMagicString';
+import { shortHostFromServerUrl } from '@/lib/server/serverDisplayName';
 import { useAuthStore } from '@/store/authStore';
 
 export interface UserFormState {

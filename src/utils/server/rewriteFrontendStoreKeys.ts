@@ -5,7 +5,7 @@ import { useLocalPlaybackStore } from '../../store/localPlaybackStore';
 import { useLibraryIndexStore } from '../../store/libraryIndexStore';
 import { useOfflineStore } from '@/features/offline';
 import { usePlayerStore } from '@/features/playback/store/playerStore';
-import { serverIndexKeyFromUrl } from './serverIndexKey';
+import { serverIndexKeyFromUrl } from '@/lib/server/serverIndexKey';
 
 /**
  * One `legacyId → indexKey` rewrite step. `legacyId` is whatever the keys

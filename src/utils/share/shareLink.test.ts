@@ -7,7 +7,7 @@ import {
   findServerIdForShareUrl,
   normalizeShareServerUrl,
 } from './shareLink';
-import { decodeServerMagicString, encodeServerMagicString, SERVER_MAGIC_STRING_PREFIX } from '../server/serverMagicString';
+import { decodeServerMagicString, encodeServerMagicString, SERVER_MAGIC_STRING_PREFIX } from '@/lib/server/serverMagicString';
 import { makeServer } from '@/test/helpers/factories';
 
 describe('shareLink vs serverMagicString', () => {

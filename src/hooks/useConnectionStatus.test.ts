@@ -5,7 +5,7 @@ import { useAuthStore } from '@/store/authStore';
 import {
   invalidateReachableEndpointCache,
   type PickReachableResult,
-} from '@/utils/server/serverEndpoint';
+} from '@/lib/server/serverEndpoint';
 
 vi.mock('@/lib/api/subsonic', () => ({
   pingWithCredentials: vi.fn(),

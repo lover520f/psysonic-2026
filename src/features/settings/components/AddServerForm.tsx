@@ -6,16 +6,16 @@ import {
   DEFAULT_CUSTOM_HEADERS_APPLY_TO,
   serverCustomHeadersFromForm,
   validateCustomHeaders,
-} from '@/utils/server/serverHttpHeaders';
+} from '@/lib/server/serverHttpHeaders';
 import { CustomHttpHeadersEditor } from '@/features/settings/components/CustomHttpHeadersEditor';
 import {
   decodeServerMagicString,
   encodeServerMagicString,
   DECODED_PASSWORD_VISUAL_MASK,
   type ServerMagicPayload,
-} from '@/utils/server/serverMagicString';
-import { shortHostFromServerUrl } from '@/utils/server/serverDisplayName';
-import { isLanUrl } from '@/utils/server/serverEndpoint';
+} from '@/lib/server/serverMagicString';
+import { shortHostFromServerUrl } from '@/lib/server/serverDisplayName';
+import { isLanUrl } from '@/lib/server/serverEndpoint';
 import { resolveHostAddresses } from '@/api/network';
 
 type FormState = {

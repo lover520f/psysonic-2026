@@ -1,8 +1,8 @@
-import { APP_MAIN_SCROLL_VIEWPORT_ID } from '../../constants/appScroll';
+import { APP_MAIN_SCROLL_VIEWPORT_ID } from '@/constants/appScroll';
 import {
   useAdvancedSearchSessionStore,
   type AdvancedSearchSessionStash,
-} from '../../store/advancedSearchSessionStore';
+} from '@/store/advancedSearchSessionStore';
 
 export type AdvancedSearchLeaveSnapshot = {
   scrollTop: number;

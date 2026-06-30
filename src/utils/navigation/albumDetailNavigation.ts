@@ -11,7 +11,7 @@ import {
 import {
   peekPersistedAdvancedSearchLeaveSnapshot,
   saveAdvancedSearchLeaveSnapshot,
-} from './advancedSearchScrollSnapshot';
+} from '@/lib/navigation/advancedSearchScrollSnapshot';
 
 export type AlbumDetailLocationState = {
   returnTo?: string;

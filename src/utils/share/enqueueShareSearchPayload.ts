@@ -14,8 +14,8 @@ import { songToTrack } from '@/lib/media/songToTrack';
 import type { Track } from '@/lib/media/trackTypes';
 import { orbitBulkGuard } from '@/features/orbit';
 import { findServerIdForShareUrl } from './shareLink';
-import { connectBaseUrlForServer } from '../server/serverEndpoint';
-import { serverIndexKeyFromUrl } from '../server/serverIndexKey';
+import { connectBaseUrlForServer } from '@/lib/server/serverEndpoint';
+import { serverIndexKeyFromUrl } from '@/lib/server/serverIndexKey';
 import type {
   AlbumShareSearchPayload,
   ArtistShareSearchPayload,

@@ -7,7 +7,7 @@ import { useOfflineStore } from '@/features/offline/store/offlineStore';
 import { trackToSong } from '@/lib/library/advancedSearchLocal';
 import { isActiveServerReachable, onActiveServerBecameReachable } from '@/utils/network/activeServerReachability';
 import { shouldAttemptSubsonicForServer } from '@/utils/network/subsonicNetworkGuard';
-import { resolveServerIdForIndexKey } from '@/utils/server/serverLookup';
+import { resolveServerIdForIndexKey } from '@/lib/server/serverLookup';
 import { isOfflinePinComplete } from '@/features/offline/utils/offlineLibraryHelpers';
 import { resolveAlbumForServer } from '@/features/offline/utils/offlineMediaResolve';
 

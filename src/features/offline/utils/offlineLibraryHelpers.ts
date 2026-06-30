@@ -8,10 +8,10 @@ import { useLocalPlaybackStore } from '@/store/localPlaybackStore';
 import { findLocalPlaybackEntry, hasLocalLibraryBytes } from '@/store/localPlaybackResolve';
 import { useOfflineStore, type OfflineAlbumMeta } from '@/features/offline/store/offlineStore';
 import { resolveTrackCoverArtId, trackToSong } from '@/lib/library/advancedSearchLocal';
-import { canonicalQueueServerKey, resolveIndexKey } from '@/utils/server/serverIndexKey';
+import { canonicalQueueServerKey, resolveIndexKey } from '@/lib/server/serverIndexKey';
 import type { Track } from '@/lib/media/trackTypes';
-import { findServerByIdOrIndexKey, resolveServerIdForIndexKey } from '@/utils/server/serverLookup';
-import { serverIndexKeyForProfile } from '@/utils/server/serverIndexKey';
+import { findServerByIdOrIndexKey, resolveServerIdForIndexKey } from '@/lib/server/serverLookup';
+import { serverIndexKeyForProfile } from '@/lib/server/serverIndexKey';
 
 export interface OfflineLibraryCard {
   serverIndexKey: string;

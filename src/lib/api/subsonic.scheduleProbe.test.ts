@@ -7,7 +7,7 @@ vi.mock('@/lib/api/subsonicOpenSubsonic', () => ({
 import { fetchOpenSubsonicExtensionsWithCredentials } from '@/lib/api/subsonicOpenSubsonic';
 import { scheduleInstantMixProbeForServer } from '@/lib/api/subsonic';
 import { useAuthStore } from '@/store/authStore';
-import type { SubsonicServerIdentity } from '@/utils/server/subsonicServerIdentity';
+import type { SubsonicServerIdentity } from '@/lib/server/subsonicServerIdentity';
 
 const fetchMock = vi.mocked(fetchOpenSubsonicExtensionsWithCredentials);
 const SID = 'srv-probe';

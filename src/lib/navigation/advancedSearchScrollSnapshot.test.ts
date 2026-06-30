@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it } from 'vitest';
-import { APP_MAIN_SCROLL_VIEWPORT_ID } from '../../constants/appScroll';
+import { APP_MAIN_SCROLL_VIEWPORT_ID } from '@/constants/appScroll';
 import {
   clearAdvancedSearchLeaveSnapshots,
   peekPersistedAdvancedSearchLeaveSnapshot,
@@ -9,8 +9,8 @@ import {
   registerAdvancedSearchSessionProvider,
   resolveAdvancedSearchLeaveSnapshot,
   saveAdvancedSearchLeaveSnapshot,
-} from './advancedSearchScrollSnapshot';
-import { useAdvancedSearchSessionStore } from '../../store/advancedSearchSessionStore';
+} from '@/lib/navigation/advancedSearchScrollSnapshot';
+import { useAdvancedSearchSessionStore } from '@/store/advancedSearchSessionStore';
 
 describe('advancedSearchScrollSnapshot', () => {
   afterEach(() => {

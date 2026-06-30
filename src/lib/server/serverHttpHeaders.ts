@@ -4,9 +4,9 @@ import type {
   CustomHeadersFieldError,
   CustomHeadersValidationResult,
   ServerProfile,
-} from '../../store/authStoreTypes';
-import { serverIndexKeyForProfile } from './serverIndexKey';
-import { normalizeServerBaseUrl, serverAddressEndpoints, type ServerEndpointKind } from './serverEndpoint';
+} from '@/store/authStoreTypes';
+import { serverIndexKeyForProfile } from '@/lib/server/serverIndexKey';
+import { normalizeServerBaseUrl, serverAddressEndpoints, type ServerEndpointKind } from '@/lib/server/serverEndpoint';
 
 export const DEFAULT_CUSTOM_HEADERS_APPLY_TO: CustomHeadersApplyTo = 'public';
 

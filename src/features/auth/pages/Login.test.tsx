@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { renderWithProviders } from '@/test/helpers/renderWithProviders';
 import { resetAuthStore } from '@/test/helpers/storeReset';
 import { useAuthStore } from '@/store/authStore';
-import { encodeServerMagicString } from '@/utils/server/serverMagicString';
+import { encodeServerMagicString } from '@/lib/server/serverMagicString';
 
 vi.mock('@/lib/api/subsonic', () => ({
   pingWithCredentialsForProfile: vi.fn(async () => ({
@@ -16,7 +16,7 @@ vi.mock('@/lib/api/subsonic', () => ({
   scheduleInstantMixProbeForServer: vi.fn(),
 }));
 
-vi.mock('@/utils/server/syncServerHttpContext', () => ({
+vi.mock('@/lib/server/syncServerHttpContext', () => ({
   syncServerHttpContextForProfile: vi.fn(async () => undefined),
 }));
 

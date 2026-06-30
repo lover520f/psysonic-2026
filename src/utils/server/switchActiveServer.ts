@@ -9,8 +9,8 @@ import { useOrbitStore } from '@/features/orbit';
 import { flushPlayQueueForServer } from '@/features/playback/store/queueSync';
 import { markQueueHandoffPending } from '@/features/playback/store/queueSyncUiState';
 import { endOrbitSession, leaveOrbitSession } from '@/features/orbit';
-import { ensureConnectUrlResolved } from './serverEndpoint';
-import { syncServerHttpContextForProfile } from './syncServerHttpContext';
+import { ensureConnectUrlResolved } from '@/lib/server/serverEndpoint';
+import { syncServerHttpContextForProfile } from '@/lib/server/syncServerHttpContext';
 
 export async function switchActiveServer(server: ServerProfile): Promise<boolean> {
   coverTrafficBeginServerSwitch();

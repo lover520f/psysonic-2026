@@ -4,7 +4,7 @@ import {
   requestBaseUrlFromHttpUrl,
   serverCustomHeadersFromForm,
   validateCustomHeaders,
-} from './serverHttpHeaders';
+} from '@/lib/server/serverHttpHeaders';
 
 describe('requestBaseUrlFromHttpUrl', () => {
   it('strips /rest/ path and query from stream URLs', () => {

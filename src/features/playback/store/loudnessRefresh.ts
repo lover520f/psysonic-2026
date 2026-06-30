@@ -1,7 +1,7 @@
 import { buildStreamUrl } from '@/lib/api/subsonicStreamUrl';
 import { invoke } from '@tauri-apps/api/core';
 import { getPlaybackIndexKey } from '@/features/playback/utils/playback/playbackServer';
-import { redactSubsonicUrlForLog } from '@/utils/server/redactSubsonicUrl';
+import { redactSubsonicUrlForLog } from '@/lib/server/redactSubsonicUrl';
 import { useAuthStore } from '@/store/authStore';
 import { usePlayerStore } from '@/features/playback/store/playerStore';
 import { emitNormalizationDebug } from '@/features/playback/store/normalizationDebug';

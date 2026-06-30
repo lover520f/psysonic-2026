@@ -4,7 +4,7 @@ import {
   isNavidromeAudiomuseSoftwareEligible,
   isNavidromeServer,
   parseLeadingSemver,
-} from './subsonicServerIdentity';
+} from '@/lib/server/subsonicServerIdentity';
 
 describe('parseLeadingSemver', () => {
   it('parses Navidrome-style version strings', () => {

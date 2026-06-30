@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../store/authStore';
 import type { EntitySharePayloadV1 } from '../utils/share/shareLink';
 import { decodeSharePayloadFromText } from '../utils/share/shareLink';
-import { decodeServerMagicStringFromText } from '../utils/server/serverMagicString';
+import { decodeServerMagicStringFromText } from '@/lib/server/serverMagicString';
 import { applySharePastePayload, applySharePasteQueue } from '../utils/share/applySharePaste';
 import { shareQueueServerContext } from '../utils/share/shareServerOriginLabel';
 import { showToast } from '@/lib/dom/toast';

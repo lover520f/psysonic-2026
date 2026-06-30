@@ -2,12 +2,12 @@ import axios from 'axios';
 import md5 from 'md5';
 import { useAuthStore } from '@/store/authStore';
 import type { ServerProfile } from '@/store/authStoreTypes';
-import { headersForServerRequest } from '@/utils/server/serverHttpHeaders';
-import { findServerByIdOrIndexKey } from '@/utils/server/serverLookup';
+import { headersForServerRequest } from '@/lib/server/serverHttpHeaders';
+import { findServerByIdOrIndexKey } from '@/lib/server/serverLookup';
 import {
   type InstantMixProbeResult,
   type SubsonicServerIdentity,
-} from '@/utils/server/subsonicServerIdentity';
+} from '@/lib/server/subsonicServerIdentity';
 import { fetchOpenSubsonicExtensionsWithCredentials } from '@/lib/api/subsonicOpenSubsonic';
 import { buildCapabilityContext } from '@/serverCapabilities/context';
 import {

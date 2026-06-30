@@ -1,4 +1,4 @@
-import { APP_MAIN_SCROLL_VIEWPORT_ID } from '../../constants/appScroll';
+import { APP_MAIN_SCROLL_VIEWPORT_ID } from '@/constants/appScroll';
 
 const SAFETY_TIMEOUT_MS = 3000;
 

@@ -12,7 +12,7 @@ import { cancelledDownloads, useOfflineJobStore } from '@/features/offline/store
 import { useFavoritesOfflineSyncStore } from '@/features/offline/store/favoritesOfflineSyncStore';
 import { useLocalPlaybackStore } from '@/store/localPlaybackStore';
 import { getMediaDir } from '@/lib/media/mediaDir';
-import { resolveIndexKey, serverIndexKeyForProfile } from '@/utils/server/serverIndexKey';
+import { resolveIndexKey, serverIndexKeyForProfile } from '@/lib/server/serverIndexKey';
 import { FAVORITES_OFFLINE_JOB_ID } from '@/features/offline/utils/favoritesOfflineConstants';
 import { isActiveServerReachable } from '@/utils/network/activeServerReachability';
 import { favoritesServerIds } from '@/features/offline/utils/favoritesOfflineBrowse';

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { ndLogin } from '@/lib/api/navidromeAdmin';
 import { useAuthStore } from '../store/authStore';
-import { isNavidromeServer } from '../utils/server/subsonicServerIdentity';
+import { isNavidromeServer } from '@/lib/server/subsonicServerIdentity';
 
 export type NavidromeAdminRole = 'idle' | 'checking' | 'admin' | 'user' | 'na' | 'error';
 

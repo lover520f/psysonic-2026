@@ -7,7 +7,7 @@ import { emitPlaybackProgress } from '@/features/playback/store/playbackProgress
 import type { QueueItemRef, Track } from '@/lib/media/trackTypes';
 import type { PlayerState } from '@/features/playback/store/playerStoreTypes';
 import { toQueueItemRefs } from '@/features/playback/store/queueItemRef';
-import { canonicalQueueServerKey } from '@/utils/server/serverIndexKey';
+import { canonicalQueueServerKey } from '@/lib/server/serverIndexKey';
 import { readInitialQueueVisibility } from '@/features/playback/store/queueVisibilityStorage';
 import { createNetworkLoveActions } from '@/features/playback/store/networkLoveActions';
 import { createMiscActions } from '@/features/playback/store/miscActions';

@@ -1,6 +1,6 @@
-import { useAuthStore } from '../../store/authStore';
-import type { ServerProfile } from '../../store/authStoreTypes';
-import { serverIndexKeyForProfile, serverIndexKeyFromUrl } from './serverIndexKey';
+import { useAuthStore } from '@/store/authStore';
+import type { ServerProfile } from '@/store/authStoreTypes';
+import { serverIndexKeyForProfile, serverIndexKeyFromUrl } from '@/lib/server/serverIndexKey';
 
 export function findServerByIdOrIndexKey(serverIdOrKey: string): ServerProfile | undefined {
   const servers = useAuthStore.getState().servers;

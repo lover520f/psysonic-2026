@@ -1,7 +1,7 @@
 import { useAuthStore } from '../../store/authStore';
-import { serverShareBaseUrl } from '../server/serverEndpoint';
+import { serverShareBaseUrl } from '@/lib/server/serverEndpoint';
 import { encodeSharePayload, type EntityShareKind } from './shareLink';
-import { copyTextToClipboard } from '../server/serverMagicString';
+import { copyTextToClipboard } from '@/lib/server/serverMagicString';
 
 /** Copies a track / album / artist / composer share link (`psysonic2-`) to the clipboard. */
 export async function copyEntityShareLink(kind: EntityShareKind, id: string): Promise<boolean> {

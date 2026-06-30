@@ -1,7 +1,7 @@
 import type { Track, QueueItemRef } from '@/lib/media/trackTypes';
 import { useAuthStore } from '@/store/authStore';
-import { canonicalQueueServerKey } from '@/utils/server/serverIndexKey';
-import { resolveServerIdForIndexKey } from '@/utils/server/serverLookup';
+import { canonicalQueueServerKey } from '@/lib/server/serverIndexKey';
+import { resolveServerIdForIndexKey } from '@/lib/server/serverLookup';
 
 /**
  * Pure server-scope helpers for the shared media model: stamp the owning server

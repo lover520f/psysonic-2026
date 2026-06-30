@@ -1,4 +1,4 @@
-import type { ServerProfile } from '../../store/authStoreTypes';
+import type { ServerProfile } from '@/store/authStoreTypes';
 /** Host (+ port) from a server base URL, e.g. `https://music.one.com/foo` → `music.one.com`. */
 export function shortHostFromServerUrl(urlRaw?: string | null): string {
   const t = typeof urlRaw === 'string' ? urlRaw.trim() : '';

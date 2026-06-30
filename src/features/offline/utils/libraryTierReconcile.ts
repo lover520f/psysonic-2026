@@ -6,7 +6,7 @@ import { useAuthStore } from '@/store/authStore';
 import type { LocalPlaybackEntry, PinSource } from '@/store/localPlaybackStore';
 import { useLocalPlaybackStore } from '@/store/localPlaybackStore';
 import { getMediaDir } from '@/lib/media/mediaDir';
-import { resolveIndexKey, serverIndexKeyForProfile } from '@/utils/server/serverIndexKey';
+import { resolveIndexKey, serverIndexKeyForProfile } from '@/lib/server/serverIndexKey';
 import {
   entryBelongsToServer,
   findLocalPlaybackEntry,

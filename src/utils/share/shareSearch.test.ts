@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { encodeServerMagicString } from '../server/serverMagicString';
+import { encodeServerMagicString } from '@/lib/server/serverMagicString';
 import { encodeSharePayload } from './shareLink';
 import { parseShareSearchText, sharePayloadTotal } from './shareSearch';
 

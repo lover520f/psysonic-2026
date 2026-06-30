@@ -1,4 +1,4 @@
-import type { SubsonicServerIdentity } from '@/utils/server/subsonicServerIdentity';
+import type { SubsonicServerIdentity } from '@/lib/server/subsonicServerIdentity';
 
 /** OpenSubsonic `ItemGenre` on songs/albums (atomic genres from the server). */
 export interface SubsonicItemGenre {

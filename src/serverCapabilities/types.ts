@@ -1,4 +1,4 @@
-import type { SubsonicServerIdentity } from '../utils/server/subsonicServerIdentity';
+import type { SubsonicServerIdentity } from '@/lib/server/subsonicServerIdentity';
 
 export type Semver = [number, number, number];
 

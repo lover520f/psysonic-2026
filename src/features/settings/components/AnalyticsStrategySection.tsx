@@ -21,8 +21,8 @@ import {
 } from '@/api/analysis';
 import { libraryGetTracksBatch, type LibraryTrackDto, type TrackRefDto } from '@/lib/api/library';
 import { buildStreamUrlForServer } from '@/lib/api/subsonicStreamUrl';
-import { serverListDisplayLabel } from '@/utils/server/serverDisplayName';
-import { serverIndexKeyForProfile } from '@/utils/server/serverIndexKey';
+import { serverListDisplayLabel } from '@/lib/server/serverDisplayName';
+import { serverIndexKeyForProfile } from '@/lib/server/serverIndexKey';
 import { showToast } from '@/lib/dom/toast';
 import {
   ANALYTICS_STRATEGIES,

@@ -54,7 +54,7 @@ import {
   resolveLiveSearchScopeGhost,
 } from '@/features/search/components/liveSearchScope';
 import { useLiveSearchScopeStore } from '@/store/liveSearchScopeStore';
-import { resolveIndexKey } from '@/utils/server/serverIndexKey';
+import { resolveIndexKey } from '@/lib/server/serverIndexKey';
 
 type LiveSearchSource = 'local' | 'network';
 

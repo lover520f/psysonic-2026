@@ -16,7 +16,7 @@ import {
   fetchServerFingerprint,
   verifySameServerEndpoints,
   type ServerFingerprint,
-} from './serverFingerprint';
+} from '@/lib/server/serverFingerprint';
 
 function makeFingerprint(overrides: Partial<ServerFingerprint> = {}): ServerFingerprint {
   return {

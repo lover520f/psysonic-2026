@@ -1,7 +1,7 @@
 import { pingWithCredentialsForProfile } from '@/lib/api/subsonic';
 import type { PingWithCredentialsResult } from '@/lib/api/subsonicTypes';
-import type { ServerProfile } from '../../store/authStoreTypes';
-import { serverProfileBaseUrl } from './serverBaseUrl';
+import type { ServerProfile } from '@/store/authStoreTypes';
+import { serverProfileBaseUrl } from '@/lib/server/serverBaseUrl';
 
 export type ServerEndpointKind = 'local' | 'public';
 

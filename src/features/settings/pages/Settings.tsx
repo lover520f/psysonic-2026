@@ -21,7 +21,7 @@ import { searchSettings, type SettingsSearchHit } from '@/features/settings/comp
 import { type Tab, resolveTab } from '@/features/settings/components/settingsTabs';
 import { UserManagementSection } from '@/features/settings/components/UserManagementSection';
 import { ndLogin } from '@/lib/api/navidromeAdmin';
-import { type ServerMagicPayload } from '@/utils/server/serverMagicString';
+import { type ServerMagicPayload } from '@/lib/server/serverMagicString';
 
 
 export default function Settings() {

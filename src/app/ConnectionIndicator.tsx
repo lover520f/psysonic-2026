@@ -10,7 +10,7 @@ import type { ServerProfile } from '@/store/authStoreTypes';
 import { useAuthStore } from '@/store/authStore';
 import { switchActiveServer } from '@/utils/server/switchActiveServer';
 import { showToast } from '@/lib/dom/toast';
-import { serverListDisplayLabel } from '@/utils/server/serverDisplayName';
+import { serverListDisplayLabel } from '@/lib/server/serverDisplayName';
 
 interface Props {
   status: ConnectionStatus;

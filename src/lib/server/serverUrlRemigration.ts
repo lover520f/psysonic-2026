@@ -28,15 +28,15 @@
  */
 
 import { invoke } from '@tauri-apps/api/core';
-import type { ServerProfile } from '../../store/authStoreTypes';
+import type { ServerProfile } from '@/store/authStoreTypes';
 import {
   migrationInspect,
   migrationRun,
   type MigrationInspectReport,
   type MigrationRunResult,
-} from '../../api/migration';
-import { rewriteFrontendStoreKeysForRemap } from './rewriteFrontendStoreKeys';
-import { serverIndexKeyFromUrl } from './serverIndexKey';
+} from '@/api/migration';
+import { rewriteFrontendStoreKeysForRemap } from '@/utils/server/rewriteFrontendStoreKeys';
+import { serverIndexKeyFromUrl } from '@/lib/server/serverIndexKey';
 
 export type IndexKeyRemap = { oldKey: string; newKey: string };
 

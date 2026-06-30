@@ -11,7 +11,7 @@ import { invoke } from '@tauri-apps/api/core';
 import {
   indexKeyRemapForUrlChange,
   runIndexKeyRemigration,
-} from './serverUrlRemigration';
+} from '@/lib/server/serverUrlRemigration';
 
 function inspectStub(needs = true) {
   return {

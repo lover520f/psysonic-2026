@@ -1,6 +1,6 @@
 import { findLocalPlaybackUrl } from '@/store/localPlaybackResolve';
 import { resolvePlaybackUrl, type PlaybackSourceKind } from '@/features/playback/utils/playback/resolvePlaybackUrl';
-import { resolveServerIdForIndexKey } from '@/utils/server/serverLookup';
+import { resolveServerIdForIndexKey } from '@/lib/server/serverLookup';
 import { sameQueueTrackId } from '@/features/playback/utils/playback/queueIdentity';
 
 /**

@@ -35,7 +35,7 @@ import {
 import { showToast } from '@/lib/dom/toast';
 import { shuffleArray } from '@/lib/util/shuffleArray';
 import { getMediaDir } from '@/lib/media/mediaDir';
-import { canonicalQueueServerKey, resolveIndexKey } from '@/utils/server/serverIndexKey';
+import { canonicalQueueServerKey, resolveIndexKey } from '@/lib/server/serverIndexKey';
 import { reconcileAllLibraryTiersFromDisk } from '@/features/offline/utils/libraryTierReconcile';
 import {
   inferPinSourcesFromLibraryIndex,

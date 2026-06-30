@@ -1,7 +1,7 @@
 import { useAuthStore } from '../../store/authStore';
 import { resolvePlaybackUrl } from '@/features/playback/utils/playback/resolvePlaybackUrl';
 import { isDevOfflineBrowseForced } from '@/features/offline';
-import { resolveServerIdForIndexKey } from '../server/serverLookup';
+import { resolveServerIdForIndexKey } from '@/lib/server/serverLookup';
 import { isActiveServerReachable } from './activeServerReachability';
 
 function isSameServerProfile(a: string, b: string): boolean {

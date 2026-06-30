@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { open as openUrl } from '@tauri-apps/plugin-shell';
 import { AlertTriangle, CheckCircle2, Info, Lock, LogOut, Pencil, Plus, Power, Server, Sparkles, Wifi, WifiOff } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
-import { formatServerSoftware, isNavidromeAudiomuseSoftwareEligible, type InstantMixProbeResult, type SubsonicServerIdentity } from '@/utils/server/subsonicServerIdentity';
+import { formatServerSoftware, isNavidromeAudiomuseSoftwareEligible, type InstantMixProbeResult, type SubsonicServerIdentity } from '@/lib/server/subsonicServerIdentity';
 import { buildCapabilityContext } from '@/serverCapabilities/context';
 import { useLibraryIndexStore } from '@/store/libraryIndexStore';
 import { libraryDeleteServerData, librarySyncClearSession } from '@/lib/api/library';
@@ -16,24 +16,24 @@ import { pingWithCredentialsForProfile, scheduleInstantMixProbeForServer } from 
 import {
   clearServerHttpContext,
   syncServerHttpContextForProfile,
-} from '@/utils/server/syncServerHttpContext';
-import { type ServerMagicPayload } from '@/utils/server/serverMagicString';
-import { ensureConnectUrlResolved, invalidateReachableEndpointCache } from '@/utils/server/serverEndpoint';
+} from '@/lib/server/syncServerHttpContext';
+import { type ServerMagicPayload } from '@/lib/server/serverMagicString';
+import { ensureConnectUrlResolved, invalidateReachableEndpointCache } from '@/lib/server/serverEndpoint';
 import {
   verifySameServerEndpoints,
   type VerifySameServerResult,
-} from '@/utils/server/serverFingerprint';
+} from '@/lib/server/serverFingerprint';
 import {
   indexKeyRemapForUrlChange,
   runIndexKeyRemigration,
-} from '@/utils/server/serverUrlRemigration';
+} from '@/lib/server/serverUrlRemigration';
 import { useConfirmModalStore } from '@/store/confirmModalStore';
 import { showToast } from '@/lib/dom/toast';
 import { FEATURE_AUDIOMUSE_SIMILAR_TRACKS } from '@/serverCapabilities/catalog';
 import { isFeatureActiveForServer, resolveFeatureForServer } from '@/serverCapabilities/storeView';
 import type { ResolvedCapability } from '@/serverCapabilities/types';
-import { serverIdentityLabel, serverListDisplayLabel, serverSettingsEntryTitle } from '@/utils/server/serverDisplayName';
-import { serverIndexKeyForProfile } from '@/utils/server/serverIndexKey';
+import { serverIdentityLabel, serverListDisplayLabel, serverSettingsEntryTitle } from '@/lib/server/serverDisplayName';
+import { serverIndexKeyForProfile } from '@/lib/server/serverIndexKey';
 import { switchActiveServer } from '@/utils/server/switchActiveServer';
 import { AddServerForm } from '@/features/settings/components/AddServerForm';
 import { ServerCapabilityHeaderBadge } from '@/features/settings/components/ServerCapabilityHeaderBadge';

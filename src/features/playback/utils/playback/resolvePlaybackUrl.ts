@@ -1,6 +1,6 @@
 import { buildStreamUrlForServer } from '@/lib/api/subsonicStreamUrl';
 import { findLocalPlaybackUrl } from '@/store/localPlaybackResolve';
-import { resolveServerIdForIndexKey } from '@/utils/server/serverLookup';
+import { resolveServerIdForIndexKey } from '@/lib/server/serverLookup';
 import { getPlaybackCacheServerKey, getPlaybackServerId } from '@/features/playback/utils/playback/playbackServer';
 
 /** Same resolution order as {@link resolvePlaybackUrl} — for UI hints only. */

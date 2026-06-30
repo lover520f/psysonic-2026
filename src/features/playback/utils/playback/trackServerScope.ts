@@ -1,6 +1,6 @@
 import type { QueueItemRef } from '@/lib/media/trackTypes';
 import { usePlayerStore } from '@/features/playback/store/playerStore';
-import { resolveServerIdForIndexKey } from '@/utils/server/serverLookup';
+import { resolveServerIdForIndexKey } from '@/lib/server/serverLookup';
 import { activeServerProfileId, profileIdFromQueueRef } from '@/lib/media/trackServerScope';
 
 /**

@@ -1,5 +1,5 @@
-import type { ServerProfile } from '../../store/authStoreTypes';
-import { normalizeServerBaseUrl, serverShareBaseUrl } from './serverEndpoint';
+import type { ServerProfile } from '@/store/authStoreTypes';
+import { normalizeServerBaseUrl, serverShareBaseUrl } from '@/lib/server/serverEndpoint';
 
 /**
  * Prefix for server invite strings (Subsonic credentials). Same family as library

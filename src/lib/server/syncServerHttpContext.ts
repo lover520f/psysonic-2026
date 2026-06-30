@@ -1,7 +1,7 @@
 import { invoke } from '@tauri-apps/api/core';
-import type { ServerProfile } from '../../store/authStoreTypes';
-import { serverHttpContextWireForProfile } from './serverHttpHeaders';
-import { serverIndexKeyForProfile } from './serverIndexKey';
+import type { ServerProfile } from '@/store/authStoreTypes';
+import { serverHttpContextWireForProfile } from '@/lib/server/serverHttpHeaders';
+import { serverIndexKeyForProfile } from '@/lib/server/serverIndexKey';
 
 export async function syncServerHttpContextForProfile(server: ServerProfile): Promise<void> {
   const wire = serverHttpContextWireForProfile(server);

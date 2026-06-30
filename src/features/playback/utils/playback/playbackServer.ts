@@ -9,13 +9,13 @@ import { usePlayerStore } from '@/features/playback/store/playerStore';
 import { switchActiveServer } from '@/utils/server/switchActiveServer';
 import { sameQueueTrackId } from '@/features/playback/utils/playback/queueIdentity';
 import type { QueueItemRef, Track } from '@/lib/media/trackTypes';
-import { findServerByIdOrIndexKey, resolveServerIdForIndexKey } from '@/utils/server/serverLookup';
+import { findServerByIdOrIndexKey, resolveServerIdForIndexKey } from '@/lib/server/serverLookup';
 import {
   canonicalQueueServerKey,
   resolveIndexKey,
   serverIndexKeyForProfile,
   serverIndexKeyFromUrl,
-} from '@/utils/server/serverIndexKey';
+} from '@/lib/server/serverIndexKey';
 import {
   activeServerProfileId,
   isMultiServerQueue,

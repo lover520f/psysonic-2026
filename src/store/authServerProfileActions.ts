@@ -1,7 +1,7 @@
 import type { AuthState } from './authStoreTypes';
 import { generateId } from './authStoreHelpers';
 import { getQueueServerId, clearQueueServerForPlayback } from './playbackEngineBridge';
-import { resolveServerIdForIndexKey } from '../utils/server/serverLookup';
+import { resolveServerIdForIndexKey } from '@/lib/server/serverLookup';
 
 type SetState = (
   partial: Partial<AuthState> | ((state: AuthState) => Partial<AuthState>),

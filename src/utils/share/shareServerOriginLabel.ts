@@ -1,6 +1,6 @@
 import type { ServerProfile } from '../../store/authStoreTypes';
-import { serverListDisplayLabel } from '../server/serverDisplayName';
-import { serverIndexKeyFromUrl } from '../server/serverIndexKey';
+import { serverListDisplayLabel } from '@/lib/server/serverDisplayName';
+import { serverIndexKeyFromUrl } from '@/lib/server/serverIndexKey';
 import { findServerIdForShareUrl } from './shareLink';
 import type { ShareSearchMatch } from './shareSearch';
 

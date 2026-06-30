@@ -22,9 +22,9 @@ import {
   SUBSONIC_CLIENT,
   type ServerHttpHeaderProfile,
 } from '@/lib/api/subsonicClient';
-import type { ServerProfile } from '../../store/authStoreTypes';
-import { allNormalizedAddresses } from './serverEndpoint';
-import { headersForServerRequest } from './serverHttpHeaders';
+import type { ServerProfile } from '@/store/authStoreTypes';
+import { allNormalizedAddresses } from '@/lib/server/serverEndpoint';
+import { headersForServerRequest } from '@/lib/server/serverHttpHeaders';
 
 export type ServerFingerprint = {
   ping: {

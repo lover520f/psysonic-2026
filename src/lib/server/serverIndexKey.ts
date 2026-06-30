@@ -1,6 +1,6 @@
-import type { ServerProfile } from '../../store/authStoreTypes';
-import { useAuthStore } from '../../store/authStore';
-import { serverProfileBaseUrl } from './serverBaseUrl';
+import type { ServerProfile } from '@/store/authStoreTypes';
+import { useAuthStore } from '@/store/authStore';
+import { serverProfileBaseUrl } from '@/lib/server/serverBaseUrl';
 
 /** Stable index key derived from a server URL (host + optional path, no scheme). */
 export function serverIndexKeyFromUrl(urlRaw: string): string {

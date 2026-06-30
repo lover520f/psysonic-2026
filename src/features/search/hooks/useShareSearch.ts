@@ -11,7 +11,7 @@ import type { ServerProfile } from '@/store/authStoreTypes';
 import { findServerIdForShareUrl } from '@/utils/share/shareLink';
 import { shareServerOriginLabel } from '@/utils/share/shareServerOriginLabel';
 import { parseShareSearchText } from '@/utils/share/shareSearch';
-import { serverIndexKeyFromUrl } from '@/utils/server/serverIndexKey';
+import { serverIndexKeyFromUrl } from '@/lib/server/serverIndexKey';
 import { useShareSearchPreview } from '@/features/search/hooks/useShareSearchPreview';
 
 export function useShareSearch(query: string, onSuccess?: () => void) {

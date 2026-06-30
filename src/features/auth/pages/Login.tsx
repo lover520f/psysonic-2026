@@ -9,8 +9,8 @@ import {
   DEFAULT_CUSTOM_HEADERS_APPLY_TO,
   serverCustomHeadersFromForm,
   validateCustomHeaders,
-} from '@/utils/server/serverHttpHeaders';
-import { syncServerHttpContextForProfile } from '@/utils/server/syncServerHttpContext';
+} from '@/lib/server/serverHttpHeaders';
+import { syncServerHttpContextForProfile } from '@/lib/server/syncServerHttpContext';
 import { useTranslation } from 'react-i18next';
 import i18n from '@/lib/i18n';
 import CustomSelect from '@/ui/CustomSelect';
@@ -19,8 +19,8 @@ import {
   DECODED_PASSWORD_VISUAL_MASK,
   encodeServerMagicString,
   type ServerMagicPayload,
-} from '@/utils/server/serverMagicString';
-import { shortHostFromServerUrl, serverListDisplayLabel } from '@/utils/server/serverDisplayName';
+} from '@/lib/server/serverMagicString';
+import { shortHostFromServerUrl, serverListDisplayLabel } from '@/lib/server/serverDisplayName';
 
 const PsysonicLogo = () => (
   <img src="/logo-psysonic.png" width="64" height="64" alt="Psysonic" style={{ borderRadius: 18 }} />

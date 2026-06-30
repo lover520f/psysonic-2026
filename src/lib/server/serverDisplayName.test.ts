@@ -1,6 +1,6 @@
-import type { ServerProfile } from '../../store/authStoreTypes';
+import type { ServerProfile } from '@/store/authStoreTypes';
 import { describe, expect, it } from 'vitest';
-import { serverIdentityLabel, serverListDisplayLabel, serverSettingsEntryTitle, shortHostFromServerUrl } from './serverDisplayName';
+import { serverIdentityLabel, serverListDisplayLabel, serverSettingsEntryTitle, shortHostFromServerUrl } from '@/lib/server/serverDisplayName';
 
 function srv(p: Partial<ServerProfile> & Pick<ServerProfile, 'id'>): ServerProfile {
   return {
