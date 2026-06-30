@@ -1,6 +1,6 @@
 import React from 'react';
 import type { TFunction } from 'i18next';
-import type { ColDef } from '@/utils/useTracklistColumns';
+import type { ColDef } from '@/hooks/useTracklistColumns';
 import { CENTERED_COLS, isSortable, type ColKey, type SortKey } from '@/features/album/utils/albumTrackListHelpers';
 
 interface Props {

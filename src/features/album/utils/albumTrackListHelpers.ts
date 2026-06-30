@@ -1,4 +1,4 @@
-import type { ColDef } from '@/utils/useTracklistColumns';
+import type { ColDef } from '@/hooks/useTracklistColumns';
 
 export function codecLabel(song: { suffix?: string; bitRate?: number }, showBitrate: boolean): string {
   const parts: string[] = [];

@@ -4,7 +4,7 @@ import FavoriteSongRow, { type FavoriteSongRowCallbacks } from '@/features/favor
 import { TracklistColumnPicker } from '@/ui/TracklistColumnPicker';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import type { ColDef } from '@/utils/useTracklistColumns';
+import type { ColDef } from '@/hooks/useTracklistColumns';
 import type { SubsonicSong } from '@/lib/api/subsonicTypes';
 import { usePlayerStore } from '@/features/playback/store/playerStore';
 import { previewInputFromSong, usePreviewStore } from '@/features/playback/store/previewStore';

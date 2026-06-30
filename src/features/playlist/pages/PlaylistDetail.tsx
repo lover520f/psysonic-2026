@@ -2,7 +2,7 @@ import { updatePlaylist } from '@/lib/api/subsonicPlaylists';
 import type { SubsonicPlaylist, SubsonicSong } from '@/lib/api/subsonicTypes';
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { useTracklistColumns, type ColDef } from '@/utils/useTracklistColumns';
+import { useTracklistColumns, type ColDef } from '@/hooks/useTracklistColumns';
 import { usePlayerStore } from '@/features/playback/store/playerStore';
 import { useShallow } from 'zustand/react/shallow';
 import { usePlaylistStore } from '@/features/playlist/store/playlistStore';

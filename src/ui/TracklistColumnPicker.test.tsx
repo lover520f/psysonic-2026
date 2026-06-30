@@ -5,7 +5,7 @@ import userEvent from '@testing-library/user-event';
 import type { TFunction } from 'i18next';
 import { renderWithProviders } from '@/test/helpers/renderWithProviders';
 import { TracklistColumnPicker } from '@/ui/TracklistColumnPicker';
-import type { ColDef } from '@/utils/useTracklistColumns';
+import type { ColDef } from '@/hooks/useTracklistColumns';
 
 const COLUMNS: readonly ColDef[] = [
   { key: 'title', i18nKey: 'title', minWidth: 100, defaultWidth: 200, required: true },

@@ -1,6 +1,6 @@
 import { queueSongStar, queueSongRating } from '@/features/playback/store/pendingStarSync';
 import React, { useEffect, useMemo, useState } from 'react';
-import { useTracklistColumns, type ColDef } from '@/utils/useTracklistColumns';
+import { useTracklistColumns, type ColDef } from '@/hooks/useTracklistColumns';
 import { TopFavoriteArtistsRow } from '@/features/favorites/components/TopFavoriteArtists';
 import { RadioStationRow } from '@/features/favorites/components/RadioFavorites';
 import FavoritesSongsSectionHeader from '@/features/favorites/components/FavoritesSongsSectionHeader';
