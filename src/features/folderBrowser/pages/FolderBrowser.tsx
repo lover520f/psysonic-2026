@@ -6,11 +6,11 @@ import { useTranslation } from 'react-i18next';
 import {
   entryToAlbumIfPresent, entryToTrack,
   type Column, type ColumnKind, type NavPos,
-} from '../utils/componentHelpers/folderBrowserHelpers';
-import FolderBrowserColumn from '../components/folderBrowser/FolderBrowserColumn';
-import { useFolderBrowserNowPlayingPath } from '../hooks/useFolderBrowserNowPlayingPath';
-import { useFolderBrowserScrolling } from '../hooks/useFolderBrowserScrolling';
-import { useFolderBrowserKeyboardNav } from '../hooks/useFolderBrowserKeyboardNav';
+} from '@/features/folderBrowser/utils/folderBrowserHelpers';
+import FolderBrowserColumn from '@/features/folderBrowser/components/FolderBrowserColumn';
+import { useFolderBrowserNowPlayingPath } from '@/features/folderBrowser/hooks/useFolderBrowserNowPlayingPath';
+import { useFolderBrowserScrolling } from '@/features/folderBrowser/hooks/useFolderBrowserScrolling';
+import { useFolderBrowserKeyboardNav } from '@/features/folderBrowser/hooks/useFolderBrowserKeyboardNav';
 
 export default function FolderBrowser() {
   const { t } = useTranslation();

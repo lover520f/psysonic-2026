@@ -4,7 +4,7 @@ import { usePlayerStore } from '@/features/playback/store/playerStore';
 import {
   entryToTrack, folderBrowserHasKeyModifiers, isFolderBrowserArrowKey,
   type Column, type NavPos,
-} from '../utils/componentHelpers/folderBrowserHelpers';
+} from '@/features/folderBrowser/utils/folderBrowserHelpers';
 
 interface Args {
   columns: Column[];

@@ -6,7 +6,7 @@ import type { Track } from '@/lib/media/trackTypes';
 import {
   folderBrowserHasKeyModifiers, isFolderBrowserArrowKey,
   type Column,
-} from '../../utils/componentHelpers/folderBrowserHelpers';
+} from '@/features/folderBrowser/utils/folderBrowserHelpers';
 
 interface Props {
   col: Column;

@@ -3,7 +3,7 @@ import { useLocation } from 'react-router-dom';
 import { getMusicDirectory, getMusicIndexes } from '@/lib/api/subsonicLibrary';
 import type { SubsonicDirectoryEntry } from '@/lib/api/subsonicTypes';
 import type { Track } from '@/lib/media/trackTypes';
-import type { Column, NavPos } from '../utils/componentHelpers/folderBrowserHelpers';
+import type { Column, NavPos } from '@/features/folderBrowser/utils/folderBrowserHelpers';
 
 let persistedPlayingPathIds: string[] = [];
 
