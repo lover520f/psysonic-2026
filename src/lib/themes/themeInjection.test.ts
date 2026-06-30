@@ -8,8 +8,8 @@ import {
   validateThemeCss,
   injectTheme,
   syncInjectedThemes,
-} from './themeInjection';
-import type { InstalledTheme } from '../../store/installedThemesStore';
+} from '@/lib/themes/themeInjection';
+import type { InstalledTheme } from '@/store/installedThemesStore';
 
 const ATTR = 'data-installed-theme';
 

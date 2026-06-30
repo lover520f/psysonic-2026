@@ -1,6 +1,6 @@
-import { fetchThemeCss, type RegistryTheme } from './themeRegistry';
-import { validateThemeCss } from './themeInjection';
-import { useInstalledThemesStore } from '../../store/installedThemesStore';
+import { fetchThemeCss, type RegistryTheme } from '@/lib/themes/themeRegistry';
+import { validateThemeCss } from '@/lib/themes/themeInjection';
+import { useInstalledThemesStore } from '@/store/installedThemesStore';
 
 export type InstallResult = 'ok' | 'invalid' | 'error';
 

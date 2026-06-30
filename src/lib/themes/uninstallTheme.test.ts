@@ -3,9 +3,9 @@
  * selection slot that referenced it (active + scheduler day/night).
  */
 import { beforeEach, describe, expect, it } from 'vitest';
-import { uninstallTheme } from './uninstallTheme';
-import { useInstalledThemesStore, type InstalledTheme } from '../../store/installedThemesStore';
-import { useThemeStore } from '../../store/themeStore';
+import { uninstallTheme } from '@/lib/themes/uninstallTheme';
+import { useInstalledThemesStore, type InstalledTheme } from '@/store/installedThemesStore';
+import { useThemeStore } from '@/store/themeStore';
 
 function mk(id: string, mode: 'dark' | 'light' = 'dark'): InstalledTheme {
   return { id, name: id, author: 'a', version: '1.0.0', description: '', mode, css: `[data-theme='${id}']{--accent:#fff;}`, installedAt: 0 };

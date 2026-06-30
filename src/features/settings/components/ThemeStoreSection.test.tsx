@@ -3,16 +3,16 @@ import { screen, waitFor, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { renderWithProviders } from '@/test/helpers/renderWithProviders';
 import { ThemeStoreSection } from '@/features/settings/components/ThemeStoreSection';
-import type { FetchRegistryResult, Registry, RegistryTheme } from '@/utils/themes/themeRegistry';
+import type { FetchRegistryResult, Registry, RegistryTheme } from '@/lib/themes/themeRegistry';
 
 // Control the registry the store browses so pagination/refresh are deterministic.
-vi.mock('@/utils/themes/themeRegistry', () => ({
+vi.mock('@/lib/themes/themeRegistry', () => ({
   fetchRegistry: vi.fn(),
   fetchThemeCss: vi.fn(async () => 'css'),
   assetUrl: (p: string) => `https://raw.example/${p}`,
 }));
 
-import { fetchRegistry } from '@/utils/themes/themeRegistry';
+import { fetchRegistry } from '@/lib/themes/themeRegistry';
 
 const fetchRegistryMock = vi.mocked(fetchRegistry);
 

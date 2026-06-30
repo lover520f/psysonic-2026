@@ -13,7 +13,7 @@ import {
   bumpHotCachePreviousTrackGrace,
   clearHotCachePreviousGrace,
   getDeferHotCachePrefetch,
-} from './utils/cache/hotCacheGate';
+} from '@/lib/cache/hotCacheGate';
 import {
   PREFETCH_AHEAD,
   type PrefetchJob,
@@ -27,7 +27,7 @@ import {
   scheduleAnalysisQueuePruneFromPlaybackQueue,
   resetAnalysisPruneState,
 } from './hotCachePrefetch/analysisPrune';
-import { reconcileEphemeralCache } from './utils/cache/ephemeralTierReconcile';
+import { reconcileEphemeralCache } from '@/lib/cache/ephemeralTierReconcile';
 import { hasLocalPersistentPlaybackBytes } from '@/store/localPlaybackResolve';
 
 /** Periodic index↔disk sync (stale rows + empty dirs); unindexed files evicted only on budget pressure. */

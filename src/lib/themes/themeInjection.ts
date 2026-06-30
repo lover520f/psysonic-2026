@@ -1,4 +1,4 @@
-import type { InstalledTheme } from '../../store/installedThemesStore';
+import type { InstalledTheme } from '@/store/installedThemesStore';
 
 /**
  * Runtime CSS injection for installed community themes. Built-in themes are

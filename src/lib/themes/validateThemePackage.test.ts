@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { validateThemePackage } from './validateThemePackage';
+import { validateThemePackage } from '@/lib/themes/validateThemePackage';
 
 /** A minimal floor-passing theme.css for `id`. */
 function css(id = 'my-theme'): string {

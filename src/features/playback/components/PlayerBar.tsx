@@ -19,7 +19,7 @@ import { useRadioMetadata } from '@/features/radio';
 import { useRadioMprisSync } from '@/features/radio';
 import { usePlaybackDelayPress } from '@/features/playback/hooks/usePlaybackDelayPress';
 import PlaybackDelayModal from '@/features/playback/components/PlaybackDelayModal';
-import { usePlaybackScheduleRemaining } from '@/utils/format/playbackScheduleFormat';
+import { usePlaybackScheduleRemaining } from '@/features/playback/utils/playbackScheduleFormat';
 import { usePreviewStore } from '@/features/playback/store/previewStore';
 import { usePerfProbeFlags } from '@/utils/perf/perfFlags';
 import { coerceOpenArtistRefs } from '@/lib/api/openArtistRefs';

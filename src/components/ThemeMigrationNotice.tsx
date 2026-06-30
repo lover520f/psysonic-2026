@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import ConfirmModal from './ConfirmModal';
-import { readThemeMigrationNotice, clearThemeMigrationNotice } from '../utils/themes/themeMigration';
+import { readThemeMigrationNotice, clearThemeMigrationNotice } from '@/lib/themes/themeMigration';
 
 /**
  * One-time, dismissible notice shown after the slim-bundle migration reset a

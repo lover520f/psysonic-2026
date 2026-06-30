@@ -5,7 +5,7 @@ import { resolveNpAlbum, resolveNpDiscography, resolveNpSongMeta, resolveNpTopSo
 import { fetchBandsintownEvents, type BandsintownEvent } from '@/api/bandsintown';
 import type { ArtistStats, TrackStats } from '@/music-network';
 import { getMusicNetworkRuntimeOrNull } from '@/music-network';
-import { makeCache } from '@/utils/cache/nowPlayingCache';
+import { makeCache } from '@/lib/cache/nowPlayingCache';
 import { shouldAttemptSubsonicForServer } from '@/utils/network/subsonicNetworkGuard';
 import { useConnectionStatus } from '@/hooks/useConnectionStatus';
 

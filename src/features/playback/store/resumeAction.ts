@@ -1,7 +1,7 @@
 import { getSong } from '@/lib/api/subsonicLibrary';
 import { invoke } from '@tauri-apps/api/core';
 import { estimateLivePosition, orbitSnapshot } from '@/store/orbitRuntime';
-import { setDeferHotCachePrefetch } from '@/utils/cache/hotCacheGate';
+import { setDeferHotCachePrefetch } from '@/lib/cache/hotCacheGate';
 import {
   getPlaybackCacheServerKey,
   getPlaybackIndexKey,

@@ -26,7 +26,7 @@ import { LyricsPane } from '@/features/lyrics';
 import { usePlaybackDelayPress } from '@/features/playback/hooks/usePlaybackDelayPress';
 import PlaybackDelayModal from '@/features/playback/components/PlaybackDelayModal';
 import PlaybackScheduleBadge from '@/features/playback/components/PlaybackScheduleBadge';
-import { usePlaybackScheduleRemaining } from '@/utils/format/playbackScheduleFormat';
+import { usePlaybackScheduleRemaining } from '@/features/playback/utils/playbackScheduleFormat';
 
 // ── Color extraction ──────────────────────────────────────────────────────────
 // Samples a 16×16 canvas to find the most vibrant (highest-saturation,

@@ -7,7 +7,7 @@ import { useAuthStore } from '@/store/authStore';
 import { useShallow } from 'zustand/react/shallow';
 
 import type { TFunction } from 'i18next';
-import { formatPlaybackScheduleRemaining } from '@/utils/format/playbackScheduleFormat';
+import { formatPlaybackScheduleRemaining } from '@/features/playback/utils/playbackScheduleFormat';
 import { formatClockTime } from '@/lib/format/formatClockTime';
 import {
   isValidPlaybackSchedulePreviewTimestamp,

@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { reconcileEphemeralCache } from './ephemeralTierReconcile';
-import { useLocalPlaybackStore } from '../../store/localPlaybackStore';
+import { reconcileEphemeralCache } from '@/lib/cache/ephemeralTierReconcile';
+import { useLocalPlaybackStore } from '@/store/localPlaybackStore';
 
 vi.mock('@tauri-apps/api/core', () => ({
   invoke: vi.fn(),

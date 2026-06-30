@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { invoke } from '@tauri-apps/api/core';
 import { open } from '@tauri-apps/plugin-dialog';
 import { useInstalledThemesStore } from '@/store/installedThemesStore';
-import { validateThemePackage, type ValidatedTheme } from '@/utils/themes/validateThemePackage';
+import { validateThemePackage, type ValidatedTheme } from '@/lib/themes/validateThemePackage';
 import { showToast } from '@/utils/ui/toast';
 import ConfirmModal from '@/components/ConfirmModal';
 

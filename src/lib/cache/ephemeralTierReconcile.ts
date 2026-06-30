@@ -1,6 +1,6 @@
 import { invoke } from '@tauri-apps/api/core';
-import { useLocalPlaybackStore } from '../../store/localPlaybackStore';
-import { parseLocalPlaybackEntryKey } from '../../store/localPlaybackKeys';
+import { useLocalPlaybackStore } from '@/store/localPlaybackStore';
+import { parseLocalPlaybackEntryKey } from '@/store/localPlaybackKeys';
 import { getMediaDir } from '@/lib/media/mediaDir';
 
 export interface EphemeralReconcileResult {

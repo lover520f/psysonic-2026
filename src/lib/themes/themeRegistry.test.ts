@@ -3,7 +3,7 @@
  * stale-on-error fallback, and malformed-cache tolerance.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { fetchRegistry, getCachedRegistry } from './themeRegistry';
+import { fetchRegistry, getCachedRegistry } from '@/lib/themes/themeRegistry';
 
 const CACHE_KEY = 'psysonic_theme_registry_cache';
 const NOW = 1_000_000_000;

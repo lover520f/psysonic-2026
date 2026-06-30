@@ -3,13 +3,13 @@ import { Check, RefreshCw, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useThemeStore } from '@/store/themeStore';
 import { useInstalledThemesStore } from '@/store/installedThemesStore';
-import { uninstallTheme } from '@/utils/themes/uninstallTheme';
-import { installThemeFromRegistry } from '@/utils/themes/installThemeFromRegistry';
+import { uninstallTheme } from '@/lib/themes/uninstallTheme';
+import { installThemeFromRegistry } from '@/lib/themes/installThemeFromRegistry';
 import { useThemeUpdates } from '@/features/settings/hooks/useThemeUpdates';
 import { useThemeAnimationRisk } from '@/features/settings/hooks/useThemeAnimationRisk';
 import { showToast } from '@/utils/ui/toast';
 import { AnimatedThemeBadge } from '@/features/settings/components/AnimatedThemeBadge';
-import { FIXED_THEMES } from '@/utils/themes/fixedThemes';
+import { FIXED_THEMES } from '@/lib/themes/fixedThemes';
 
 /** Pull a 3-band swatch (bg / card / accent) out of an installed theme's CSS. */
 function swatch(css: string): { bg: string; card: string; accent: string } {

@@ -1,6 +1,6 @@
 import type { Track } from '@/lib/media/trackTypes';
 import { invoke } from '@tauri-apps/api/core';
-import { setDeferHotCachePrefetch } from '@/utils/cache/hotCacheGate';
+import { setDeferHotCachePrefetch } from '@/lib/cache/hotCacheGate';
 import {
   getPlaybackIndexKey,
   playbackCacheKeyForTrack,

@@ -1,7 +1,7 @@
 import { playbackReportStart, playbackReportStopped } from '@/features/playback/store/playbackReportSession';
 import { invoke } from '@tauri-apps/api/core';
 import { getMusicNetworkRuntimeOrNull } from '@/music-network';
-import { setDeferHotCachePrefetch } from '@/utils/cache/hotCacheGate';
+import { setDeferHotCachePrefetch } from '@/lib/cache/hotCacheGate';
 import { orbitBulkGuard, orbitSnapshot } from '@/store/orbitRuntime';
 import { sameQueueTrackId } from '@/features/playback/utils/playback/queueIdentity';
 import {

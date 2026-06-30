@@ -8,7 +8,7 @@ import {
 import { resolveQueueTrack } from '@/features/playback/store/queueTrackView';
 import { invoke } from '@tauri-apps/api/core';
 import { getMusicNetworkRuntimeOrNull } from '@/music-network';
-import { setDeferHotCachePrefetch } from '@/utils/cache/hotCacheGate';
+import { setDeferHotCachePrefetch } from '@/lib/cache/hotCacheGate';
 import { notifyLibraryPlaybackHint } from '@/features/playback/store/libraryPlaybackHint';
 import {
   playListenSessionFinalize,

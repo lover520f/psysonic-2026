@@ -12,8 +12,8 @@ import {
   migrateThemeSelection,
   readThemeMigrationNotice,
   clearThemeMigrationNotice,
-} from './themeMigration';
-import { FIXED_THEMES } from '@/utils/themes/fixedThemes';
+} from '@/lib/themes/themeMigration';
+import { FIXED_THEMES } from '@/lib/themes/fixedThemes';
 
 const THEME_KEY = 'psysonic_theme';
 const INSTALLED_KEY = 'psysonic_installed_themes';

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { isNewer } from '@/utils/componentHelpers/appUpdaterHelpers';
-import { fetchRegistry, getCachedRegistry, type Registry, type RegistryTheme } from '@/utils/themes/themeRegistry';
+import { fetchRegistry, getCachedRegistry, type Registry, type RegistryTheme } from '@/lib/themes/themeRegistry';
 import { useInstalledThemesStore } from '@/store/installedThemesStore';
 
 // Refresh the registry from source once per app launch (not just from the

@@ -7,7 +7,7 @@ import { useAutodjTransitionUi } from '@/features/playback/store/autodjTransitio
 import { usePreviewStore } from '@/features/playback/store/previewStore';
 import PlaybackScheduleBadge from '@/features/playback/components/PlaybackScheduleBadge';
 import { usePlaybackDelayPress } from '@/features/playback/hooks/usePlaybackDelayPress';
-import { usePlaybackScheduleRemaining } from '@/utils/format/playbackScheduleFormat';
+import { usePlaybackScheduleRemaining } from '@/features/playback/utils/playbackScheduleFormat';
 
 type RepeatMode = PlayerState['repeatMode'];
 type PlayPauseBind = ReturnType<typeof usePlaybackDelayPress>['playPauseBind'];

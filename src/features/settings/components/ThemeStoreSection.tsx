@@ -13,9 +13,9 @@ import {
   assetUrl,
   fetchRegistry,
   type RegistryTheme,
-} from '@/utils/themes/themeRegistry';
-import { installThemeFromRegistry } from '@/utils/themes/installThemeFromRegistry';
-import { uninstallTheme } from '@/utils/themes/uninstallTheme';
+} from '@/lib/themes/themeRegistry';
+import { installThemeFromRegistry } from '@/lib/themes/installThemeFromRegistry';
+import { uninstallTheme } from '@/lib/themes/uninstallTheme';
 import { isNewer } from '@/utils/componentHelpers/appUpdaterHelpers';
 
 type ModeFilter = 'all' | 'dark' | 'light';

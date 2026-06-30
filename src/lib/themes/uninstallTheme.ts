@@ -1,5 +1,5 @@
-import { useInstalledThemesStore } from '../../store/installedThemesStore';
-import { useThemeStore } from '../../store/themeStore';
+import { useInstalledThemesStore } from '@/store/installedThemesStore';
+import { useThemeStore } from '@/store/themeStore';
 
 /**
  * Uninstall a community theme and repair any theme selection that pointed at it.

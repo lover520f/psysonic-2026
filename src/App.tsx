@@ -4,7 +4,7 @@ import { usePlayerStore } from '@/features/playback/store/playerStore';
 import { useLyricsStore } from './store/lyricsStore';
 import { useThemeStore } from './store/themeStore';
 import { useInstalledThemesStore } from './store/installedThemesStore';
-import { syncInjectedThemes } from './utils/themes/themeInjection';
+import { syncInjectedThemes } from '@/lib/themes/themeInjection';
 import { useThemeScheduler } from '@/app/hooks/useThemeScheduler';
 import { useFontStore } from './store/fontStore';
 import { getWindowKind } from './app/windowKind';

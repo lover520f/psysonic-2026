@@ -2,7 +2,7 @@ import {
   BUILTIN_SPLASH_PALETTES,
   BUILTIN_THEME_IDS,
   type StartupSplashPalette,
-} from '../../config/startupSplashPalettes';
+} from '@/config/startupSplashPalettes';
 
 export type PersistedThemeState = {
   enableThemeScheduler: boolean;

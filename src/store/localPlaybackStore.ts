@@ -2,7 +2,7 @@ import type { QueueItemRef } from '@/lib/media/trackTypes';
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { invoke } from '@tauri-apps/api/core';
-import { isHotCachePreviousTrackUnderGrace } from '../utils/cache/hotCacheGate';
+import { isHotCachePreviousTrackUnderGrace } from '@/lib/cache/hotCacheGate';
 import { emitAnalysisStorageChanged } from './analysisSync';
 import { useAuthStore } from './authStore';
 import { localPlaybackEntryKey, parseLocalPlaybackEntryKey } from './localPlaybackKeys';
@@ -15,7 +15,7 @@ import {
   evictEphemeralOrphansToFit,
   getEphemeralDiskBytes,
   reconcileEphemeralCache,
-} from '../utils/cache/ephemeralTierReconcile';
+} from '@/lib/cache/ephemeralTierReconcile';
 
 export type LocalPlaybackTier = 'ephemeral' | 'library' | 'favorite-auto';
 
