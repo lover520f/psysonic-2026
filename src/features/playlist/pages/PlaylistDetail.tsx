@@ -38,7 +38,7 @@ import { usePlaylistPreview } from '@/features/playlist/hooks/usePlaylistPreview
 import { usePlaylistBulkPlayCallbacks } from '@/features/playlist/hooks/usePlaylistBulkPlayCallbacks';
 import { usePlaylistDerived } from '@/features/playlist/hooks/usePlaylistDerived';
 import { usePlaylistRouteEffects } from '@/features/playlist/hooks/usePlaylistRouteEffects';
-import { useBulkPlPickerOutsideClick } from '@/hooks/useBulkPlPickerOutsideClick';
+import { useBulkPlPickerOutsideClick } from '@/features/playlist/hooks/useBulkPlPickerOutsideClick';
 import { usePlaylistDnDReorder } from '@/features/playlist/hooks/usePlaylistDnDReorder';
 import { useOfflineBrowseContext } from '@/features/offline';
 import { offlineActionPolicy } from '@/features/offline';

@@ -6,7 +6,7 @@ import type { PlayerState } from '@/features/playback/store/playerStoreTypes';
 import { useAutodjTransitionUi } from '@/features/playback/store/autodjTransitionUi';
 import { usePreviewStore } from '@/features/playback/store/previewStore';
 import PlaybackScheduleBadge from '@/features/playback/components/PlaybackScheduleBadge';
-import { usePlaybackDelayPress } from '@/hooks/usePlaybackDelayPress';
+import { usePlaybackDelayPress } from '@/features/playback/hooks/usePlaybackDelayPress';
 import { usePlaybackScheduleRemaining } from '@/utils/format/playbackScheduleFormat';
 
 type RepeatMode = PlayerState['repeatMode'];

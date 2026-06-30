@@ -17,7 +17,7 @@ import { useTranslation } from 'react-i18next';
 import { usePlaybackLibraryNavigate } from '@/features/playback/hooks/usePlaybackLibraryNavigate';
 import { useRadioMetadata } from '@/features/radio';
 import { useRadioMprisSync } from '@/features/radio';
-import { usePlaybackDelayPress } from '@/hooks/usePlaybackDelayPress';
+import { usePlaybackDelayPress } from '@/features/playback/hooks/usePlaybackDelayPress';
 import PlaybackDelayModal from '@/features/playback/components/PlaybackDelayModal';
 import { usePlaybackScheduleRemaining } from '@/utils/format/playbackScheduleFormat';
 import { usePreviewStore } from '@/features/playback/store/previewStore';
@@ -31,7 +31,7 @@ import { PlayerPlaybackRate } from '@/features/playback/components/playerBar/Pla
 import { PlayerVolume } from '@/features/playback/components/playerBar/PlayerVolume';
 import { PlayerOverflowMenu } from '@/features/playback/components/playerBar/PlayerOverflowMenu';
 import { useFloatingPlayerBar } from '@/features/playback/hooks/useFloatingPlayerBar';
-import { useUtilityOverflowMenu } from '@/hooks/useUtilityOverflowMenu';
+import { useUtilityOverflowMenu } from '@/features/playback/hooks/useUtilityOverflowMenu';
 import {
   usePlayerBarLayoutStore,
   type PlayerBarLayoutItemId,

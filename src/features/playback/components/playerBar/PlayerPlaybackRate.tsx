@@ -15,7 +15,7 @@ import {
   varispeedSpeedFromSemitones,
 } from '@/features/playback/utils/audio/playbackRateHelpers';
 import { isOrbitPlaybackSyncActive } from '@/features/orbit';
-import { usePlayerBarAnchoredPopover } from '@/hooks/usePlayerBarAnchoredPopover';
+import { usePlayerBarAnchoredPopover } from '@/features/playback/hooks/usePlayerBarAnchoredPopover';
 
 const POPOVER_WIDTH = 320;
 

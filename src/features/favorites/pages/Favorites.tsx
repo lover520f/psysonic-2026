@@ -8,7 +8,7 @@ import FavoritesSongsTracklist from '@/features/favorites/components/FavoritesSo
 import { useFavoritesData } from '@/features/favorites/hooks/useFavoritesData';
 import { useFavoritesSongFiltering } from '@/features/favorites/hooks/useFavoritesSongFiltering';
 import { useFavoritesSelection } from '@/features/favorites/hooks/useFavoritesSelection';
-import { useBulkPlPickerOutsideClick } from '@/hooks/useBulkPlPickerOutsideClick';
+import { useBulkPlPickerOutsideClick } from '@/features/playlist/hooks/useBulkPlPickerOutsideClick';
 import { AlbumRow } from '@/features/album';
 import { ArtistRow } from '@/features/artist';
 import { usePlayerStore } from '@/features/playback/store/playerStore';
