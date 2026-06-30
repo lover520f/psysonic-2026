@@ -1,7 +1,7 @@
 import React, { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import FavoriteSongRow, { type FavoriteSongRowCallbacks } from '@/features/favorites/components/FavoriteSongRow';
-import { TracklistColumnPicker } from '@/components/albumTrackList/TracklistColumnPicker';
+import { TracklistColumnPicker } from '@/ui/TracklistColumnPicker';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import type { ColDef } from '@/utils/useTracklistColumns';

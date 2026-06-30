@@ -1,5 +1,5 @@
 import { validateThemeCss } from './themeInjection';
-import { FIXED_THEMES } from '../../components/settings/fixedThemes';
+import { FIXED_THEMES } from '@/utils/themes/fixedThemes';
 
 /**
  * Validation for a locally imported theme package (a .zip holding manifest.json

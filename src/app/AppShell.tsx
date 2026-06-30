@@ -7,7 +7,7 @@ import { PanelRight } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import Sidebar from '@/features/sidebar';
 import PlayerBar from '@/features/playback/components/PlayerBar';
-import BottomNav from '../components/BottomNav';
+import BottomNav from '@/features/sidebar/components/BottomNav';
 import { useIsMobile } from '@/lib/hooks/useIsMobile';
 import { LiveSearch } from '@/features/search';
 import DevNetworkModeToggle from '@/app/DevNetworkModeToggle';

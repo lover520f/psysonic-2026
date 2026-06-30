@@ -2,7 +2,7 @@ import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Check, ChevronDown, RotateCcw } from 'lucide-react';
 import type { TFunction } from 'i18next';
-import type { ColDef } from '../../utils/useTracklistColumns';
+import type { ColDef } from '@/utils/useTracklistColumns';
 
 interface Props {
   /** Every column (required ones are filtered out of the menu). */

@@ -42,7 +42,7 @@ import { albumArtistDisplayName, deriveAlbumHeaderArtistRefs } from '@/features/
 import { usePerfProbeFlags } from '@/utils/perf/perfFlags';
 import { albumGridWarmCovers } from '@/cover/layoutSizes';
 import { VirtualCardGrid } from '@/ui/VirtualCardGrid';
-import LosslessModeBanner from '@/components/LosslessModeBanner';
+import LosslessModeBanner from '@/ui/LosslessModeBanner';
 import { isLosslessSuffix } from '@/lib/library/losslessFormats';
 import { isLosslessMode } from '@/lib/library/losslessMode';
 import { readDetailServerId } from '@/utils/navigation/detailServerScope';

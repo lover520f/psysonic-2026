@@ -9,7 +9,7 @@ import { useThemeUpdates } from '@/hooks/useThemeUpdates';
 import { useThemeAnimationRisk } from '@/hooks/useThemeAnimationRisk';
 import { showToast } from '@/utils/ui/toast';
 import { AnimatedThemeBadge } from '@/features/settings/components/AnimatedThemeBadge';
-import { FIXED_THEMES } from '@/components/settings/fixedThemes';
+import { FIXED_THEMES } from '@/utils/themes/fixedThemes';
 
 /** Pull a 3-band swatch (bg / card / accent) out of an installed theme's CSS. */
 function swatch(css: string): { bg: string; card: string; accent: string } {

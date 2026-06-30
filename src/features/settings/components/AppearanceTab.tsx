@@ -17,7 +17,7 @@ import { SettingsToggle } from '@/features/settings/components/SettingsToggle';
 import { SettingsSubCard, SettingsField, SettingsValue } from '@/features/settings/components/SettingsSubCard';
 import { SettingsSegmented, type SegmentedOption } from '@/features/settings/components/SettingsSegmented';
 import { SeekbarPreview } from '@/features/waveform';
-import WindowButtonPreview from '@/components/WindowButtonPreview';
+import WindowButtonPreview from '@/features/settings/components/WindowButtonPreview';
 
 export function AppearanceTab() {
   const { t } = useTranslation();

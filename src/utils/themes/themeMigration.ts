@@ -1,4 +1,4 @@
-import { FIXED_THEMES } from '../../components/settings/fixedThemes';
+import { FIXED_THEMES } from '@/utils/themes/fixedThemes';
 
 /**
  * Slim-bundle theme migration (C5). Older builds bundled ~80 palettes that now

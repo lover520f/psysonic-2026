@@ -13,7 +13,7 @@ import {
 import { useAlbumTrackListSelection } from '@/features/album/hooks/useAlbumTrackListSelection';
 import { TrackRow } from '@/features/album/components/TrackRow';
 import { AlbumTrackListMobile } from '@/features/album/components/AlbumTrackListMobile';
-import { TracklistColumnPicker } from '@/components/albumTrackList/TracklistColumnPicker';
+import { TracklistColumnPicker } from '@/ui/TracklistColumnPicker';
 import { TracklistHeaderRow } from '@/features/album/components/TracklistHeaderRow';
 import { offlineActionPolicy, type OfflineActionPolicy } from '@/features/offline';
 

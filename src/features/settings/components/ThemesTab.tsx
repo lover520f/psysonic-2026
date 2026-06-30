@@ -5,7 +5,7 @@ import { useThemeStore } from '@/store/themeStore';
 import { useInstalledThemesStore } from '@/store/installedThemesStore';
 import CustomSelect from '@/ui/CustomSelect';
 import BackToTopButton from '@/ui/BackToTopButton';
-import { FIXED_THEMES } from '@/components/settings/fixedThemes';
+import { FIXED_THEMES } from '@/utils/themes/fixedThemes';
 import { InstalledThemes } from '@/features/settings/components/InstalledThemes';
 import { ThemeImportSection } from '@/features/settings/components/ThemeImportSection';
 import { ThemeStoreSection } from '@/features/settings/components/ThemeStoreSection';

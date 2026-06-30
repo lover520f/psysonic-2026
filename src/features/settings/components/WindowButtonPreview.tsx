@@ -1,6 +1,6 @@
 import React from 'react';
 import { Minus, Square, X } from 'lucide-react';
-import type { WindowButtonStyle } from '../store/authStoreTypes';
+import type { WindowButtonStyle } from '@/store/authStoreTypes';
 
 interface Props {
   style: WindowButtonStyle;

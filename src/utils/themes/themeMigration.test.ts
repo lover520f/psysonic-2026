@@ -13,7 +13,7 @@ import {
   readThemeMigrationNotice,
   clearThemeMigrationNotice,
 } from './themeMigration';
-import { FIXED_THEMES } from '../../components/settings/fixedThemes';
+import { FIXED_THEMES } from '@/utils/themes/fixedThemes';
 
 const THEME_KEY = 'psysonic_theme';
 const INSTALLED_KEY = 'psysonic_installed_themes';

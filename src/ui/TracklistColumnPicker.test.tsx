@@ -4,7 +4,7 @@ import { screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { TFunction } from 'i18next';
 import { renderWithProviders } from '@/test/helpers/renderWithProviders';
-import { TracklistColumnPicker } from './TracklistColumnPicker';
+import { TracklistColumnPicker } from '@/ui/TracklistColumnPicker';
 import type { ColDef } from '@/utils/useTracklistColumns';
 
 const COLUMNS: readonly ColDef[] = [

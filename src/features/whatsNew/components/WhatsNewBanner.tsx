@@ -2,8 +2,8 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Sparkles, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { version } from '../../package.json';
-import { useAuthStore } from '../store/authStore';
+import { version } from '@/../package.json';
+import { useAuthStore } from '@/store/authStore';
 
 interface Props {
   collapsed?: boolean;

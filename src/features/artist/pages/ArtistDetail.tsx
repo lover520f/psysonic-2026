@@ -29,7 +29,7 @@ import ArtistDetailHero from '@/features/artist/components/ArtistDetailHero';
 import ArtistDetailTopTracks from '@/features/artist/components/ArtistDetailTopTracks';
 import ArtistDetailSimilarArtists from '@/features/artist/components/ArtistDetailSimilarArtists';
 import { ArtistCard } from '@/features/nowPlaying';
-import LosslessModeBanner from '@/components/LosslessModeBanner';
+import LosslessModeBanner from '@/ui/LosslessModeBanner';
 import { usePerfProbeFlags } from '@/utils/perf/perfFlags';
 import { albumGridWarmCovers, COVER_DENSE_GRID_MIN_CELL_CSS_PX, GRID_COVER_WARM_LIMIT } from '@/cover/layoutSizes';
 import { artistDetailCoverWarmAlbums } from '@/features/artist/components/topSongAlbumForCover';
