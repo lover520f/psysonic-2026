@@ -22,7 +22,7 @@ import PlaybackDelayModal from './PlaybackDelayModal';
 import { usePlaybackScheduleRemaining } from '../utils/format/playbackScheduleFormat';
 import { usePreviewStore } from '../store/previewStore';
 import { usePerfProbeFlags } from '../utils/perf/perfFlags';
-import { coerceOpenArtistRefs } from '@/features/artist';
+import { coerceOpenArtistRefs } from '@/lib/api/openArtistRefs';
 import { resolveTrackArtistRefs } from '../utils/playback/trackArtistRefs';
 import { PlayerTrackInfo } from './playerBar/PlayerTrackInfo';
 import { PlayerTransportControls } from './playerBar/PlayerTransportControls';

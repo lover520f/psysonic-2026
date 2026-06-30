@@ -1,6 +1,6 @@
 import type { SubsonicOpenArtistRef } from '@/lib/api/subsonicTypes';
 import type { Track } from '../../store/playerStoreTypes';
-import { coerceOpenArtistRefs } from '@/features/artist';
+import { coerceOpenArtistRefs } from '@/lib/api/openArtistRefs';
 
 type TrackArtistFields = Pick<Track, 'artist' | 'artistId' | 'artists'>;
 

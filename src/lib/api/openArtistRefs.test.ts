@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { coerceOpenArtistRefs } from '@/features/artist/utils/openArtistRefs';
+import { coerceOpenArtistRefs } from '@/lib/api/openArtistRefs';
 
 describe('coerceOpenArtistRefs', () => {
   it('returns an empty array for nullish input', () => {

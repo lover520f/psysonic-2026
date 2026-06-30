@@ -27,7 +27,6 @@ export * from './store/artistAlbumYearSortStore';
 export * from './store/artistBrowseSessionStore';
 export * from './store/artistLayoutStore';
 export * from './utils/artistsHelpers';
-export * from './utils/openArtistRefs';
 export * from './utils/runArtistDetailActions';
 export * from './utils/runArtistDetailPlay';
 export * from './utils/sortArtistAlbums';
