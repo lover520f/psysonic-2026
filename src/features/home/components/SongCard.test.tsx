@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
 import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { renderWithProviders } from '../test/helpers/renderWithProviders';
-import SongCard from './SongCard';
+import { renderWithProviders } from '@/test/helpers/renderWithProviders';
+import SongCard from '@/features/home/components/SongCard';
 import type { SubsonicSong } from '@/lib/api/subsonicTypes';
 
 const navigateToArtist = vi.fn();
@@ -14,7 +14,7 @@ vi.mock('@/features/artist/hooks/useNavigateToArtist', () => ({
   useNavigateToArtist: () => navigateToArtist,
 }));
 
-vi.mock('../cover/useLibraryCoverRef', () => ({
+vi.mock('@/cover/useLibraryCoverRef', () => ({
   useTrackCoverRef: () => undefined,
 }));
 

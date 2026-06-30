@@ -6,7 +6,7 @@ import { usePlayerStore } from '@/features/playback/store/playerStore';
 import { useSelectionStore } from '@/store/selectionStore';
 import { songToTrack } from '@/lib/media/songToTrack';
 import { AddToPlaylistSubmenu } from '@/components/ContextMenu';
-import GenreFilterBar from '@/components/GenreFilterBar';
+import GenreFilterBar from '@/ui/GenreFilterBar';
 
 interface Props {
   visibleSongs: SubsonicSong[];

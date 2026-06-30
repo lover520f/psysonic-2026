@@ -8,7 +8,7 @@ import { useLibraryCoverPrefetch } from '@/cover/useLibraryCoverPrefetch';
 import { useAuthStore } from '@/store/authStore';
 import { clampLibraryGridMaxColumns } from '@/store/authStoreHelpers';
 import { computeCardGridColumnCount } from '@/utils/cardGridLayout';
-import GenreFilterBar from '@/components/GenreFilterBar';
+import GenreFilterBar from '@/ui/GenreFilterBar';
 import YearFilterButton from '@/ui/YearFilterButton';
 import StarFilterButton from '@/ui/StarFilterButton';
 import LosslessFilterButton from '@/ui/LosslessFilterButton';

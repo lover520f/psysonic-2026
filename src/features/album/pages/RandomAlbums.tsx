@@ -9,7 +9,7 @@ import React, { useEffect, useLayoutEffect, useState, useCallback, useRef } from
 import { RefreshCw, Download, HardDriveDownload } from 'lucide-react';
 import SelectionToggleButton from '@/ui/SelectionToggleButton';
 import AlbumCard from '@/features/album/components/AlbumCard';
-import GenreFilterBar from '@/components/GenreFilterBar';
+import GenreFilterBar from '@/ui/GenreFilterBar';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/store/authStore';
