@@ -1,9 +1,9 @@
 import {
   isDevOfflineBrowseForced,
   useDevOfflineBrowseStore,
-} from '@/features/offline/store/devOfflineBrowseStore';
+} from '@/store/devOfflineBrowseStore';
 import { useConnectionStatus } from '@/hooks/useConnectionStatus';
-import { isActiveServerReachable } from '@/utils/network/activeServerReachability';
+import { isActiveServerReachable } from '@/lib/network/activeServerReachability';
 
 /** True when browse/detail pages should use local-bytes-only data sources. */
 export function isOfflineBrowseActive(): boolean {

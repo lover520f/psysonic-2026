@@ -6,6 +6,7 @@ import { useAuthStore } from '@/store/authStore';
 import type { LocalPlaybackEntry } from '@/store/localPlaybackStore';
 import { useLocalPlaybackStore } from '@/store/localPlaybackStore';
 import { resolveIndexKey, serverIndexKeyForProfile } from '@/lib/server/serverIndexKey';
+import { resolveServerIdForIndexKey } from '@/lib/server/serverLookup';
 
 function serverIndexKeysForServerId(serverId: string): string[] {
   const servers = useAuthStore.getState().servers;
@@ -99,4 +100,21 @@ export function findLocalPlaybackUrl(
     if (url) return url;
   }
   return null;
+}
+
+/**
+ * True when the track resolves to local `psysonic-local://` bytes (library,
+ * favorite-auto, or ephemeral tier). Mirrors `resolvePlaybackUrl`'s local-source
+ * branch exactly (same `resolveServerIdForIndexKey(serverId) || serverId` profile
+ * resolution, minus the empty-serverId playback-store fallback that callers here
+ * never hit) so the network-guard skip check stays bit-identical without an
+ * @/features/playback import.
+ */
+export function hasLocalPlaybackUrl(trackId: string, serverId: string): boolean {
+  const profileId = resolveServerIdForIndexKey(serverId) || serverId;
+  return !!(
+    findLocalPlaybackUrl(trackId, profileId, 'library') ||
+    findLocalPlaybackUrl(trackId, profileId, 'favorite-auto') ||
+    findLocalPlaybackUrl(trackId, profileId, 'ephemeral')
+  );
 }

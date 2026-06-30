@@ -19,7 +19,7 @@ export * from './hooks/useOfflineBrowseContext';
 export * from './hooks/useOfflineBrowseReloadToken';
 export * from './hooks/useOfflineLibraryFilterSuspend';
 export * from './hooks/useZipDownloadBridge';
-export * from './store/devOfflineBrowseStore';
+export * from '@/store/devOfflineBrowseStore';
 export * from './store/downloadModalStore';
 export * from './store/favoritesOfflineSyncStore';
 export * from './store/offlineJobStore';

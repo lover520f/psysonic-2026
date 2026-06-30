@@ -13,7 +13,7 @@ const { savePlayQueueMock, playerState, progressSnapshot, isSubsonicServerReacha
 }));
 
 vi.mock('@/lib/api/subsonicPlayQueue', () => ({ savePlayQueue: savePlayQueueMock }));
-vi.mock('@/utils/network/subsonicNetworkGuard', () => ({
+vi.mock('@/lib/network/subsonicNetworkGuard', () => ({
   isSubsonicServerReachable: (serverId: string) => isSubsonicServerReachableMock(serverId),
 }));
 vi.mock('@/features/playback/utils/playback/playbackServer', () => ({

@@ -16,11 +16,11 @@ import type { SubsonicArtistInfo, SubsonicSong, SubsonicAlbum, SubsonicArtist } 
 vi.mock('@/lib/api/subsonicArtists');
 vi.mock('@/lib/api/subsonicLibrary');
 vi.mock('@/api/bandsintown');
-vi.mock('@/utils/network/subsonicNetworkGuard', () => ({
+vi.mock('@/lib/network/subsonicNetworkGuard', () => ({
   shouldAttemptSubsonicForServer: vi.fn(() => true),
 }));
 
-import { shouldAttemptSubsonicForServer } from '@/utils/network/subsonicNetworkGuard';
+import { shouldAttemptSubsonicForServer } from '@/lib/network/subsonicNetworkGuard';
 import { getArtistForServer, getArtistInfoForServer, getTopSongsForServer } from '@/lib/api/subsonicArtists';
 import { getAlbumForServer, getSongForServer } from '@/lib/api/subsonicLibrary';
 import { fetchBandsintownEvents } from '@/api/bandsintown';

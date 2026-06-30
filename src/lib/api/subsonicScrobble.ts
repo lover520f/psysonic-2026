@@ -1,7 +1,7 @@
 import { api, apiForServer } from '@/lib/api/subsonicClient';
 import type { PlaybackReportState, SubsonicNowPlaying } from '@/lib/api/subsonicTypes';
 import { patchLibraryTrackOnUse } from '@/lib/library/patchOnUse';
-import { shouldAttemptSubsonicForServer } from '@/utils/network/subsonicNetworkGuard';
+import { shouldAttemptSubsonicForServer } from '@/lib/network/subsonicNetworkGuard';
 
 async function scrobbleOnServer(
   serverId: string,

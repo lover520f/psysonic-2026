@@ -21,7 +21,7 @@ import { libraryIsReady } from '@/lib/library/libraryReady';
 import {
   shouldAttemptSubsonicForActiveServer,
   shouldAttemptSubsonicForServer,
-} from '@/utils/network/subsonicNetworkGuard';
+} from '@/lib/network/subsonicNetworkGuard';
 
 type AlbumPayload = ResolvedAlbum;
 

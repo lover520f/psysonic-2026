@@ -1,6 +1,6 @@
 import { invoke } from '@tauri-apps/api/core';
 import { useAuthStore } from '@/store/authStore';
-import { shouldAttemptSubsonicForServer } from '@/utils/network/subsonicNetworkGuard';
+import { shouldAttemptSubsonicForServer } from '@/lib/network/subsonicNetworkGuard';
 import { api, apiForServer } from '@/lib/api/subsonicClient';
 import type { SubsonicPlaylist, SubsonicSong } from '@/lib/api/subsonicTypes';
 

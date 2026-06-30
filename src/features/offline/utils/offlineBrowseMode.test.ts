@@ -1,7 +1,7 @@
 import { renderHook, act } from '@testing-library/react';
 import { describe, expect, it, beforeEach } from 'vitest';
-import { useDevOfflineBrowseStore } from '@/features/offline/store/devOfflineBrowseStore';
-import { resetActiveServerConnectionSnapshot } from '@/utils/network/activeServerReachability';
+import { useDevOfflineBrowseStore } from '@/store/devOfflineBrowseStore';
+import { resetActiveServerConnectionSnapshot } from '@/lib/network/activeServerReachability';
 import { useOfflineBrowseActive } from '@/features/offline/utils/offlineBrowseMode';
 
 describe('useOfflineBrowseActive', () => {

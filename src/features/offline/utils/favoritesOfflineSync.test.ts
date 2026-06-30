@@ -16,7 +16,7 @@ const getStarredForServerMock = vi.fn(async (_serverId: string) => ({
 
 const isActiveServerReachableMock = vi.fn(() => true);
 
-vi.mock('@/utils/network/activeServerReachability', () => ({
+vi.mock('@/lib/network/activeServerReachability', () => ({
   isActiveServerReachable: () => isActiveServerReachableMock(),
 }));
 

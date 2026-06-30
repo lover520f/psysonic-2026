@@ -13,10 +13,10 @@ import * as subsonicArtists from '@/lib/api/subsonicArtists';
 import * as subsonicLibrary from '@/lib/api/subsonicLibrary';
 
 // Network reachability is decided by the guard; mock it so we can test both arms.
-vi.mock('@/utils/network/subsonicNetworkGuard', () => ({
+vi.mock('@/lib/network/subsonicNetworkGuard', () => ({
   shouldAttemptSubsonicForServer: vi.fn(() => true),
 }));
-import { shouldAttemptSubsonicForServer } from '@/utils/network/subsonicNetworkGuard';
+import { shouldAttemptSubsonicForServer } from '@/lib/network/subsonicNetworkGuard';
 import {
   resolveNpAlbum,
   resolveNpDiscography,

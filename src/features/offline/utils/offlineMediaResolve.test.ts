@@ -44,7 +44,7 @@ vi.mock('@/features/offline/utils/offlinePlaylistBrowse', () => ({
     loadOfflineBrowsablePlaylistMock(playlistId, serverId),
 }));
 
-vi.mock('@/utils/network/subsonicNetworkGuard', () => ({
+vi.mock('@/lib/network/subsonicNetworkGuard', () => ({
   shouldAttemptSubsonicForServer: (serverId: string, trackId?: string) =>
     shouldAttemptSubsonicForServerMock(serverId, trackId),
 }));

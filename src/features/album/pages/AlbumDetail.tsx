@@ -21,7 +21,7 @@ import { useOfflineJobStore } from '@/features/offline';
 import { isOfflinePinComplete } from '@/features/offline';
 import { dequeueOfflinePin } from '@/features/offline';
 import { reconcileLibraryTierForAlbum } from '@/features/offline';
-import { shouldAttemptSubsonicForServer } from '@/utils/network/subsonicNetworkGuard';
+import { shouldAttemptSubsonicForServer } from '@/lib/network/subsonicNetworkGuard';
 import { join } from '@tauri-apps/api/path';
 import { useZipDownloadStore } from '@/features/offline';
 import AlbumCard from '@/features/album/components/AlbumCard';

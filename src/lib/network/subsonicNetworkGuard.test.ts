@@ -1,23 +1,21 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { useAuthStore } from '../../store/authStore';
-import { resetAuthStore } from '../../test/helpers/storeReset';
-import { setActiveServerReachable } from './activeServerReachability';
-import { shouldAttemptSubsonicForServer } from './subsonicNetworkGuard';
+import { useAuthStore } from '@/store/authStore';
+import { resetAuthStore } from '@/test/helpers/storeReset';
+import { setActiveServerReachable } from '@/lib/network/activeServerReachability';
+import { shouldAttemptSubsonicForServer } from '@/lib/network/subsonicNetworkGuard';
 
-const resolvePlaybackUrlMock = vi.fn((_trackId: string, _serverId?: string) =>
-  'https://music.test/stream',
-);
+const hasLocalPlaybackUrlMock = vi.fn((_trackId: string, _serverId: string) => false);
 
-vi.mock('@/features/playback/utils/playback/resolvePlaybackUrl', () => ({
-  resolvePlaybackUrl: (trackId: string, serverId?: string) =>
-    resolvePlaybackUrlMock(trackId, serverId),
+vi.mock('@/store/localPlaybackResolve', () => ({
+  hasLocalPlaybackUrl: (trackId: string, serverId: string) =>
+    hasLocalPlaybackUrlMock(trackId, serverId),
 }));
 
 describe('shouldAttemptSubsonicForServer', () => {
   beforeEach(() => {
     resetAuthStore();
     setActiveServerReachable(null);
-    resolvePlaybackUrlMock.mockReturnValue('https://music.test/stream');
+    hasLocalPlaybackUrlMock.mockReturnValue(false);
   });
 
   it('returns false without a server id', () => {
@@ -58,9 +56,9 @@ describe('shouldAttemptSubsonicForServer', () => {
 
   it('returns false when the track resolves to a local playback url', () => {
     setActiveServerReachable(true);
-    resolvePlaybackUrlMock.mockReturnValue('psysonic-local:///favorites/t1.flac');
+    hasLocalPlaybackUrlMock.mockReturnValue(true);
     expect(shouldAttemptSubsonicForServer('srv-1', 't1')).toBe(false);
-    expect(resolvePlaybackUrlMock).toHaveBeenCalledWith('t1', 'srv-1');
+    expect(hasLocalPlaybackUrlMock).toHaveBeenCalledWith('t1', 'srv-1');
   });
 
   it('returns true for stream playback when the active server is reachable', () => {
@@ -84,11 +82,11 @@ describe('shouldAttemptSubsonicForServer', () => {
     });
     useAuthStore.getState().setActiveServer(activeId);
     setActiveServerReachable(true);
-    resolvePlaybackUrlMock.mockReturnValue('psysonic-local:///favorites/t1.flac');
+    hasLocalPlaybackUrlMock.mockReturnValue(true);
     // Byte-style call (with the track id) is blocked because the bytes are local…
     expect(shouldAttemptSubsonicForServer(activeId, 't1')).toBe(false);
     // …but the metadata gate omits the track id, so it never consults
-    // resolvePlaybackUrl and stays allowed while the server is reachable.
+    // hasLocalPlaybackUrl and stays allowed while the server is reachable.
     expect(shouldAttemptSubsonicForServer(activeId)).toBe(true);
   });
 });

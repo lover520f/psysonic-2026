@@ -1,6 +1,6 @@
 import { savePlayQueue } from '@/lib/api/subsonicPlayQueue';
 import type { QueueItemRef, Track } from '@/lib/media/trackTypes';
-import { isSubsonicServerReachable } from '@/utils/network/subsonicNetworkGuard';
+import { isSubsonicServerReachable } from '@/lib/network/subsonicNetworkGuard';
 import {
   filterQueueRefsForPlaybackServer,
   getPlaybackServerId,

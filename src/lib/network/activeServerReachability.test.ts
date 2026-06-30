@@ -1,12 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { useDevOfflineBrowseStore } from '@/features/offline';
+import { useDevOfflineBrowseStore } from '@/store/devOfflineBrowseStore';
 import {
   getActiveServerReachable,
   isActiveServerReachable,
   onActiveServerBecameReachable,
   resetActiveServerConnectionSnapshot,
   setActiveServerReachable,
-} from './activeServerReachability';
+} from '@/lib/network/activeServerReachability';
 
 describe('activeServerReachability', () => {
   beforeEach(() => {

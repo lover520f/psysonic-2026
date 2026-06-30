@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useAuthStore } from '@/store/authStore';
 import { usePlayerStore } from '@/features/playback/store/playerStore';
 import { reportNowPlaying, scrobbleSong } from '@/lib/api/subsonicScrobble';
-import { shouldAttemptSubsonicForServer } from '@/utils/network/subsonicNetworkGuard';
+import { shouldAttemptSubsonicForServer } from '@/lib/network/subsonicNetworkGuard';
 
 const { apiForServerMock } = vi.hoisted(() => ({
   apiForServerMock: vi.fn(async () => ({})),
@@ -12,7 +12,7 @@ vi.mock('@/lib/api/subsonicClient', () => ({
   api: vi.fn(),
   apiForServer: apiForServerMock,
 }));
-vi.mock('@/utils/network/subsonicNetworkGuard', () => ({
+vi.mock('@/lib/network/subsonicNetworkGuard', () => ({
   shouldAttemptSubsonicForServer: vi.fn(() => true),
 }));
 

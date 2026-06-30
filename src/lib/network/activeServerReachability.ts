@@ -1,4 +1,4 @@
-import { isDevOfflineBrowseForced } from '@/features/offline';
+import { isDevOfflineBrowseForced } from '@/store/devOfflineBrowseStore';
 
 export type ConnectionStatus = 'connected' | 'disconnected' | 'checking';
 

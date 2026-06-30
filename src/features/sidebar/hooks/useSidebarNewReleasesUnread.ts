@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { getAlbumList } from '@/lib/api/subsonicLibrary';
-import { isActiveServerReachable } from '@/utils/network/activeServerReachability';
+import { isActiveServerReachable } from '@/lib/network/activeServerReachability';
 import {
   NEW_RELEASES_RESET_DELAY_MS,
   NEW_RELEASES_SEEN_MAX_IDS,

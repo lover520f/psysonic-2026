@@ -30,7 +30,7 @@ vi.mock('@/lib/api/subsonicPlayQueue', () => ({
   savePlayQueue: vi.fn(async () => undefined),
   getPlayQueue: vi.fn(async () => ({ songs: [], current: undefined, position: 0 })),
 }));
-vi.mock('@/utils/network/activeServerReachability', () => ({
+vi.mock('@/lib/network/activeServerReachability', () => ({
   isActiveServerReachable: () => true,
 }));
 vi.mock('@/lib/api/subsonicStreamUrl', () => ({

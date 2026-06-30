@@ -20,7 +20,7 @@ import { libraryGetTrack, libraryGetTracksByAlbum } from '@/lib/api/library';
 import { getArtistForServer, getTopSongsForServer } from '@/lib/api/subsonicArtists';
 import { getAlbumForServer, getSongForServer } from '@/lib/api/subsonicLibrary';
 import type { SubsonicAlbum, SubsonicSong } from '@/lib/api/subsonicTypes';
-import { shouldAttemptSubsonicForServer } from '@/utils/network/subsonicNetworkGuard';
+import { shouldAttemptSubsonicForServer } from '@/lib/network/subsonicNetworkGuard';
 import { loadAlbumFromLibraryIndex, loadArtistFromLibraryIndex } from '@/features/offline';
 import { trackToSong } from '@/lib/library/advancedSearchLocal';
 import { libraryIsReady } from '@/lib/library/libraryReady';

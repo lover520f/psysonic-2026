@@ -20,7 +20,7 @@ vi.mock('axios', () => ({
   default: { get: vi.fn() },
 }));
 
-vi.mock('@/utils/network/subsonicNetworkGuard', () => ({
+vi.mock('@/lib/network/subsonicNetworkGuard', () => ({
   shouldAttemptSubsonicForActiveServer: () => true,
   shouldAttemptSubsonicForServer: () => true,
 }));

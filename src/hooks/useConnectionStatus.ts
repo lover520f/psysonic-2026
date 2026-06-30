@@ -14,12 +14,12 @@ import {
   setConnectionStatus,
   subscribeConnectionStatus,
   type ConnectionStatus,
-} from '../utils/network/activeServerReachability';
+} from '@/lib/network/activeServerReachability';
 import { usePerfProbeFlags } from '@/lib/perf/perfFlags';
 import {
   isDevOfflineBrowseForced,
   useDevOfflineBrowseStore,
-} from '@/features/offline';
+} from '@/store/devOfflineBrowseStore';
 
 // Backward-compatible re-export for call sites that still import from the hook.
 export { isLanUrl };

@@ -2,7 +2,7 @@ import { useAuthStore } from '@/store/authStore';
 import {
   shouldAttemptSubsonicForActiveServer,
   shouldAttemptSubsonicForServer,
-} from '@/utils/network/subsonicNetworkGuard';
+} from '@/lib/network/subsonicNetworkGuard';
 import { api, apiForServer, libraryFilterParams, libraryFilterParamsForServer } from '@/lib/api/subsonicClient';
 import type {
   RandomSongsFilters,

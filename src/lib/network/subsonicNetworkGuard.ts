@@ -1,8 +1,8 @@
-import { useAuthStore } from '../../store/authStore';
-import { resolvePlaybackUrl } from '@/features/playback/utils/playback/resolvePlaybackUrl';
-import { isDevOfflineBrowseForced } from '@/features/offline';
+import { useAuthStore } from '@/store/authStore';
+import { hasLocalPlaybackUrl } from '@/store/localPlaybackResolve';
+import { isDevOfflineBrowseForced } from '@/store/devOfflineBrowseStore';
 import { resolveServerIdForIndexKey } from '@/lib/server/serverLookup';
-import { isActiveServerReachable } from './activeServerReachability';
+import { isActiveServerReachable } from '@/lib/network/activeServerReachability';
 
 function isSameServerProfile(a: string, b: string): boolean {
   if (!a || !b) return false;
@@ -35,10 +35,7 @@ export function shouldAttemptSubsonicForServer(serverId: string, trackId?: strin
   if (!serverId) return false;
   if (isDevOfflineBrowseForced()) return false;
   if (typeof navigator !== 'undefined' && !navigator.onLine) return false;
-  if (trackId) {
-    const url = resolvePlaybackUrl(trackId, serverId);
-    if (url.startsWith('psysonic-local://')) return false;
-  }
+  if (trackId && hasLocalPlaybackUrl(trackId, serverId)) return false;
   return isSubsonicServerReachable(serverId);
 }
 

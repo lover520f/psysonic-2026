@@ -8,7 +8,7 @@ import type {
   SubsonicSong,
 } from '@/lib/api/subsonicTypes';
 import { useAuthStore } from '@/store/authStore';
-import { shouldAttemptSubsonicForServer } from '@/utils/network/subsonicNetworkGuard';
+import { shouldAttemptSubsonicForServer } from '@/lib/network/subsonicNetworkGuard';
 import { isOfflineBrowseActive } from '@/features/offline/utils/offlineBrowseMode';
 import { libraryIsReady } from '@/lib/library/libraryReady';
 import { registerMediaResolver } from '@/store/mediaResolver';

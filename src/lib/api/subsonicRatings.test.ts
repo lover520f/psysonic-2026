@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@/lib/api/subsonicArtists', () => ({ getArtist: vi.fn() }));
 vi.mock('@/lib/api/subsonicLibrary', () => ({ getAlbum: vi.fn() }));
-vi.mock('@/utils/network/subsonicNetworkGuard', () => ({
+vi.mock('@/lib/network/subsonicNetworkGuard', () => ({
   shouldAttemptSubsonicForActiveServer: vi.fn(() => true),
 }));
 

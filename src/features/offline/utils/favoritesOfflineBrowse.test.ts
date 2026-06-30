@@ -19,10 +19,10 @@ import { resolveAlbumForServer } from '@/features/offline/utils/offlineMediaReso
 
 const isActiveServerReachableMock = vi.fn(() => true);
 const shouldAttemptSubsonicForServerMock = vi.fn((_serverId: string, _trackId?: string) => true);
-vi.mock('@/utils/network/activeServerReachability', () => ({
+vi.mock('@/lib/network/activeServerReachability', () => ({
   isActiveServerReachable: () => isActiveServerReachableMock(),
 }));
-vi.mock('@/utils/network/subsonicNetworkGuard', () => ({
+vi.mock('@/lib/network/subsonicNetworkGuard', () => ({
   shouldAttemptSubsonicForServer: (serverId: string, trackId?: string) =>
     shouldAttemptSubsonicForServerMock(serverId, trackId),
 }));

@@ -24,7 +24,7 @@ const isReachableMock = vi.fn(() => true);
 const enqueueMock = vi.fn((_task: unknown) => true);
 const invokeMock = vi.fn(async (_cmd: string, _args?: unknown) => ({}));
 
-vi.mock('@/utils/network/activeServerReachability', () => ({
+vi.mock('@/lib/network/activeServerReachability', () => ({
   isActiveServerReachable: () => isReachableMock(),
   onActiveServerBecameReachable: () => () => {},
 }));

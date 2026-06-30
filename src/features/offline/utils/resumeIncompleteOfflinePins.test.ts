@@ -8,7 +8,7 @@ const isOfflinePinCompleteMock = vi.fn((_albumId: string, _serverId: string) => 
 const resolveAlbumForServerMock = vi.fn();
 const downloadAlbumMock = vi.fn();
 
-vi.mock('@/utils/network/activeServerReachability', () => ({
+vi.mock('@/lib/network/activeServerReachability', () => ({
   isActiveServerReachable: () => isActiveServerReachableMock(),
   onActiveServerBecameReachable: () => () => {},
 }));

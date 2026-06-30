@@ -14,7 +14,7 @@ import { getMediaDir } from '@/lib/media/mediaDir';
 import {
   isActiveServerReachable,
   onActiveServerBecameReachable,
-} from '@/utils/network/activeServerReachability';
+} from '@/lib/network/activeServerReachability';
 import { resolveIndexKey, serverIndexKeyForProfile } from '@/lib/server/serverIndexKey';
 import { resolveServerIdForIndexKey } from '@/lib/server/serverLookup';
 import { findLocalPlaybackEntry } from '@/store/localPlaybackResolve';

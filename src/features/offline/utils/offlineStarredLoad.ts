@@ -6,7 +6,7 @@ import type {
   SubsonicArtist,
   SubsonicSong,
 } from '@/lib/api/subsonicTypes';
-import { isActiveServerReachable } from '@/utils/network/activeServerReachability';
+import { isActiveServerReachable } from '@/lib/network/activeServerReachability';
 import {
   albumToAlbum,
   trackToSong,
