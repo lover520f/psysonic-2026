@@ -8,7 +8,7 @@ import { playListenSessionFinalize } from '@/features/playback/store/playListenS
 import { playbackReportStopped } from '@/features/playback/store/playbackReportSession';
 import { getPlaybackProgressSnapshot } from '@/features/playback/store/playbackProgress';
 import { usePlayerStore } from '@/features/playback/store/playerStore';
-import { useAuthStore } from '../../store/authStore';
+import { useAuthStore } from '@/store/authStore';
 import { useOrbitStore } from '@/features/orbit';
 import { endOrbitSession, leaveOrbitSession } from '@/features/orbit';
 import {

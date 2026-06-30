@@ -4,12 +4,12 @@ import {
   clearAllDiskSrcCache,
   forgetDiskSrcForServer,
   forgetDiskSrcPrefix,
-} from '../../cover/diskSrcCache';
-import { rememberDiskSrcLadder } from '../../cover/diskSrcLookup';
-import { notifyCoverDiskReady } from '../../cover/diskHandoff';
-import { invalidateCacheKey } from '../../utils/imageCache';
-import { COVER_ART_TIERS } from '../../cover/tiers';
-import type { CoverArtTier, CoverCacheKind } from '../../cover/types';
+} from '@/cover/diskSrcCache';
+import { rememberDiskSrcLadder } from '@/cover/diskSrcLookup';
+import { notifyCoverDiskReady } from '@/cover/diskHandoff';
+import { invalidateCacheKey } from '@/utils/imageCache';
+import { COVER_ART_TIERS } from '@/cover/tiers';
+import type { CoverArtTier, CoverCacheKind } from '@/cover/types';
 
 type CoverTierReadyPayload = {
   serverIndexKey: string;

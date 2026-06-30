@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { listen } from '@tauri-apps/api/event';
 import { usePlayerStore } from '@/features/playback/store/playerStore';
-import { useAuthStore } from '../../store/authStore';
+import { useAuthStore } from '@/store/authStore';
 import { setSeekFallbackVisualTarget } from '@/features/playback/store/seekFallbackState';
 import { getIsAudioPaused } from '@/features/playback/store/engineState';
 

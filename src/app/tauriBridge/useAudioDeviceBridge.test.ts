@@ -19,7 +19,7 @@ import { usePlayerStore } from '@/features/playback/store/playerStore';
 import { useAuthStore } from '@/store/authStore';
 import { getSeekFallbackVisualTarget, setSeekFallbackVisualTarget } from '@/features/playback/store/seekFallbackState';
 import { setIsAudioPaused } from '@/features/playback/store/engineState';
-import { useAudioDeviceBridge } from './useAudioDeviceBridge';
+import { useAudioDeviceBridge } from '@/app/tauriBridge/useAudioDeviceBridge';
 
 const track = makeTrack({ id: 't1', duration: 300 });
 

@@ -1,9 +1,9 @@
 import { useEffect } from 'react';
 import type { NavigateFunction } from 'react-router-dom';
-import { useKeybindingsStore, buildInAppBinding } from '../../store/keybindingsStore';
-import { useGlobalShortcutsStore } from '../../store/globalShortcutsStore';
+import { useKeybindingsStore, buildInAppBinding } from '@/store/keybindingsStore';
+import { useGlobalShortcutsStore } from '@/store/globalShortcutsStore';
 import { DEFAULT_IN_APP_BINDINGS, executeRuntimeAction } from '@/config/shortcutActions';
-import { matchInAppShortcutAction } from '../../shortcuts/runtime';
+import { matchInAppShortcutAction } from '@/shortcuts/runtime';
 
 /** Configurable in-app keybindings: matches keydown chords against the user's
  * bindings, skipping chords claimed by a registered global shortcut. */
