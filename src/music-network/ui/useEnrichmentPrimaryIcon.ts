@@ -1,4 +1,5 @@
-import { useEnrichmentPrimary, type PresetIcon } from '../music-network';
+import type { PresetIcon } from '@/music-network';
+import { useEnrichmentPrimary } from './useEnrichmentPrimary';
 
 /**
  * Manifest icon id of the current enrichment-primary provider, or null when no

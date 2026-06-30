@@ -1,4 +1,4 @@
-import { useEnrichmentPrimary } from '../music-network';
+import { useEnrichmentPrimary } from './useEnrichmentPrimary';
 
 /**
  * Display label of the current enrichment-primary account (e.g. "Last.fm",

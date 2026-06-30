@@ -15,9 +15,7 @@ import { OpenArtistRefInline } from '@/features/artist';
 import StarRating from '@/ui/StarRating';
 import { PlaybackBufferingOverlay } from '@/features/playback/components/PlaybackBufferingOverlay';
 import { usePlayerStore } from '@/features/playback/store/playerStore';
-import { useEnrichmentPrimaryLabel } from '@/hooks/useEnrichmentPrimaryLabel';
-import { useEnrichmentPrimaryIcon } from '@/hooks/useEnrichmentPrimaryIcon';
-import { renderPresetIcon } from '@/music-network';
+import { renderPresetIcon, useEnrichmentPrimaryIcon, useEnrichmentPrimaryLabel } from '@/music-network';
 import {
   usePlayerBarLayoutStore,
   type PlayerBarLayoutItemId,

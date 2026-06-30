@@ -7,9 +7,7 @@ import type { ArtistStats, TrackStats } from '@/music-network';
 import type { SubsonicOpenArtistRef } from '@/lib/api/subsonicTypes';
 import { OpenArtistRefInline } from '@/features/artist';
 import { formatTrackTime } from '@/lib/format/formatDuration';
-import { useEnrichmentPrimaryLabel } from '@/hooks/useEnrichmentPrimaryLabel';
-import { useEnrichmentPrimaryIcon } from '@/hooks/useEnrichmentPrimaryIcon';
-import { renderPresetIcon } from '@/music-network';
+import { renderPresetIcon, useEnrichmentPrimaryIcon, useEnrichmentPrimaryLabel } from '@/music-network';
 
 interface HeroProps {
   track: { title: string; artist: string; album: string; year?: number;
