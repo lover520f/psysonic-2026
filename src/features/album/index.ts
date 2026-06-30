@@ -5,7 +5,7 @@
  * the album session store, per-album offline status, and album export helpers.
  *
  * Stays OUT (library-core / cross-cutting, consumed by this feature, not owned):
- * the `utils/library/album*` browse query engine (shared with offline + other
+ * the `lib/library/album*` browse query engine (shared with offline + other
  * browse surfaces → M4), `albumDetailNavigation` (cross-cutting nav → M4),
  * `playAlbum` (playback action → playback), `starredAlbumIndexSync` (index
  * sync, core), the album context-menu items (context-menu subsystem), the

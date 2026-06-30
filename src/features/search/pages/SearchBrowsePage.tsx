@@ -42,19 +42,19 @@ import {
   runNetworkAdvancedTextSearch,
   runNetworkAdvancedYearAlbums,
   tryRunLocalAdvancedSearch,
-} from '@/utils/library/advancedSearchLocal';
-import { isLosslessSuffix } from '@/utils/library/losslessFormats';
-import { LOSSLESS_MODE_QUERY } from '@/utils/library/losslessMode';
-import { OXIMEDIA_MOOD_SEARCH_ENABLED } from '@/utils/library/trackEnrichment';
-import { raceSearchSources } from '@/utils/library/searchRace';
-import { logLibrarySearch } from '@/utils/library/libraryDevLog';
+} from '@/lib/library/advancedSearchLocal';
+import { isLosslessSuffix } from '@/lib/library/losslessFormats';
+import { LOSSLESS_MODE_QUERY } from '@/lib/library/losslessMode';
+import { OXIMEDIA_MOOD_SEARCH_ENABLED } from '@/lib/library/trackEnrichment';
+import { raceSearchSources } from '@/lib/library/searchRace';
+import { logLibrarySearch } from '@/lib/library/libraryDevLog';
 import {
   browseRaceCountsFullSearch,
   loadMoreLocalBrowseSongs,
   raceBrowseWithLocalFallback,
   runLocalBrowseFullSearch,
   runNetworkBrowseFullSearch,
-} from '@/utils/library/browseTextSearch';
+} from '@/lib/library/browseTextSearch';
 import { useLibraryIndexStore } from '@/store/libraryIndexStore';
 import { MOOD_GROUP_IDS } from '@/config/moodGroups';
 import { usePerfProbeFlags } from '@/utils/perf/perfFlags';

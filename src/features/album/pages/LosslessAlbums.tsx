@@ -4,7 +4,7 @@ import type { SubsonicAlbum } from '@/lib/api/subsonicTypes';
 import { songToTrack } from '@/features/playback/utils/playback/songToTrack';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import AlbumCard from '@/features/album/components/AlbumCard';
-import { LOSSLESS_MODE_QUERY } from '@/utils/library/losslessMode';
+import { LOSSLESS_MODE_QUERY } from '@/lib/library/losslessMode';
 import { ndListLosslessAlbumsPage } from '@/lib/api/navidromeBrowse';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/store/authStore';
@@ -38,7 +38,7 @@ import {
   runLocalAlbumBrowsePage,
   sortSubsonicAlbums,
   type AlbumBrowseSort,
-} from '@/utils/library/browseTextSearch';
+} from '@/lib/library/browseTextSearch';
 
 /** Local index page size — SQLite is cheap; larger pages than the network walk. */
 const LOCAL_PAGE_SIZE = 30;

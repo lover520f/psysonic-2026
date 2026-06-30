@@ -1,5 +1,5 @@
 import { getGenres } from '@/lib/api/subsonicGenres';
-import type { GenreFilterOption } from '../utils/library/albumBrowseLoad';
+import type { GenreFilterOption } from '@/lib/library/albumBrowseLoad';
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Check, Filter, X } from 'lucide-react';

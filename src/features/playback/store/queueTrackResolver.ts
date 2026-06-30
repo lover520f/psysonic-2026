@@ -5,8 +5,8 @@ import type { QueueItemRef, Track } from '@/features/playback/store/playerStoreT
 import { songToTrack } from '@/features/playback/utils/playback/songToTrack';
 import { resolveServerIdForIndexKey } from '@/utils/server/serverLookup';
 import { canonicalQueueServerKey } from '@/utils/server/serverIndexKey';
-import { trackToSong } from '@/utils/library/advancedSearchLocal';
-import { libraryIsReady } from '@/utils/library/libraryReady';
+import { trackToSong } from '@/lib/library/advancedSearchLocal';
+import { libraryIsReady } from '@/lib/library/libraryReady';
 
 /**
  * Queue track resolver (thin-state phase 2). Resolves `QueueItemRef`s to full

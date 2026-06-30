@@ -15,9 +15,9 @@ import {
   bootstrapAllIndexedServers,
   bootstrapIndexedServer,
   type BindServerResult,
-} from '../utils/library/librarySession';
-import { enqueueLibrarySync } from '../utils/library/librarySyncQueue';
-import { syncIngestDisplayCount } from '../utils/library/libraryReady';
+} from '@/lib/library/librarySession';
+import { enqueueLibrarySync } from '@/lib/library/librarySyncQueue';
+import { syncIngestDisplayCount } from '@/lib/library/libraryReady';
 
 export type LibraryServerConnection = 'online' | 'offline' | 'unknown';
 

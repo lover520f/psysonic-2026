@@ -3,7 +3,7 @@ import type { SubsonicPlaylist, SubsonicSong } from '@/lib/api/subsonicTypes';
 import { useLibraryIndexStore } from '@/store/libraryIndexStore';
 import type { PinnedGroup } from '@/store/localPlaybackStore';
 import { useLocalPlaybackStore } from '@/store/localPlaybackStore';
-import { trackToSong } from '@/utils/library/advancedSearchLocal';
+import { trackToSong } from '@/lib/library/advancedSearchLocal';
 import { isManualOfflinePlaylist } from '@/features/offline/utils/pinnedOfflineSync';
 import {
   hasLocalLibraryBytes,

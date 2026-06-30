@@ -8,8 +8,8 @@ import { libraryScopeForServer } from '@/lib/api/subsonicClient';
 import type { Track } from '@/features/playback/store/playerStoreTypes';
 import { songToTrack } from '@/features/playback/utils/playback/songToTrack';
 import { shuffleArray } from '@/lib/util/shuffleArray';
-import { trackToSong } from '@/utils/library/advancedSearchLocal';
-import { type AlbumBrowseSort } from '@/utils/library/albumBrowseSort';
+import { trackToSong } from '@/lib/library/advancedSearchLocal';
+import { type AlbumBrowseSort } from '@/lib/library/albumBrowseSort';
 import {
   genreCatalogCacheKey,
   getInflightGenreCatalog,
@@ -17,9 +17,9 @@ import {
   peekGenreCatalogCache,
   trackInflightGenreCatalog,
   writeGenreCatalogCache,
-} from '@/utils/library/genreCatalogCountsCache';
-import { fetchGenreAlbumTotal } from '@/utils/library/genreAlbumBrowse';
-import { libraryIsReady } from '@/utils/library/libraryReady';
+} from '@/lib/library/genreCatalogCountsCache';
+import { fetchGenreAlbumTotal } from '@/lib/library/genreAlbumBrowse';
+import { libraryIsReady } from '@/lib/library/libraryReady';
 
 /** Drop genres with no indexed albums/tracks (stale server list or orphan rows). */
 export function filterGenresWithContent(genres: SubsonicGenre[]): SubsonicGenre[] {

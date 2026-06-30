@@ -3,12 +3,12 @@ import {
   librarySyncBindSession,
 } from '@/lib/api/library';
 import { enqueueLibrarySync, queueInitialSyncIfNeeded } from './librarySyncQueue';
-import type { ServerProfile } from '../../store/authStoreTypes';
-import { useAuthStore } from '../../store/authStore';
-import { useLibraryIndexStore } from '../../store/libraryIndexStore';
-import { ensureConnectUrlResolved } from '../server/serverEndpoint';
-import { serverIndexKeyForProfile } from '../server/serverIndexKey';
-import { syncServerHttpContextForProfile } from '../server/syncServerHttpContext';
+import type { ServerProfile } from '@/store/authStoreTypes';
+import { useAuthStore } from '@/store/authStore';
+import { useLibraryIndexStore } from '@/store/libraryIndexStore';
+import { ensureConnectUrlResolved } from '@/utils/server/serverEndpoint';
+import { serverIndexKeyForProfile } from '@/utils/server/serverIndexKey';
+import { syncServerHttpContextForProfile } from '@/utils/server/syncServerHttpContext';
 import { libraryDevEnabled, logLibraryStatus, logLibrarySync, timed } from './libraryDevLog';
 
 export type BindServerResult = 'bound' | 'offline' | 'error';

@@ -7,7 +7,7 @@ import type { LocalPlaybackEntry, PinnedGroup, PinSource } from '@/store/localPl
 import { useLocalPlaybackStore } from '@/store/localPlaybackStore';
 import { findLocalPlaybackEntry, hasLocalLibraryBytes } from '@/store/localPlaybackResolve';
 import { useOfflineStore, type OfflineAlbumMeta } from '@/features/offline/store/offlineStore';
-import { resolveTrackCoverArtId, trackToSong } from '@/utils/library/advancedSearchLocal';
+import { resolveTrackCoverArtId, trackToSong } from '@/lib/library/advancedSearchLocal';
 import { canonicalQueueServerKey, resolveIndexKey } from '@/utils/server/serverIndexKey';
 import type { Track } from '@/features/playback/store/playerStoreTypes';
 import { findServerByIdOrIndexKey, resolveServerIdForIndexKey } from '@/utils/server/serverLookup';

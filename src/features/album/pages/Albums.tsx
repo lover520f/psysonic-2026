@@ -43,15 +43,15 @@ import { peekAlbumBrowseScrollRestore } from '@/features/album/store/albumBrowse
 import { readAlbumBrowseRestore } from '@/utils/navigation/albumDetailNavigation';
 import { albumArtistDisplayName } from '@/features/album/utils/deriveAlbumHeaderArtistRefs';
 import { useAlbumCatalogYearBounds } from '@/features/album/hooks/useAlbumCatalogYearBounds';
-import type { AlbumBrowseSort } from '@/utils/library/albumBrowseSort';
-import { LOSSLESS_MODE_QUERY } from '@/utils/library/losslessMode';
-import { resolveAlbumYearBounds } from '@/utils/library/albumYearFilter';
+import type { AlbumBrowseSort } from '@/lib/library/albumBrowseSort';
+import { LOSSLESS_MODE_QUERY } from '@/lib/library/losslessMode';
+import { resolveAlbumYearBounds } from '@/lib/library/albumYearFilter';
 import {
   filterAlbumsByCompilation,
   filterAlbumsByGenres,
   filterAlbumsByStarred,
   filterAlbumsByYearBounds,
-} from '@/utils/library/albumBrowseFilters';
+} from '@/lib/library/albumBrowseFilters';
 import { useScopedBrowseSearchQuery } from '@/store/liveSearchScopeStore';
 
 type SortType = AlbumBrowseSort;

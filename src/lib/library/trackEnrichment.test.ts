@@ -9,7 +9,7 @@ import {
   resolveDisplayBpm,
   topMoodLabelIds,
 } from './trackEnrichment';
-import { topDistinctOximediaMoodTagIds, topOximediaMoodTagIds } from '../../config/moodGroups';
+import { topDistinctOximediaMoodTagIds, topOximediaMoodTagIds } from '@/config/moodGroups';
 
 const t = ((key: string, opts?: Record<string, unknown>) => {
   if (key === 'queue.bpm') return `${opts?.bpm} BPM`;

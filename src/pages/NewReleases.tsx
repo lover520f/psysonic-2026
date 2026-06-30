@@ -37,7 +37,7 @@ import { useAlbumBrowseScrollSnapshotSync, type AlbumBrowseScrollSnapshot } from
 import { readAlbumBrowseRestore } from '../utils/navigation/albumDetailNavigation';
 import { albumArtistDisplayName } from '@/features/album';
 import { useLibraryIndexStore } from '../store/libraryIndexStore';
-import { filterAlbumsByGenres } from '../utils/library/albumBrowseFilters';
+import { filterAlbumsByGenres } from '@/lib/library/albumBrowseFilters';
 import { useScopedBrowseSearchQuery } from '../store/liveSearchScopeStore';
 
 const PAGE_SIZE = 30;

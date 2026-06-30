@@ -22,7 +22,7 @@ import { runLegacyOfflineFileMigration } from '@/features/offline';
 import { reconcileLibraryTierForServer } from '@/features/offline';
 import { initMiniPlayerBridgeOnMain } from '@/features/miniPlayer';
 import { runAdvancedModeMigration } from '../utils/migrations/advancedModeMigration';
-import { bootstrapAllIndexedServers } from '../utils/library/librarySession';
+import { bootstrapAllIndexedServers } from '@/lib/library/librarySession';
 import { hydrateQueueFromIndex } from '@/features/playback/store/queueRestore';
 import { useLibraryAnalysisBackfill } from '../hooks/useLibraryAnalysisBackfill';
 import { useCoverArtPrefetch } from '../cover/useCoverArtPrefetch';

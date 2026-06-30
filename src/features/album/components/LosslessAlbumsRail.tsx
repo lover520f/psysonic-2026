@@ -5,8 +5,8 @@ import { ndListLosslessAlbumsPage } from '@/lib/api/navidromeBrowse';
 import AlbumRow from '@/features/album/components/AlbumRow';
 import { useAuthStore } from '@/store/authStore';
 import { useLibraryIndexStore } from '@/store/libraryIndexStore';
-import { runLocalLosslessAlbums } from '@/utils/library/browseTextSearch';
-import { LOSSLESS_MODE_QUERY } from '@/utils/library/losslessMode';
+import { runLocalLosslessAlbums } from '@/lib/library/browseTextSearch';
+import { LOSSLESS_MODE_QUERY } from '@/lib/library/losslessMode';
 
 interface Props {
   disableArtwork?: boolean;

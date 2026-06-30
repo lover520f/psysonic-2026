@@ -1,5 +1,5 @@
 import type { SubsonicAlbum } from '@/lib/api/subsonicTypes';
-import type { AlbumBrowseQuery } from '@/utils/library/albumBrowseTypes';
+import type { AlbumBrowseQuery } from '@/lib/library/albumBrowseTypes';
 import { isOfflineBrowseActive } from '@/features/offline/utils/offlineBrowseMode';
 import {
   fetchOfflineLocalAlbumCatalogChunk,

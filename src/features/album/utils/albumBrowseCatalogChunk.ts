@@ -2,8 +2,8 @@ import type { SubsonicAlbum } from '@/lib/api/subsonicTypes';
 import { dedupeById } from '@/lib/util/dedupeById';
 import { isOfflineBrowseActive } from '@/features/offline';
 import { loadOfflineAlbumCatalogChunk } from '@/features/offline';
-import type { AlbumBrowseQuery } from '@/utils/library/albumBrowseTypes';
-import { fetchLocalAlbumCatalogChunk } from '@/utils/library/albumBrowseLoad';
+import type { AlbumBrowseQuery } from '@/lib/library/albumBrowseTypes';
+import { fetchLocalAlbumCatalogChunk } from '@/lib/library/albumBrowseLoad';
 
 export type AlbumCatalogChunk = {
   albums: SubsonicAlbum[];

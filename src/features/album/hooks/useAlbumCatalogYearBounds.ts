@@ -3,8 +3,8 @@ import {
   ALBUM_YEAR_MAX,
   ALBUM_YEAR_MIN,
   type AlbumCatalogYearRange,
-} from '@/utils/library/albumYearFilter';
-import { fetchAlbumCatalogYearBounds } from '@/utils/library/albumCatalogYearBounds';
+} from '@/lib/library/albumYearFilter';
+import { fetchAlbumCatalogYearBounds } from '@/lib/library/albumCatalogYearBounds';
 
 const DEFAULT: AlbumCatalogYearRange = { min: ALBUM_YEAR_MIN, max: ALBUM_YEAR_MAX };
 

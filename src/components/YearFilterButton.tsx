@@ -12,7 +12,7 @@ import {
   normalizeAlbumYearToFieldChange,
   resolveAlbumYearBounds,
   stepAlbumYearField,
-} from '../utils/library/albumYearFilter';
+} from '@/lib/library/albumYearFilter';
 
 interface Props {
   from: string;

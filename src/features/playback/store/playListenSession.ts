@@ -5,7 +5,7 @@ import {
   libraryRecordPlaySession,
   type PlaySessionEndReason,
 } from '@/lib/api/library';
-import { libraryIsReady } from '@/utils/library/libraryReady';
+import { libraryIsReady } from '@/lib/library/libraryReady';
 import { getPlaybackServerId } from '@/features/playback/utils/playback/playbackServer';
 import { emitPlaySessionRecorded } from '@/features/playback/store/playSessionRecorded';
 import { useLibraryIndexStore } from '@/store/libraryIndexStore';

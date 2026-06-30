@@ -14,7 +14,7 @@ import {
 } from '@/features/playback/store/playListenSession';
 import { onPlaySessionRecorded } from '@/features/playback/store/playSessionRecorded';
 
-vi.mock('@/utils/library/libraryReady', () => ({
+vi.mock('@/lib/library/libraryReady', () => ({
   libraryIsReady: vi.fn(async () => true),
 }));
 
@@ -178,7 +178,7 @@ describe('playListenSession', () => {
   });
 
   it('skips when library is not ready', async () => {
-    const { libraryIsReady } = await import('@/utils/library/libraryReady');
+    const { libraryIsReady } = await import('@/lib/library/libraryReady');
     vi.mocked(libraryIsReady).mockResolvedValueOnce(false);
     vi.useFakeTimers();
     await playListenSessionOpen(testTrack, 'server-1');

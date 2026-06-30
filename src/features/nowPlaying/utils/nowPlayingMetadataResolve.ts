@@ -22,8 +22,8 @@ import { getAlbumForServer, getSongForServer } from '@/lib/api/subsonicLibrary';
 import type { SubsonicAlbum, SubsonicSong } from '@/lib/api/subsonicTypes';
 import { shouldAttemptSubsonicForServer } from '@/utils/network/subsonicNetworkGuard';
 import { loadAlbumFromLibraryIndex, loadArtistFromLibraryIndex } from '@/features/offline';
-import { trackToSong } from '@/utils/library/advancedSearchLocal';
-import { libraryIsReady } from '@/utils/library/libraryReady';
+import { trackToSong } from '@/lib/library/advancedSearchLocal';
+import { libraryIsReady } from '@/lib/library/libraryReady';
 
 const TOP_SONGS_LIMIT = 5;
 

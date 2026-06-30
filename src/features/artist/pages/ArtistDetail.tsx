@@ -36,7 +36,7 @@ import { artistDetailCoverWarmAlbums } from '@/features/artist/components/topSon
 import { useLibraryCoverPrefetch } from '@/cover/useLibraryCoverPrefetch';
 import { useWarmGridCovers } from '@/hooks/useWarmGridCovers';
 import { VirtualCardGrid } from '@/components/VirtualCardGrid';
-import { LOSSLESS_MODE_QUERY } from '@/utils/library/losslessMode';
+import { LOSSLESS_MODE_QUERY } from '@/lib/library/losslessMode';
 import { sortArtistAlbumsByYear } from '@/features/artist/utils/sortArtistAlbums';
 import { readDetailServerId } from '@/utils/navigation/detailServerScope';
 

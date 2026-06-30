@@ -7,7 +7,7 @@ import {
   raceBrowseWithLocalFallback,
   runLocalBrowseAlbums,
   runNetworkBrowseAlbums,
-} from '@/utils/library/browseTextSearch';
+} from '@/lib/library/browseTextSearch';
 import { useOfflineBrowseContext } from '@/features/offline';
 import { offlineLocalBrowseEnabled, searchOfflineLocalAlbums } from '@/features/offline';
 

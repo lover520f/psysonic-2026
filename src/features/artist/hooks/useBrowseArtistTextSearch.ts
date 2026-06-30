@@ -8,7 +8,7 @@ import {
   runLocalBrowseArtists,
   runNetworkBrowseArtists,
   type LibrarySearchSurface,
-} from '@/utils/library/browseTextSearch';
+} from '@/lib/library/browseTextSearch';
 import { useOfflineBrowseContext } from '@/features/offline';
 import { offlineLocalBrowseEnabled, searchOfflineLocalArtists } from '@/features/offline';
 

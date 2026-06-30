@@ -9,17 +9,17 @@ import {
   artistToArtist,
   resolveTrackCoverArtId,
   trackToSong,
-} from '@/utils/library/advancedSearchLocal';
-import { albumIsCompilationFromTrackDtos } from '@/utils/library/albumCompilation';
+} from '@/lib/library/advancedSearchLocal';
+import { albumIsCompilationFromTrackDtos } from '@/lib/library/albumCompilation';
 import {
   filterAlbumsByCompilation,
   filterAlbumsByGenres,
   filterAlbumsByStarred,
   filterAlbumsByYearBounds,
-} from '@/utils/library/albumBrowseFilters';
-import type { AlbumBrowseQuery } from '@/utils/library/albumBrowseTypes';
-import { sortSubsonicAlbums } from '@/utils/library/albumBrowseSort';
-import { isLosslessSuffix } from '@/utils/library/losslessFormats';
+} from '@/lib/library/albumBrowseFilters';
+import type { AlbumBrowseQuery } from '@/lib/library/albumBrowseTypes';
+import { sortSubsonicAlbums } from '@/lib/library/albumBrowseSort';
+import { isLosslessSuffix } from '@/lib/library/losslessFormats';
 import { entryBelongsToServer } from '@/store/localPlaybackResolve';
 
 function sortBrowsableSongs(songs: SubsonicSong[]): SubsonicSong[] {

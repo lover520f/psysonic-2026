@@ -11,8 +11,8 @@ import { loadArtistFromLibraryIndex } from '@/features/offline';
 import { useOfflineBrowseContext } from '@/features/offline';
 import { loadArtistFromLocalPlayback, offlineLocalBrowseEnabled } from '@/features/offline';
 import { readDetailServerId } from '@/utils/navigation/detailServerScope';
-import { runLocalArtistLosslessBrowse } from '@/utils/library/browseTextSearch';
-import { isLosslessSuffix } from '@/utils/library/losslessFormats';
+import { runLocalArtistLosslessBrowse } from '@/lib/library/browseTextSearch';
+import { isLosslessSuffix } from '@/lib/library/losslessFormats';
 
 export interface UseArtistDetailDataOptions {
   /** When true, albums and top tracks are limited to lossless containers (local index preferred). */

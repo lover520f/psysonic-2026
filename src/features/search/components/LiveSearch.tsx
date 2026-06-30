@@ -9,17 +9,17 @@ import {
   mergeLiveSearchResults,
   runLocalLiveSearch,
   runNetworkLiveSearch,
-} from '@/utils/library/liveSearchLocal';
-import { raceLiveSearch } from '@/utils/library/searchRace';
-import { libraryIsReady } from '@/utils/library/libraryReady';
+} from '@/lib/library/liveSearchLocal';
+import { raceLiveSearch } from '@/lib/library/searchRace';
+import { libraryIsReady } from '@/lib/library/libraryReady';
 import {
   emitLiveSearchDebug,
   searchHitCounts,
   searchResultSamples,
-} from '@/utils/library/liveSearchDebug';
+} from '@/lib/library/liveSearchDebug';
 import {
   logLibrarySearch,
-} from '@/utils/library/libraryDevLog';
+} from '@/lib/library/libraryDevLog';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useNavigateToAlbum } from '@/features/album';

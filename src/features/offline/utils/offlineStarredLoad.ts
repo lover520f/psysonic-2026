@@ -10,7 +10,7 @@ import { isActiveServerReachable } from '@/utils/network/activeServerReachabilit
 import {
   albumToAlbum,
   trackToSong,
-} from '@/utils/library/advancedSearchLocal';
+} from '@/lib/library/advancedSearchLocal';
 import { dedupeById } from '@/lib/util/dedupeById';
 import { isOfflineBrowseActive } from '@/features/offline/utils/offlineBrowseMode';
 import { favoritesServerIds } from '@/features/offline/utils/favoritesOfflineBrowse';

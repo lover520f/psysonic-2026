@@ -15,7 +15,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/store/authStore';
 import { useLibraryIndexStore } from '@/store/libraryIndexStore';
 import { filterAlbumsByMixRatings, getMixMinRatingsConfigFromAuth } from '@/utils/mix/mixRatingFilter';
-import { runLocalRandomAlbums, runLocalAlbumsByGenres } from '@/utils/library/browseTextSearch';
+import { runLocalRandomAlbums, runLocalAlbumsByGenres } from '@/lib/library/browseTextSearch';
 import { useOfflineStore } from '@/features/offline';
 import { useDownloadModalStore } from '@/features/offline';
 import { invoke } from '@tauri-apps/api/core';

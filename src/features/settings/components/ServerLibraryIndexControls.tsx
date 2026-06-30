@@ -4,7 +4,7 @@ import type { SyncStateDto } from '@/lib/api/library';
 import {
   libraryStatusDisplayTrackCount,
   libraryStatusIsReady,
-} from '@/utils/library/libraryReady';
+} from '@/lib/library/libraryReady';
 import type { LibraryServerConnection } from '@/hooks/useLibraryIndexSync';
 
 interface ServerLibraryIndexControlsProps {

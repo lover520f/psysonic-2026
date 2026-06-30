@@ -7,10 +7,10 @@ import {
   libraryCoverBackfillSetBaseUrl,
   librarySqlServerId,
 } from '../api/coverCache';
-import { coverStrategyAllowsLibraryBackfill } from '../utils/library/coverStrategy';
+import { coverStrategyAllowsLibraryBackfill } from '@/lib/library/coverStrategy';
 import { useAuthStore } from '../store/authStore';
 import { useCoverStrategyStore } from '../store/coverStrategyStore';
-import { subscribeLibraryCoverBackfillWake } from '../utils/library/coverBackfillWake';
+import { subscribeLibraryCoverBackfillWake } from '@/lib/library/coverBackfillWake';
 import { serverIndexKeyForProfile } from '../utils/server/serverIndexKey';
 import { subscribeConnectCache } from '../utils/server/serverEndpoint';
 

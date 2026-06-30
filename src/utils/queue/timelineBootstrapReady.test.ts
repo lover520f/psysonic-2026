@@ -3,11 +3,11 @@ import { useAuthStore } from '../../store/authStore';
 import { useLibraryIndexStore } from '../../store/libraryIndexStore';
 import { timelineBootstrapIndexReady } from './timelineBootstrapReady';
 
-vi.mock('../library/libraryReady', () => ({
+vi.mock('@/lib/library/libraryReady', () => ({
   libraryIsReady: vi.fn(),
 }));
 
-import { libraryIsReady } from '../library/libraryReady';
+import { libraryIsReady } from '@/lib/library/libraryReady';
 
 describe('timelineBootstrapIndexReady', () => {
   beforeEach(() => {

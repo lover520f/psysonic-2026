@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { SubsonicAlbum } from '@/lib/api/subsonicTypes';
 import { dedupeById } from '@/lib/util/dedupeById';
-import type { AlbumBrowseSort } from '@/utils/library/albumBrowseSort';
+import type { AlbumBrowseSort } from '@/lib/library/albumBrowseSort';
 import {
   fetchGenreAlbumPage,
   GENRE_ALBUM_CATALOG_CHUNK,
   GENRE_ALBUM_FIRST_PAGE,
-} from '@/utils/library/genreAlbumBrowse';
+} from '@/lib/library/genreAlbumBrowse';
 import { useClientSliceInfiniteScroll } from '@/hooks/useClientSliceInfiniteScroll';
 import { useInpageScrollSentinel } from '@/hooks/useInpageScrollSentinel';
 

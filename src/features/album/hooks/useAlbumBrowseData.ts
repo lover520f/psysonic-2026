@@ -13,8 +13,8 @@ import {
 } from '@/cover/coverTraffic';
 import { coverEnsureQueueBacklog, coverEnsureResumePump, coverEnsureSubscribeBacklogDrain } from '@/cover/ensureQueue';
 import { dedupeById } from '@/lib/util/dedupeById';
-import { albumBrowseCompScanComplete, albumBrowseCompFilterClientOnly } from '@/utils/library/albumCompilation';
-import type { AlbumCompFilter } from '@/utils/library/albumCompilation';
+import { albumBrowseCompScanComplete, albumBrowseCompFilterClientOnly } from '@/lib/library/albumCompilation';
+import type { AlbumCompFilter } from '@/lib/library/albumCompilation';
 import {
   albumBrowseHasGenreFilter,
   albumBrowseHasServerFilters,
@@ -24,12 +24,12 @@ import {
   fetchLocalAlbumCatalogChunk,
   type AlbumBrowseQuery,
   type GenreFilterOption,
-} from '@/utils/library/albumBrowseLoad';
+} from '@/lib/library/albumBrowseLoad';
 import { libraryScopeForServer } from '@/lib/api/subsonicClient';
 import {
   ALBUM_YEAR_FILTER_DEBOUNCE_MS,
   resolveAlbumYearBounds,
-} from '@/utils/library/albumYearFilter';
+} from '@/lib/library/albumYearFilter';
 import { loadOfflineAlbumBrowseInitial } from '@/features/offline';
 import { useOfflineBrowseReloadToken } from '@/features/offline';
 import {

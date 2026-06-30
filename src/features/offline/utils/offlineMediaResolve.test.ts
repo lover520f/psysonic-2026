@@ -62,7 +62,7 @@ vi.mock('@/lib/api/subsonicPlaylists', () => ({
     getPlaylistForServerMock(serverId, playlistId),
 }));
 
-vi.mock('@/utils/library/libraryReady', () => ({
+vi.mock('@/lib/library/libraryReady', () => ({
   libraryIsReady: (serverId: string) => libraryIsReadyMock(serverId),
 }));
 

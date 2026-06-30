@@ -22,23 +22,23 @@ vi.mock('@/lib/api/subsonicClient', () => ({
   libraryScopeForServer: vi.fn(() => 'music'),
 }));
 
-vi.mock('@/utils/library/libraryReady', () => ({
+vi.mock('@/lib/library/libraryReady', () => ({
   libraryIsReady: vi.fn(),
 }));
 
 // Spread the real leaf module so other consumers pulled in transitively (the
 // album barrel reaches this via the artist↔album edge → useGenreAlbumBrowse needs
 // GENRE_ALBUM_FIRST_PAGE); only fetchGenreAlbumTotal is stubbed here.
-vi.mock('@/utils/library/genreAlbumBrowse', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('@/utils/library/genreAlbumBrowse')>()),
+vi.mock('@/lib/library/genreAlbumBrowse', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/library/genreAlbumBrowse')>()),
   fetchGenreAlbumTotal: vi.fn(),
 }));
 
 import { libraryAdvancedSearch, libraryGetGenreAlbumCounts } from '@/lib/api/library';
 import { fetchAllSongsByGenre, getGenres } from '@/lib/api/subsonicGenres';
-import { fetchGenreAlbumTotal } from '@/utils/library/genreAlbumBrowse';
-import { resetGenreCatalogCountsCacheForTests } from '@/utils/library/genreCatalogCountsCache';
-import { libraryIsReady } from '@/utils/library/libraryReady';
+import { fetchGenreAlbumTotal } from '@/lib/library/genreAlbumBrowse';
+import { resetGenreCatalogCountsCacheForTests } from '@/lib/library/genreCatalogCountsCache';
+import { libraryIsReady } from '@/lib/library/libraryReady';
 
 describe('genreBrowsePlayback', () => {
   beforeEach(() => {

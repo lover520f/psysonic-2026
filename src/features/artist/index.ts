@@ -3,7 +3,7 @@
  * `pages/*` paths, not re-exported), artist cards/rows/avatars, the detail hero +
  * similar-artists + top-tracks UI, the artist Subsonic API, browse catalog/
  * filter/scroll hooks, per-artist offline status, and the open-artist-ref nav
- * cluster. `sortArtistAlbums` moved in from `utils/library/` (artist-only sort,
+ * cluster. `sortArtistAlbums` moved in from `lib/library/` (artist-only sort,
  * not the shared index query engine).
  *
  * Stays OUT (other owners): `deriveAlbumHeaderArtistRefs` (album header),

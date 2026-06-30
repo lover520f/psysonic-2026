@@ -1,7 +1,7 @@
 import { getArtists } from '@/lib/api/subsonicArtists';
 import { getAlbumList, getRandomSongs } from '@/lib/api/subsonicLibrary';
 import type { SubsonicAlbum, SubsonicArtist, SubsonicSong } from '@/lib/api/subsonicTypes';
-import { runLocalRandomSongs } from '../utils/library/browseTextSearch';
+import { runLocalRandomSongs } from '@/lib/library/browseTextSearch';
 import React, { useEffect, useState } from 'react';
 import Hero from '../components/Hero';
 import { AlbumRow } from '@/features/album';

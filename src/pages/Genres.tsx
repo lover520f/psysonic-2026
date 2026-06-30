@@ -9,9 +9,9 @@ import { useAuthStore } from '../store/authStore';
 import { useLibraryIndexStore } from '../store/libraryIndexStore';
 import { fetchGenreCatalog, filterGenresWithContent } from '@/features/playback/utils/playback/genreBrowsePlayback';
 import { libraryScopeForServer } from '@/lib/api/subsonicClient';
-import { peekGenreCatalogCache } from '../utils/library/genreCatalogCountsCache';
+import { peekGenreCatalogCache } from '@/lib/library/genreCatalogCountsCache';
 import { resolveIndexKey } from '../utils/server/serverIndexKey';
-import { genreColor } from '../utils/library/genreColor';
+import { genreColor } from '@/lib/library/genreColor';
 
 const SCROLL_KEY = 'genres-scroll';
 const FONT_MIN_REM = 0.78;

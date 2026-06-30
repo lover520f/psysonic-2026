@@ -5,7 +5,7 @@ import {
   topDistinctOximediaMoodTagIds,
   topDistinctOximediaMoodTagIdsFromValenceArousal,
   moodScoresFromValenceArousal,
-} from '../../config/moodGroups';
+} from '@/config/moodGroups';
 
 /** Oximedia mood labels in queue/Song Info — off until a reliable model ships. */
 export const OXIMEDIA_MOOD_UI_ENABLED = false;
@@ -15,7 +15,7 @@ export const OXIMEDIA_ENRICHMENT_SOURCE_KIND = 'analysis';
 export const OXIMEDIA_ENRICHMENT_SOURCE_ID = 'oximedia-60s-center';
 
 /** Oximedia mood label ids — see `src/config/moodGroups.ts` and Rust `mood_groups`. */
-export type { OximediaMoodTagId } from '../../config/moodGroups';
+export type { OximediaMoodTagId } from '@/config/moodGroups';
 
 export interface ParsedTrackEnrichment {
   serverBpm: number | null;
@@ -115,7 +115,7 @@ export function deriveMoodScores(valence: number, arousal: number): Record<strin
 }
 
 /** @deprecated Use `topDistinctOximediaMoodTagIdsFromValenceArousal`. */
-export { topDistinctOximediaMoodTagIdsFromValenceArousal as topMoodLabelIds } from '../../config/moodGroups';
+export { topDistinctOximediaMoodTagIdsFromValenceArousal as topMoodLabelIds } from '@/config/moodGroups';
 
 /** Analysis/measured BPM when present; otherwise file tag BPM. */
 export function resolveDisplayBpm(

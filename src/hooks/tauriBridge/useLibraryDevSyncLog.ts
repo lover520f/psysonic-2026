@@ -15,7 +15,7 @@ import {
   logLibrarySync,
   normalizeIngestMetrics,
   timed,
-} from '../../utils/library/libraryDevLog';
+} from '@/lib/library/libraryDevLog';
 
 /**
  * DevTools: log library sync progress + idle with ingest strategy from status.

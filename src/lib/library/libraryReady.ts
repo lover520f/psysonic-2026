@@ -5,7 +5,7 @@
  * index when it's enabled and synced enough for trustworthy results.
  */
 import { libraryGetStatus, type SyncStateDto } from '@/lib/api/library';
-import { useLibraryIndexStore } from '../../store/libraryIndexStore';
+import { useLibraryIndexStore } from '@/store/libraryIndexStore';
 
 /** Spec §9.3 — shared by Live Search, Advanced Search, browse, … */
 export function libraryStatusIsReady(status: SyncStateDto): boolean {

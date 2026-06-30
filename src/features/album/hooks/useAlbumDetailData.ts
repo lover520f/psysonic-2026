@@ -17,7 +17,7 @@ import {
   offlineLocalBrowseEnabled,
 } from '@/features/offline';
 import { readDetailServerId } from '@/utils/navigation/detailServerScope';
-import { libraryIsReady } from '@/utils/library/libraryReady';
+import { libraryIsReady } from '@/lib/library/libraryReady';
 import {
   shouldAttemptSubsonicForActiveServer,
   shouldAttemptSubsonicForServer,

@@ -1,5 +1,5 @@
 import type { SubsonicGenre } from '@/lib/api/subsonicTypes';
-import { resolveServerIdForIndexKey } from '../server/serverLookup';
+import { resolveServerIdForIndexKey } from '@/utils/server/serverLookup';
 
 /** Fresh hits skip SQLite entirely. */
 const FRESH_TTL_MS = 60 * 60 * 1000;

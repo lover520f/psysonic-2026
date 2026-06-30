@@ -14,7 +14,7 @@ vi.mock('@/lib/api/navidromeBrowse', () => ({
   ndListSongs: vi.fn(async () => []),
 }));
 
-vi.mock('../utils/library/advancedSearchLocal', () => ({
+vi.mock('@/lib/library/advancedSearchLocal', () => ({
   runLocalSongBrowse: vi.fn(async () => []),
 }));
 
@@ -25,7 +25,7 @@ vi.mock('@/features/offline/hooks/useOfflineBrowseReloadToken', () => ({
   useOfflineBrowseReloadToken: () => undefined,
 }));
 
-vi.mock('../utils/library/browseTextSearch', () => ({
+vi.mock('@/lib/library/browseTextSearch', () => ({
   BROWSE_TEXT_DEBOUNCE_NETWORK_MS: 10,
   BROWSE_TEXT_DEBOUNCE_RACE_MS: 10,
   browseRaceCountsSongs: vi.fn(),

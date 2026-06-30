@@ -5,7 +5,7 @@ import { dedupeById } from '@/lib/util/dedupeById';
 import {
   fetchLocalArtistCatalogChunk,
   fetchNetworkStarredArtists,
-} from '@/utils/library/browseTextSearch';
+} from '@/lib/library/browseTextSearch';
 import { useOfflineBrowseContext } from '@/features/offline';
 import { useOfflineBrowseReloadToken } from '@/features/offline';
 import {

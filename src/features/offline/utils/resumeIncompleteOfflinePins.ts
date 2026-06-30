@@ -4,7 +4,7 @@ import type { SubsonicSong } from '@/lib/api/subsonicTypes';
 import { useAuthStore } from '@/store/authStore';
 import type { OfflineAlbumMeta } from '@/features/offline/store/offlineStore';
 import { useOfflineStore } from '@/features/offline/store/offlineStore';
-import { trackToSong } from '@/utils/library/advancedSearchLocal';
+import { trackToSong } from '@/lib/library/advancedSearchLocal';
 import { isActiveServerReachable, onActiveServerBecameReachable } from '@/utils/network/activeServerReachability';
 import { shouldAttemptSubsonicForServer } from '@/utils/network/subsonicNetworkGuard';
 import { resolveServerIdForIndexKey } from '@/utils/server/serverLookup';

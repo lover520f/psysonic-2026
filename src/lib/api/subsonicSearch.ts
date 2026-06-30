@@ -1,5 +1,5 @@
 import { api, libraryFilterParams } from '@/lib/api/subsonicClient';
-import { searchQueryIsFtsSafe } from '@/utils/library/searchQueryFtsSafe';
+import { searchQueryIsFtsSafe } from '@/lib/library/searchQueryFtsSafe';
 import type {
   SearchResults,
   SubsonicAlbum,

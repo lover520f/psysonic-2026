@@ -8,7 +8,7 @@ import {
   albumToAlbum,
   artistToArtist,
   trackToSong,
-} from '@/utils/library/advancedSearchLocal';
+} from '@/lib/library/advancedSearchLocal';
 
 export async function loadAlbumFromLibraryIndex(
   serverId: string,

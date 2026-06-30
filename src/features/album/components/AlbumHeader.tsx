@@ -20,8 +20,8 @@ import { sanitizeHtml } from '@/lib/util/sanitizeHtml';
 import { OpenArtistRefInline } from '@/features/artist';
 import { tooltipAttrs } from '@/ui/tooltipAttrs';
 import { offlineActionPolicy, type OfflineActionPolicy } from '@/features/offline';
-import { deriveAlbumGenreTags } from '@/utils/library/genreTags';
-import { genreColor } from '@/utils/library/genreColor';
+import { deriveAlbumGenreTags } from '@/lib/library/genreTags';
+import { genreColor } from '@/lib/library/genreColor';
 
 /** True when the album artist label means "no single artist" — `getArtistInfo`
  *  has nothing meaningful to return for these, so the Artist Bio entry is hidden.

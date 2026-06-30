@@ -10,7 +10,7 @@ import type {
 import { useAuthStore } from '@/store/authStore';
 import { shouldAttemptSubsonicForServer } from '@/utils/network/subsonicNetworkGuard';
 import { isOfflineBrowseActive } from '@/features/offline/utils/offlineBrowseMode';
-import { libraryIsReady } from '@/utils/library/libraryReady';
+import { libraryIsReady } from '@/lib/library/libraryReady';
 import { registerMediaResolver } from '@/store/mediaResolver';
 import {
   loadAlbumFromLibraryIndex,

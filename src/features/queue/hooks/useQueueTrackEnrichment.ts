@@ -8,8 +8,8 @@ import {
   OXIMEDIA_MOOD_UI_ENABLED,
   parseTrackEnrichmentFacts,
   type ParsedTrackEnrichment,
-} from '@/utils/library/trackEnrichment';
-import { libraryIsReady } from '@/utils/library/libraryReady';
+} from '@/lib/library/trackEnrichment';
+import { libraryIsReady } from '@/lib/library/libraryReady';
 import { normalizeAnalysisTrackId } from '@/features/playback/utils/playback/queueIdentity';
 
 const EMPTY: ParsedTrackEnrichment = {

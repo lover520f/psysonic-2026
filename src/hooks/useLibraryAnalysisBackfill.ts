@@ -6,7 +6,7 @@ import {
 import { librarySqlServerId } from '../api/coverCache';
 import { useAuthStore } from '../store/authStore';
 import { useAnalysisStrategyStore } from '../store/analysisStrategyStore';
-import { DEFAULT_ADVANCED_PARALLELISM } from '../utils/library/analysisStrategy';
+import { DEFAULT_ADVANCED_PARALLELISM } from '@/lib/library/analysisStrategy';
 import { serverIndexKeyForProfile } from '../utils/server/serverIndexKey';
 
 const DISABLED_CONFIGURE = {

@@ -14,13 +14,13 @@ import { copyTextToClipboard } from '../utils/server/serverMagicString';
 import { showToast } from '../utils/ui/toast';
 import { formatTrackTime } from '@/lib/format/formatDuration';
 import { formatLastSeen } from '../utils/componentHelpers/userMgmtHelpers';
-import { libraryIsReady } from '../utils/library/libraryReady';
+import { libraryIsReady } from '@/lib/library/libraryReady';
 import {
   formatQueueMoodLabels,
   parseTrackEnrichmentFacts,
   resolveQueueBpm,
   type ParsedTrackEnrichment,
-} from '../utils/library/trackEnrichment';
+} from '@/lib/library/trackEnrichment';
 import i18n from '@/lib/i18n';
 
 function formatSize(bytes?: number): string | null {

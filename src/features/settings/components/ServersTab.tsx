@@ -8,7 +8,7 @@ import { formatServerSoftware, isNavidromeAudiomuseSoftwareEligible, type Instan
 import { buildCapabilityContext } from '@/serverCapabilities/context';
 import { useLibraryIndexStore } from '@/store/libraryIndexStore';
 import { libraryDeleteServerData, librarySyncClearSession } from '@/lib/api/library';
-import { bootstrapIndexedServer } from '@/utils/library/librarySession';
+import { bootstrapIndexedServer } from '@/lib/library/librarySession';
 import { useLibraryIndexSync } from '@/hooks/useLibraryIndexSync';
 import ServerLibraryIndexControls from '@/features/settings/components/ServerLibraryIndexControls';
 import type { ServerProfile } from '@/store/authStoreTypes';

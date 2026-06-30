@@ -4,7 +4,7 @@ import {
   DEFAULT_COVER_CACHE_STRATEGY,
   coverStrategyFromLegacyPrefetch,
   type CoverCacheStrategy,
-} from '../utils/library/coverStrategy';
+} from '@/lib/library/coverStrategy';
 import { useAuthStore } from './authStore';
 import { serverIndexKeyFromUrl } from '../utils/server/serverIndexKey';
 import type { ServerProfile } from './authStoreTypes';

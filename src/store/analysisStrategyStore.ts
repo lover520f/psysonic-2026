@@ -5,7 +5,7 @@ import {
   DEFAULT_ADVANCED_PARALLELISM,
   DEFAULT_ANALYTICS_STRATEGY,
   type AnalyticsStrategy,
-} from '../utils/library/analysisStrategy';
+} from '@/lib/library/analysisStrategy';
 import { useAuthStore } from './authStore';
 import { serverIndexKeyFromUrl } from '../utils/server/serverIndexKey';
 import type { ServerProfile } from './authStoreTypes';

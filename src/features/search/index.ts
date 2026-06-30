@@ -3,7 +3,7 @@
  * search/browse page (lazy via the deep path `pages/SearchBrowsePage`), live
  * search scope UI/state, and the share-link search/queue-preview surfaces.
  *
- * The local-index query engine (`utils/library/*search*`), the shared Subsonic
+ * The local-index query engine (`lib/library/*search*`), the shared Subsonic
  * search API, the cross-cutting `liveSearchScopeStore`, and the
  * `advancedSearch*` session/scroll state live outside this feature
  * (library-core / cross-cutting) — this feature consumes them.

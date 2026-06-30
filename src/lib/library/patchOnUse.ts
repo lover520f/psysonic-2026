@@ -1,5 +1,5 @@
 import { libraryPatchTrack } from '@/lib/api/library';
-import { useLibraryIndexStore } from '../../store/libraryIndexStore';
+import { useLibraryIndexStore } from '@/store/libraryIndexStore';
 
 type TrackPatch = {
   /** ms epoch when starred, or `null` to clear (unstar). */

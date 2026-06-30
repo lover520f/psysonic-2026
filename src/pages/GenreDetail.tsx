@@ -23,7 +23,7 @@ import {
   fetchGenreAlbumCount,
   fetchGenreTracksForPlayback,
 } from '@/features/playback/utils/playback/genreBrowsePlayback';
-import { lookupGenreAlbumCount } from '../utils/library/genreCatalogCountsCache';
+import { lookupGenreAlbumCount } from '@/lib/library/genreCatalogCountsCache';
 import { libraryScopeForServer } from '@/lib/api/subsonicClient';
 import {
   readAlbumBrowseRestore,

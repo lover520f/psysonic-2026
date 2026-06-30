@@ -1,4 +1,4 @@
-import { coverEnsureQueueBacklog } from '../../cover/ensureQueue';
+import { coverEnsureQueueBacklog } from '@/cover/ensureQueue';
 
 /** Target in-flight + queued ensures ≈ workers × multiplier (mirror analysis backfill). */
 export const LIBRARY_COVER_BACKLOG_DEPTH_MULTIPLIER = 3;

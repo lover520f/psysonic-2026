@@ -29,7 +29,7 @@ import {
   ADVANCED_PARALLELISM_MAX,
   ADVANCED_PARALLELISM_MIN,
   type AnalyticsStrategy,
-} from '@/utils/library/analysisStrategy';
+} from '@/lib/library/analysisStrategy';
 
 type ClearTarget = {
   serverId: string;

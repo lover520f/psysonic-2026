@@ -1,5 +1,5 @@
 import type { SubsonicAlbum, SubsonicArtist, SubsonicSong } from '@/lib/api/subsonicTypes';
-import { parseItemGenres } from '@/utils/library/genreTags';
+import { parseItemGenres } from '@/lib/library/genreTags';
 import { invoke } from '@tauri-apps/api/core';
 import { useAuthStore } from '@/store/authStore';
 import { ndLogin } from '@/lib/api/navidromeAdmin';

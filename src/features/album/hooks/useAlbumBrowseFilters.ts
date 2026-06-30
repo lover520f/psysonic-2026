@@ -14,7 +14,7 @@ import {
   isAlbumDetailPath,
   useAlbumBrowseSessionStore,
 } from '@/features/album/store/albumBrowseSessionStore';
-import type { AlbumBrowseSort } from '@/utils/library/browseTextSearch';
+import type { AlbumBrowseSort } from '@/lib/library/browseTextSearch';
 import { shouldRestoreAlbumBrowseSession } from '@/utils/navigation/albumDetailNavigation';
 import { useLiveSearchScopeStore } from '@/store/liveSearchScopeStore';
 

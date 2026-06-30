@@ -1,12 +1,12 @@
 import { api, apiForServer, libraryFilterParams, libraryFilterParamsForServer } from '@/lib/api/subsonicClient';
 import { invalidateEntityUserRatingCaches } from '@/lib/api/subsonicRatings';
 import { useAuthStore } from '@/store/authStore';
-import { patchLibraryTrackOnUse, type StarPatchMeta } from '@/utils/library/patchOnUse';
+import { patchLibraryTrackOnUse, type StarPatchMeta } from '@/lib/library/patchOnUse';
 import { useLibraryIndexStore } from '@/store/libraryIndexStore';
 import {
   invalidateStarredAlbumBrowse,
   refreshStarredAlbumIndexFromServer,
-} from '@/utils/library/starredAlbumIndexSync';
+} from '@/lib/library/starredAlbumIndexSync';
 import type {
   EntityRatingSupportLevel,
   StarredResults,

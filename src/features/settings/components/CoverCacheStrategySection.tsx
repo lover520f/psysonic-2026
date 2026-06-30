@@ -19,11 +19,11 @@ import { serverIndexKeyForProfile } from '@/utils/server/serverIndexKey';
 import { showToast } from '@/utils/ui/toast';
 import { formatBytes } from '@/lib/format/formatBytes';
 import { clearImageCache, getImageCacheSize } from '@/utils/imageCache';
-import { wakeLibraryCoverBackfill } from '@/utils/library/coverBackfillWake';
+import { wakeLibraryCoverBackfill } from '@/lib/library/coverBackfillWake';
 import {
   COVER_CACHE_STRATEGIES,
   type CoverCacheStrategy,
-} from '@/utils/library/coverStrategy';
+} from '@/lib/library/coverStrategy';
 
 type ClearTarget =
   | { kind: 'image' }

@@ -1,6 +1,6 @@
 import { useAuthStore } from '../../store/authStore';
 import { useLibraryIndexStore } from '../../store/libraryIndexStore';
-import { libraryIsReady } from '../library/libraryReady';
+import { libraryIsReady } from '@/lib/library/libraryReady';
 
 /**
  * Timeline cold bootstrap reads local `play_session` (cross-server). Gate on at
