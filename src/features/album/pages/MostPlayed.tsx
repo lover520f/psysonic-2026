@@ -5,15 +5,15 @@ import { songToTrack } from '@/lib/media/songToTrack';
 import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowUpDown, ArrowDown, ArrowUp, TrendingUp, UsersRound, Play, ListPlus } from 'lucide-react';
-import { useAuthStore } from '../store/authStore';
+import { useAuthStore } from '@/store/authStore';
 import { usePlayerStore } from '@/features/playback/store/playerStore';
-import { AlbumCoverArtImage } from '../cover/AlbumCoverArtImage';
-import { ArtistCoverArtImage } from '../cover/ArtistCoverArtImage';
+import { AlbumCoverArtImage } from '@/cover/AlbumCoverArtImage';
+import { ArtistCoverArtImage } from '@/cover/ArtistCoverArtImage';
 import { playAlbum, playAlbumShuffled } from '@/features/playback/utils/playback/playAlbum';
 import { useLongPressAction } from '@/lib/hooks/useLongPressAction';
-import { LongPressWaveOverlay } from '../components/LongPressWaveOverlay';
+import { LongPressWaveOverlay } from '@/components/LongPressWaveOverlay';
 import { useTranslation } from 'react-i18next';
-import { albumArtistDisplayName } from '@/features/album';
+import { albumArtistDisplayName } from '@/features/album/utils/deriveAlbumHeaderArtistRefs';
 
 const PAGE_SIZE = 50;
 
