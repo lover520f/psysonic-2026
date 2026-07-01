@@ -1,5 +1,5 @@
 import { useAuthStore } from '@/store/authStore';
-import type { NavidromeAdminRole } from '@/hooks/useNavidromeAdminRole';
+import type { NavidromeAdminRole } from '@/lib/hooks/useNavidromeAdminRole';
 import { isNavidromeServer, formatServerSoftware } from '@/lib/server/subsonicServerIdentity';
 import { FEATURE_AUDIOMUSE_SIMILAR_TRACKS, OP_SIMILAR_TRACKS } from '@/serverCapabilities/catalog';
 import {

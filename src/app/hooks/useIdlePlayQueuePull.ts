@@ -11,7 +11,7 @@ import {
   markPlaybackIdle,
 } from '@/features/playback/store/queuePlaybackIdle';
 import { hasPendingQueueSync } from '@/features/playback/store/queueSync';
-import type { ConnectionStatus } from '@/hooks/useConnectionStatus';
+import type { ConnectionStatus } from '@/lib/hooks/useConnectionStatus';
 import { canAutoIdlePlayQueuePull } from '@/app/hooks/usePlayQueueSyncLedState';
 
 const IDLE_THRESHOLD_MS = 30_000;

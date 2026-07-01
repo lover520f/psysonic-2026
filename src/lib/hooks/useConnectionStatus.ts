@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef, useMemo, useSyncExternalStore } from 'react';
-import { useAuthStore } from '../store/authStore';
+import { useAuthStore } from '@/store/authStore';
 import { scheduleInstantMixProbeForServer } from '@/lib/api/subsonic';
 import { serverListDisplayLabel } from '@/lib/server/serverDisplayName';
 import {

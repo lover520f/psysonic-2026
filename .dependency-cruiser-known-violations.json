@@ -535,6 +535,91 @@
   },
   {
     "type": "dependency",
+    "from": "src/lib/hooks/useCardGridMetrics.ts",
+    "to": "src/store/authStore.ts",
+    "unresolvedTo": "@/store/authStore",
+    "dependencyTypes": [
+      "aliased",
+      "aliased-tsconfig",
+      "aliased-tsconfig-paths",
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "lib-is-the-floor"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/lib/hooks/useCardGridMetrics.ts",
+    "to": "src/store/authStoreHelpers.ts",
+    "unresolvedTo": "@/store/authStoreHelpers",
+    "dependencyTypes": [
+      "aliased",
+      "aliased-tsconfig",
+      "aliased-tsconfig-paths",
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "lib-is-the-floor"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/lib/hooks/useConnectionStatus.ts",
+    "to": "src/store/authStore.ts",
+    "unresolvedTo": "@/store/authStore",
+    "dependencyTypes": [
+      "aliased",
+      "aliased-tsconfig",
+      "aliased-tsconfig-paths",
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "lib-is-the-floor"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/lib/hooks/useConnectionStatus.ts",
+    "to": "src/store/devOfflineBrowseStore.ts",
+    "unresolvedTo": "@/store/devOfflineBrowseStore",
+    "dependencyTypes": [
+      "aliased",
+      "aliased-tsconfig",
+      "aliased-tsconfig-paths",
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "lib-is-the-floor"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/lib/hooks/useNavidromeAdminRole.ts",
+    "to": "src/store/authStore.ts",
+    "unresolvedTo": "@/store/authStore",
+    "dependencyTypes": [
+      "aliased",
+      "aliased-tsconfig",
+      "aliased-tsconfig-paths",
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "lib-is-the-floor"
+    }
+  },
+  {
+    "type": "dependency",
     "from": "src/lib/library/hooks/useLibraryAnalysisBackfill.ts",
     "to": "src/store/analysisStrategyStore.ts",
     "unresolvedTo": "@/store/analysisStrategyStore",

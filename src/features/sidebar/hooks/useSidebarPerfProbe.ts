@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { acquirePerfLivePoll, patchPerfLiveAnalysis } from '@/lib/perf/perfLiveStore';
 import { setPerfProbeTelemetryActive } from '@/lib/perf/perfTelemetry';
 import { useAnalysisPerfLast } from '@/lib/perf/analysisPerfStore';
-import { useAnalysisPerfListener } from '@/hooks/useAnalysisPerfListener';
+import { useAnalysisPerfListener } from '@/lib/hooks/useAnalysisPerfListener';
 import { useCoverPerfListener, useCoverUiThroughputPoll } from '@/cover/useCoverPerfListener';
 import {
   getPerfProbeFlags,

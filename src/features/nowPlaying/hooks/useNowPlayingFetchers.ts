@@ -7,7 +7,7 @@ import type { ArtistStats, TrackStats } from '@/music-network';
 import { getMusicNetworkRuntimeOrNull } from '@/music-network';
 import { makeCache } from '@/lib/cache/nowPlayingCache';
 import { shouldAttemptSubsonicForServer } from '@/lib/network/subsonicNetworkGuard';
-import { useConnectionStatus } from '@/hooks/useConnectionStatus';
+import { useConnectionStatus } from '@/lib/hooks/useConnectionStatus';
 
 // Module-level TTL caches (shared across mounts)
 const songMetaCache    = makeCache<SubsonicSong | null>();

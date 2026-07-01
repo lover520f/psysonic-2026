@@ -1,7 +1,7 @@
 import { useAuthStore } from '@/store/authStore';
 import { usePlayerStore } from '@/features/playback/store/playerStore';
-import { useConnectionStatus } from '@/hooks/useConnectionStatus';
-import { useNavidromeAdminRole } from '@/hooks/useNavidromeAdminRole';
+import { useConnectionStatus } from '@/lib/hooks/useConnectionStatus';
+import { useNavidromeAdminRole } from '@/lib/hooks/useNavidromeAdminRole';
 import { serverListDisplayLabel } from '@/lib/server/serverDisplayName';
 import { findServerByIdOrIndexKey } from '@/lib/server/serverLookup';
 import { PerfProbeMetricSection } from '@/features/sidebar/components/perfProbe/PerfProbeMetricCard';

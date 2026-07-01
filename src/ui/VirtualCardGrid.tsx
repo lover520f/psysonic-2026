@@ -4,7 +4,7 @@ import { useWarmGridCovers } from '@/cover/useWarmGridCovers';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { APP_MAIN_SCROLL_VIEWPORT_ID } from '@/constants/appScroll';
 import { useElementClientHeightById } from '@/lib/hooks/useResizeClientHeight';
-import { useCardGridMetrics } from '@/hooks/useCardGridMetrics';
+import { useCardGridMetrics } from '@/lib/hooks/useCardGridMetrics';
 import { useRemeasureGridVirtualizer } from '@/lib/hooks/useRemeasureGridVirtualizer';
 import { useVirtualizerScrollMargin } from '@/lib/hooks/useVirtualizerScrollMargin';
 import type { CardGridRowHeightVariant } from '@/lib/util/cardGridLayout';

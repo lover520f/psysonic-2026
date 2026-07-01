@@ -1,4 +1,4 @@
-import type { ConnectionStatus } from '@/hooks/useConnectionStatus';
+import type { ConnectionStatus } from '@/lib/hooks/useConnectionStatus';
 import type { OfflineAlbumMeta } from '@/features/offline/store/offlineStore';
 import { favoritesOfflineBrowseEnabled } from '@/features/offline/utils/favoritesOfflineBrowse';
 import { hasOfflineBrowseCapability } from '@/features/offline/utils/offlineBrowseRouting';

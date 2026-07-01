@@ -1,6 +1,6 @@
 import { useAuthStore } from '@/store/authStore';
 import { useOfflineStore } from '@/features/offline/store/offlineStore';
-import { useConnectionStatus } from '@/hooks/useConnectionStatus';
+import { useConnectionStatus } from '@/lib/hooks/useConnectionStatus';
 import { usePlayerStatsRecordingEnabled } from '@/features/stats';
 import { hasOfflineBrowsingContent } from '@/features/offline/utils/favoritesOfflineBrowse';
 import { useOfflineBrowseActive } from '@/features/offline/utils/offlineBrowseMode';

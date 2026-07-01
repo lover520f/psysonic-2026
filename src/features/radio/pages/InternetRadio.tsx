@@ -15,7 +15,7 @@ import RadioEditModal from '@/features/radio/components/RadioEditModal';
 import RadioDirectoryModal from '@/features/radio/components/RadioDirectoryModal';
 import { usePerfProbeFlags } from '@/lib/perf/perfFlags';
 import { VirtualCardGrid } from '@/ui/VirtualCardGrid';
-import { useNavidromeAdminRole, canManageNavidromeRadio } from '@/hooks/useNavidromeAdminRole';
+import { useNavidromeAdminRole, canManageNavidromeRadio } from '@/lib/hooks/useNavidromeAdminRole';
 
 export default function InternetRadio() {
   const { t } = useTranslation();

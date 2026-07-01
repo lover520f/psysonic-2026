@@ -28,7 +28,7 @@ import {
   writeHomeFeedCache,
   type HomeFeedSnapshot,
 } from '@/features/home/store/homeFeedCache';
-import { useConnectionStatus } from '@/hooks/useConnectionStatus';
+import { useConnectionStatus } from '@/lib/hooks/useConnectionStatus';
 import { useOfflineBrowseContext } from '@/features/offline';
 import { useOfflineBrowseReloadToken } from '@/features/offline';
 import { useDevOfflineBrowseStore } from '@/features/offline';

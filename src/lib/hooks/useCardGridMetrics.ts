@@ -1,6 +1,6 @@
 import { useLayoutEffect, useState, type RefObject } from 'react';
-import { useAuthStore } from '../store/authStore';
-import { clampLibraryGridMaxColumns } from '../store/authStoreHelpers';
+import { useAuthStore } from '@/store/authStore';
+import { clampLibraryGridMaxColumns } from '@/store/authStoreHelpers';
 import {
   type CardGridRowHeightVariant,
   computeCardGridColumnCount,

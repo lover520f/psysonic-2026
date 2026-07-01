@@ -6,7 +6,7 @@ import type {
   SubsonicAlbum, SubsonicArtist, SubsonicArtistInfo, SubsonicSong,
 } from '@/lib/api/subsonicTypes';
 import { useAuthStore } from '@/store/authStore';
-import { useConnectionStatus } from '@/hooks/useConnectionStatus';
+import { useConnectionStatus } from '@/lib/hooks/useConnectionStatus';
 import { loadArtistFromLibraryIndex } from '@/features/offline';
 import { useOfflineBrowseContext } from '@/features/offline';
 import { loadArtistFromLocalPlayback, offlineLocalBrowseEnabled } from '@/features/offline';

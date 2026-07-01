@@ -2,7 +2,7 @@ import {
   isDevOfflineBrowseForced,
   useDevOfflineBrowseStore,
 } from '@/store/devOfflineBrowseStore';
-import { useConnectionStatus } from '@/hooks/useConnectionStatus';
+import { useConnectionStatus } from '@/lib/hooks/useConnectionStatus';
 import { isActiveServerReachable } from '@/lib/network/activeServerReachability';
 
 /** True when browse/detail pages should use local-bytes-only data sources. */

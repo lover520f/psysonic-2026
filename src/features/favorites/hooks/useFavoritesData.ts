@@ -7,7 +7,7 @@ import type {
 import { useAuthStore } from '@/store/authStore';
 import { usePlayerStore } from '@/features/playback/store/playerStore';
 import type { TopFavoriteArtist } from '@/features/favorites/components/TopFavoriteArtists';
-import { useConnectionStatus } from '@/hooks/useConnectionStatus';
+import { useConnectionStatus } from '@/lib/hooks/useConnectionStatus';
 import { isActiveServerReachable } from '@/lib/network/activeServerReachability';
 import { useOfflineBrowseContext } from '@/features/offline';
 import { useOfflineBrowseReloadToken } from '@/features/offline';

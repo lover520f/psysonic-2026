@@ -30,7 +30,7 @@ import {
   resolveOverlayVisibility,
   usePerfOverlayMode,
 } from '@/lib/perf/perfOverlayMode';
-import { useAnalysisPerfListener } from '@/hooks/useAnalysisPerfListener';
+import { useAnalysisPerfListener } from '@/lib/hooks/useAnalysisPerfListener';
 import { useCoverPerfListener } from '@/cover/useCoverPerfListener';
 import { getCoverCachedPerMinute, getCoverUiPerMinute } from '@/lib/perf/coverPerfStore';
 

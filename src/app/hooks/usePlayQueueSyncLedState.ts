@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { ConnectionStatus } from '@/hooks/useConnectionStatus';
+import type { ConnectionStatus } from '@/lib/hooks/useConnectionStatus';
 import { pullPlayQueueFromActiveServer } from '@/features/playback/store/applyServerPlayQueue';
 import { useAuthStore } from '@/store/authStore';
 import { useOrbitStore } from '@/features/orbit';
