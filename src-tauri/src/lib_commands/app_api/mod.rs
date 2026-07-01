@@ -1,6 +1,8 @@
 mod backup;
 mod cli_bridge;
-mod core;
+// `pub(crate)` so tauri-specta's `collect_commands!` can reach the `#[specta::specta]`
+// helper macro by full path (a `pub use` of the fn does not carry the macro).
+pub(crate) mod core;
 mod integration;
 mod migration;
 mod network;

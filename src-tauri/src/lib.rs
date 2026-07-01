@@ -78,7 +78,39 @@ fn set_app_user_model_id() {
     }
 }
 
+/// FE↔BE contract via tauri-specta. The builder collects `#[specta::specta]`
+/// commands and exports typed TS bindings; the existing `generate_handler!` stays
+/// the live invoke handler (no cutover yet). Export runs only in debug builds /
+/// tests, so a specta RC break can never block a release `cargo build` — the
+/// committed `bindings.ts` is plain TypeScript for `tsc`. Grow `collect_commands!`
+/// crate-by-crate (see the specta-contract plan).
+fn specta_builder() -> tauri_specta::Builder<tauri::Wry> {
+    tauri_specta::Builder::<tauri::Wry>::new()
+        .commands(tauri_specta::collect_commands![
+            crate::lib_commands::app_api::core::greet
+        ])
+}
+
+/// TS exporter config. Kept as a single seam so the exporter options (header /
+/// per-type BigInt-style handling for i64 DTOs) are configured in one place as
+/// commands are added crate-by-crate.
+fn bindings_exporter() -> specta_typescript::Typescript {
+    specta_typescript::Typescript::default()
+}
+
+/// Regenerate the committed bindings on a debug launch (matches the dev workflow;
+/// the CI freshness gate runs the equivalent export in a test — see `specta_export`).
+#[cfg(debug_assertions)]
+fn export_specta_bindings() {
+    specta_builder()
+        .export(bindings_exporter(), "../src/generated/bindings.ts")
+        .expect("failed to export typescript bindings");
+}
+
 pub fn run() {
+    #[cfg(debug_assertions)]
+    export_specta_bindings();
+
     // Windows: bind this process to an explicit AppUserModelID before any window
     // or the SMTC media controls are created, so the OS can resolve the app
     // name/icon for taskbar grouping and the media tile (#1102 follow-up: the
@@ -921,4 +953,16 @@ pub fn run() {
         ])
         .run(tauri::generate_context!())
         .expect("error while running Psysonic");
+}
+
+#[cfg(test)]
+mod specta_export {
+    // Headless generator + freshness seed: runs the same export as a debug launch
+    // without a GUI, so `cargo test` regenerates `bindings.ts` and CI can diff it.
+    #[test]
+    fn bindings_are_exportable() {
+        super::specta_builder()
+            .export(super::bindings_exporter(), "../src/generated/bindings.ts")
+            .expect("failed to export typescript bindings");
+    }
 }

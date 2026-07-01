@@ -5,6 +5,7 @@ use crate::runtime_subsonic_wire_user_agent;
 use crate::analysis_cache;
 
 #[tauri::command]
+#[specta::specta]
 pub(crate) fn greet(name: &str) -> String {
     format!("Hello, {}!", name)
 }
