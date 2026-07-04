@@ -523,6 +523,15 @@ pub enum SortDir {
     Desc,
 }
 
+/// Artist browse credit semantics when `entity_types` includes `artist` (#1209).
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Default)]
+#[serde(rename_all = "camelCase")]
+pub enum ArtistCreditMode {
+    #[default]
+    Album,
+    Track,
+}
+
 /// `library_advanced_search` request (§5.13.2). `query` is shorthand for an
 /// `fts` clause on the text fields; `entityTypes` controls which of the
 /// three queries run; `filters` are combined with AND.
@@ -555,6 +564,13 @@ pub struct LibraryAdvancedSearchRequest {
     /// When true, skip per-entity COUNT queries (Live Search / small pages).
     #[serde(default)]
     pub skip_totals: bool,
+    /// Album-artist vs track-performer browse when querying `artist` (#1209).
+    /// `None` is treated as [`ArtistCreditMode::Album`].
+    #[serde(default)]
+    pub artist_credit_mode: Option<ArtistCreditMode>,
+    /// A–Z / `#` / `OTHER` / omit or `ALL` — letter bucket on `name_sort` (#1209 browse).
+    #[serde(default)]
+    pub artist_letter_bucket: Option<String>,
 }
 
 /// Per-entity result counts (full match count, not page size).
