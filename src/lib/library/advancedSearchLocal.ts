@@ -156,10 +156,11 @@ function buildRequest(
   };
 }
 
-/** Merge `raw_json` without nullish Subsonic fields wiping hot columns (e.g. year). */
+/** Merge `raw_json` without stale `starred` reviving a cleared hot column. */
 function mergeAlbumRawJson(base: SubsonicAlbum, raw: Partial<SubsonicAlbum>): SubsonicAlbum {
   const merged = { ...base } as SubsonicAlbum & Record<string, unknown>;
   for (const [key, value] of Object.entries(raw)) {
+    if (key === 'starred') continue;
     if (value != null && value !== '') merged[key] = value;
   }
   return merged;
