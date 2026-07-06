@@ -138,6 +138,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * The year filter on All Albums no longer clamps on every keystroke while typing a four-digit year — drafts commit on blur, Enter, or outside click; incomplete input reverts to the last applied value. Wheel and spinner controls are unchanged.
 
+### Discord — "Server" cover art no longer exposes your login
+
+**By [@Psychotoxical](https://github.com/Psychotoxical), PR [#1246](https://github.com/Psychotoxical/psysonic/pull/1246)**
+
+* The **Settings → Integrations → Discord → Cover art source → Server** option sent your server's cover URL to Discord, which republishes external image links, so anyone viewing your Rich Presence could read your username and login token. That option has been removed — cover art now comes only from **None** (app icon) or **Apple Music**, neither of which carries your credentials. Any saved **Server** setting is switched to **None**. Reported by lavioso on Discord.
+
 
 ## [1.49.0] - 2026-06-29
 
