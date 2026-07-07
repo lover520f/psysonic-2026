@@ -180,7 +180,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Library — renamed artists/albums no longer linger as ghosts after resync
 
-**By [@cucadmuh](https://github.com/cucadmuh), PR [#1253](https://github.com/Psychotoxical/psysonic/pull/1253)**
+**By [@cucadmuh](https://github.com/cucadmuh), reported by Seraphim on the Psysonic Discord, PR [#1253](https://github.com/Psychotoxical/psysonic/pull/1253)**
 
 * Renaming an artist (or album) on the server no longer leaves a stale entry in the local Artists/Albums list that opened to "Artist not found" — a sync now prunes browse-index rows the server no longer lists that also have no remaining tracks, keeping starred albums. Cleanup runs on both full and delta syncs, and a one-time pass at startup clears ghosts already accumulated in existing libraries.
 * The renamed artist/album now appears right after a resync instead of only after an app restart: the Artists and Albums pages refresh their cached catalog when a library sync finishes.
