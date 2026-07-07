@@ -178,6 +178,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * The **Settings → Integrations → Discord → Cover art source → Server** option sent your server's cover URL to Discord, which republishes external image links, so anyone viewing your Rich Presence could read your username and login token. That option has been removed — cover art now comes only from **None** (app icon) or **Apple Music**, neither of which carries your credentials. Any saved **Server** setting is switched to **None**. Reported by lavioso on Discord.
 
+### Library — renamed artists/albums no longer linger as ghosts after resync
+
+**By [@cucadmuh](https://github.com/cucadmuh), PR [#1253](https://github.com/Psychotoxical/psysonic/pull/1253)**
+
+* Renaming an artist (or album) on the server no longer leaves a stale entry in the local Artists/Albums list that opened to "Artist not found" — a sync now prunes browse-index rows the server no longer lists that also have no remaining tracks, keeping starred albums. Cleanup runs on both full and delta syncs, and a one-time pass at startup clears ghosts already accumulated in existing libraries.
+* The renamed artist/album now appears right after a resync instead of only after an app restart: the Artists and Albums pages refresh their cached catalog when a library sync finishes.
+
 
 ## [1.49.0] - 2026-06-29
 
