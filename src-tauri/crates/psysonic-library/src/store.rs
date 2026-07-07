@@ -12,7 +12,7 @@ use tauri::Manager;
 ///
 /// Migration checklist (wiring, data backfill, open/swap path):
 /// psysonic-workdocs `ai/agent-rules/08-library-db-migrations.md`.
-pub const LIBRARY_DB_SCHEMA_VERSION: i64 = 17;
+pub const LIBRARY_DB_SCHEMA_VERSION: i64 = 18;
 
 /// One-time data repair after migration 014 (`artist.name_sort`).
 pub(crate) const ARTIST_NAME_SORT_RECONCILE_ID: &str = "artist_name_sort_reconcile_v1";
@@ -23,7 +23,7 @@ pub(crate) const REPLAY_GAIN_PEAK_RECONCILE_ID: &str = "replay_gain_peak_reconci
 /// One-time backfill after migration 016 (`track.library_id` from `raw_json`).
 pub(crate) const LIBRARY_ID_BACKFILL_RECONCILE_ID: &str = "library_id_backfill_reconcile_v1";
 
-/// One-time cleanup of `artist`/`album` browse rows orphaned by pre-fix syncs
+/// One-time cleanup of `artist` browse rows orphaned by pre-fix syncs
 /// (server-side renames left ghosts that opened to "not found"). Ongoing syncs
 /// prune these inline; this clears already-accumulated rows at first open.
 pub(crate) const ORPHAN_BROWSE_RECONCILE_ID: &str = "orphan_browse_rows_reconcile_v1";
@@ -55,6 +55,10 @@ pub(crate) const MIGRATION_016_MULTI_LIBRARY_SCOPE: &str =
     include_str!("../migrations/016_multi_library_scope.sql");
 pub(crate) const MIGRATION_017_LIBRARY_TAG_STATE: &str =
     include_str!("../migrations/017_library_tag_state.sql");
+/// Version 18: additive `idx_artist_synced(server_id, synced_at)` so the orphan
+/// prune's freshness lookup is an index seek instead of a per-server scan.
+pub(crate) const MIGRATION_018_ARTIST_SYNCED_INDEX: &str =
+    include_str!("../migrations/018_artist_synced_index.sql");
 
 /// Embedded migrations. Ordered ascending by `version`; the runner sorts
 /// defensively before applying so the source order can stay readable.
@@ -66,6 +70,7 @@ const MIGRATIONS: &[(i64, &str)] = &[
     (15, MIGRATION_015_REPLAY_GAIN_PEAK),
     (16, MIGRATION_016_MULTI_LIBRARY_SCOPE),
     (17, MIGRATION_017_LIBRARY_TAG_STATE),
+    (18, MIGRATION_018_ARTIST_SYNCED_INDEX),
 ];
 
 /// Idempotent repair — also runs after the migration runner on every open so
@@ -921,15 +926,14 @@ fn mark_orphan_browse_reconcile_completed(conn: &Connection) -> rusqlite::Result
     Ok(())
 }
 
-/// One-time cleanup of orphaned `artist`/`album` browse rows for existing DBs —
-/// clears ghosts left by server-side renames before inline pruning landed. Runs
-/// once (guarded by `library_data_migration`); ongoing syncs prune inline.
+/// One-time cleanup of orphaned `artist` browse rows for existing DBs — clears
+/// ghosts left by server-side renames before inline pruning landed. Runs once
+/// (guarded by `library_data_migration`); ongoing syncs prune inline.
 fn maybe_reconcile_orphan_browse_rows(conn: &Connection) -> rusqlite::Result<()> {
     if orphan_browse_reconcile_completed(conn)? {
         return Ok(());
     }
-    crate::orphan_cleanup::prune_orphan_artists(conn, None)?;
-    crate::orphan_cleanup::prune_orphan_albums(conn, None)?;
+    crate::orphan_cleanup::prune_orphan_artists_all(conn)?;
     mark_orphan_browse_reconcile_completed(conn)?;
     Ok(())
 }
@@ -1539,22 +1543,6 @@ mod tests {
                      VALUES ('s1', 'ar_old', 'Old', 'old', 1)",
                     [],
                 )?;
-                // Live + orphan + starred albums.
-                conn.execute(
-                    "INSERT INTO album (server_id, id, name, starred_at, synced_at, raw_json) \
-                     VALUES ('s1', 'al_live', 'Live', NULL, 1, '{}')",
-                    [],
-                )?;
-                conn.execute(
-                    "INSERT INTO album (server_id, id, name, starred_at, synced_at, raw_json) \
-                     VALUES ('s1', 'al_orphan', 'Orphan', NULL, 1, '{}')",
-                    [],
-                )?;
-                conn.execute(
-                    "INSERT INTO album (server_id, id, name, starred_at, synced_at, raw_json) \
-                     VALUES ('s1', 'al_starred', 'Fav', 111, 1, '{}')",
-                    [],
-                )?;
                 Ok(())
             })
             .expect("seed");
@@ -1569,12 +1557,6 @@ mod tests {
             })
             .unwrap();
         assert_eq!(artists, 1, "ghost artist pruned, live kept");
-        let albums: i64 = store
-            .with_read_conn(|c| {
-                c.query_row("SELECT COUNT(*) FROM album WHERE server_id = 's1'", [], |r| r.get(0))
-            })
-            .unwrap();
-        assert_eq!(albums, 2, "orphan album pruned, live + starred kept");
 
         // Re-running with the marker set is a no-op even if a new ghost appears.
         store

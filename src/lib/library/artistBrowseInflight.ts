@@ -1,3 +1,4 @@
+import { librarySyncCatalogKey } from '@/lib/library/browseCatalogSyncKey';
 import type { ArtistCatalogChunkResult } from '@/lib/library/browseTextSearch';
 
 /** Stable key for the initial Artists catalog chunk (survives Strict Mode remount). */
@@ -26,13 +27,9 @@ export function clearArtistBrowseCatalogCache(): void {
   cache.clear();
 }
 
-/**
- * Suffix the online catalog key with the library sync revision so a completed
- * resync (renamed/pruned artists) forces a refetch. Shared by the browse hook
- * and the filter-change prefetch so both address the same cache entry.
- */
+/** Online Artists catalog key, re-keyed on the library sync revision. */
 export function artistBrowseOnlineCatalogKey(base: string, syncRevision: number): string {
-  return `${base}\0syncrev:${syncRevision}`;
+  return librarySyncCatalogKey(base, syncRevision);
 }
 
 const inflight = new Map<string, Promise<ArtistCatalogChunkResult | null>>();

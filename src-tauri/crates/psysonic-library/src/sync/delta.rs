@@ -216,12 +216,21 @@ impl<'a> DeltaSyncRunner<'a> {
         if let Some(ms) = probe.next_artists_watermark {
             let scope = self.library_scope_opt();
             if let Ok(index) = self.subsonic.get_artists(scope).await {
-                super::artist_index::apply_artist_index(
+                let confirmed = super::artist_index::apply_artist_index(
                     self.store,
                     &self.server_id,
                     &self.library_scope,
                     &index,
                 )?;
+                // Only prune after a real `getArtists` confirmation. The DS-8
+                // tombstone pass above has already soft-deleted server-removed
+                // tracks, so a renamed-away artist now has no live track.
+                if confirmed > 0 {
+                    super::artist_index::prune_orphan_artists_after_confirmed_pass(
+                        self.store,
+                        &self.server_id,
+                    );
+                }
             }
             // Advance the watermark to the probed value regardless of the index
             // refresh result — a failed/empty `getArtists` must not force a full

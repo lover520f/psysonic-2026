@@ -1,3 +1,4 @@
+import { librarySyncCatalogKey } from '@/lib/library/browseCatalogSyncKey';
 import type { AlbumBrowsePageResult, AlbumBrowseQuery } from './albumBrowseTypes';
 
 /** Stable key for the initial All Albums catalog chunk (survives Strict Mode remount). */
@@ -30,13 +31,9 @@ export function clearAlbumBrowseCatalogCache(): void {
   cache.clear();
 }
 
-/**
- * Suffix the online catalog key with the library sync revision so a completed
- * resync (renamed/pruned albums) forces a refetch. Shared by the browse hook
- * and the filter-change prefetch so both address the same cache entry.
- */
+/** Online All Albums catalog key, re-keyed on the library sync revision. */
 export function albumBrowseOnlineCatalogKey(base: string, syncRevision: number): string {
-  return `${base}\0syncrev:${syncRevision}`;
+  return librarySyncCatalogKey(base, syncRevision);
 }
 
 export function readAlbumBrowseCatalogCache(

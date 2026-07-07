@@ -262,9 +262,13 @@ impl<'a> InitialSyncRunner<'a> {
             self.persist_cursor(&sync_state, &cursor)?;
         }
 
-        // IS-4 — optional artist/album index pass via `getArtists`.
+        // IS-4 — optional artist/album index pass via `getArtists`. Remember
+        // whether it was a real, confirmed pass so IS-7 can prune orphans only
+        // when authoritative (on a cursor-resume that skips this phase we stay
+        // conservative and let the next sync clean up).
+        let mut artists_confirmed = false;
         if cursor.phase == CursorPhase::ArtistPass {
-            self.run_artist_pass(&sync_state).await?;
+            artists_confirmed = self.run_artist_pass(&sync_state).await?;
             cursor.phase = CursorPhase::Watermarks;
             self.persist_cursor(&sync_state, &cursor)?;
         }
@@ -289,18 +293,17 @@ impl<'a> InitialSyncRunner<'a> {
                     checked_count: swept,
                 });
             }
-            // Re-run after the sweep so artists/albums whose only tracks were
-            // just soft-deleted here (servers that mint fresh track ids on
-            // rename) are pruned too — the in-pass prune (IS-4) ran before the
-            // sweep and could not see them yet.
-            let pruned =
-                crate::orphan_cleanup::prune_library_orphans_for_server(self.store, &self.server_id)
-                    .map_err(SyncError::Storage)?;
-            if pruned.artists > 0 || pruned.albums > 0 {
-                crate::app_eprintln!(
-                    "[library-sync] IS-7 pruned {} orphan artist(s), {} orphan album(s)",
-                    pruned.artists,
-                    pruned.albums
+            // Prune orphaned artist browse rows once, here — after the sweep has
+            // soft-deleted the very tracks a renamed-away artist used to keep
+            // alive (servers that mint fresh track ids on rename). Doing it only
+            // post-sweep (instead of also in IS-4) avoids the double O(N) scan
+            // per full sync; the delta path prunes in DS-9 where there is no
+            // sweep. Gated on a confirmed `getArtists` pass so an empty/partial
+            // body can't mass-prune album-artist-only rows (see B1).
+            if artists_confirmed {
+                super::artist_index::prune_orphan_artists_after_confirmed_pass(
+                    self.store,
+                    &self.server_id,
                 );
             }
         }
@@ -1214,10 +1217,12 @@ impl<'a> InitialSyncRunner<'a> {
 
     // ── IS-4 artist pass (best-effort browse acceleration) ─────────────
 
+    /// Returns `true` when `getArtists` returned an authoritative body (≥ 1
+    /// confirmed artist), which the caller uses to gate the IS-7 orphan prune.
     async fn run_artist_pass(
         &self,
         _sync_state: &SyncStateRepository<'_>,
-    ) -> Result<(), SyncError> {
+    ) -> Result<bool, SyncError> {
         let scope = self.library_scope_opt();
         let artists = retry_with_backoff(
             self,
@@ -1226,15 +1231,17 @@ impl<'a> InitialSyncRunner<'a> {
         )
         .await
         .ok();
-        if let Some(index) = artists {
+        let confirmed = if let Some(index) = artists {
             super::artist_index::apply_artist_index(
                 self.store,
                 &self.server_id,
                 &self.library_scope,
                 &index,
-            )?;
-        }
-        Ok(())
+            )? > 0
+        } else {
+            false
+        };
+        Ok(confirmed)
     }
 
     // ── IS-5 watermarks ────────────────────────────────────────────────
@@ -1622,6 +1629,101 @@ mod tests {
             })
             .unwrap();
         assert_eq!(artist_ids, vec!["ar_new"]);
+    }
+
+    #[tokio::test(flavor = "multi_thread")]
+    async fn full_resync_empty_get_artists_keeps_album_artist_rows() {
+        // B1 guard: an empty/partial `getArtists` (transient 200-empty) must not
+        // prune album-artist-only rows just because track ingest + backfill
+        // advanced the freshest `synced_at`.
+        let server = MockServer::start().await;
+        for page in 0u32..=1 {
+            let body = if page == 0 {
+                json!({
+                    "subsonic-response": {
+                        "status": "ok",
+                        "searchResult3": {
+                            "song": [{
+                                "id": "tr_1",
+                                "title": "Song",
+                                "duration": 200_i64,
+                                "artistId": "ar_track",
+                                "artist": "Track Artist"
+                            }]
+                        }
+                    }
+                })
+            } else {
+                json!({ "subsonic-response": { "status": "ok", "searchResult3": {} } })
+            };
+            Mock::given(wm_method("GET"))
+                .and(wm_path("/rest/search3.view"))
+                .and(query_param("songOffset", (page * 10).to_string()))
+                .respond_with(ResponseTemplate::new(200).set_body_json(body))
+                .mount(&server)
+                .await;
+        }
+        // getArtists returns Ok but with an EMPTY index (no confirmation).
+        Mock::given(wm_method("GET"))
+            .and(wm_path("/rest/getArtists.view"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+                "subsonic-response": {
+                    "status": "ok",
+                    "artists": { "ignoredArticles": "", "index": [] }
+                }
+            })))
+            .mount(&server)
+            .await;
+        Mock::given(wm_method("GET"))
+            .and(wm_path("/rest/getScanStatus.view"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+                "subsonic-response": {
+                    "status": "ok",
+                    "scanStatus": { "scanning": false, "count": 1, "lastScan": "2024-06-01T12:00:00Z" }
+                }
+            })))
+            .mount(&server)
+            .await;
+
+        let store = LibraryStore::open_in_memory();
+        let sync_state = SyncStateRepository::new(&store);
+        sync_state.ensure("s1", "").unwrap();
+        sync_state.set_last_full_sync_at("s1", "", 1).unwrap();
+        // Album-artist-only row (compilation credit): stale stamp, no crediting
+        // track. A confirmed pass would re-stamp it; an empty pass must leave it.
+        store
+            .with_conn_mut("seed", |c| {
+                c.execute(
+                    "INSERT INTO artist (server_id, id, name, name_sort, synced_at) \
+                     VALUES ('s1', 'ar_va', 'Various', 'various', 1)",
+                    [],
+                )
+            })
+            .unwrap();
+
+        let subsonic = test_subsonic(&server.uri());
+        InitialSyncRunner::new(
+            &store,
+            &subsonic,
+            "s1",
+            "",
+            flags(CapabilityFlags::SUBSONIC_SEARCH3_BULK | CapabilityFlags::SCAN_STATUS_AVAILABLE),
+        )
+        .with_sleep_disabled()
+        .run()
+        .await
+        .unwrap();
+
+        let has_va: i64 = store
+            .with_read_conn(|c| {
+                c.query_row(
+                    "SELECT COUNT(*) FROM artist WHERE server_id = 's1' AND id = 'ar_va'",
+                    [],
+                    |r| r.get(0),
+                )
+            })
+            .unwrap();
+        assert_eq!(has_va, 1, "empty getArtists must not prune album-artist rows");
     }
 
     // ── Per-batch progress is emitted during ingest ───────────────────

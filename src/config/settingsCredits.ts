@@ -189,7 +189,7 @@ const CONTRIBUTOR_ENTRIES = [
       'Genres — full catalog via indexed SQL when All libraries is selected; no longer samples first album page on large libraries (PR #1242)',
       'Offline browse — on-disk-only Artists/Albums/Tracks/Genres (pins, favorites-auto, hot-cache); reactive sidebar gates and sync-idle reload; local credit mode and genre scope (PR #1243)',
       'Album detail — album-level favorite heart from album.starred_at; server-backed album rating reconcile on detail (report: HiveMind on Psysonic Discord, PR #1247)',
-      'Library — prune orphaned artist/album browse rows after server-side renames (fixes "Artist not found" ghosts) on full/delta sync + one-time startup reconcile; refresh Artists/Albums catalog on sync-idle (report: Seraphim on Psysonic Discord, PR #1253)',
+      'Library — prune orphaned artist browse rows after server-side renames (fixes "Artist not found" ghosts) on full/delta sync + one-time startup reconcile; refresh Artists/Albums catalog on sync-idle (report: Seraphim on Psysonic Discord, PR #1253)',
     ],
   },
   {

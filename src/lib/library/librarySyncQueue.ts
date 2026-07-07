@@ -48,9 +48,13 @@ function ensureIdleListener(): Promise<UnlistenFn> {
 
 function onSyncIdle(payload: LibrarySyncIdlePayload): void {
   if (payload.ok) {
-    // A completed sync may have added/renamed/pruned rows, so drop the buffered
-    // browse catalogs; the artist/album pages re-key on the sync revision (see
-    // offlineLocalLibrarySyncRevision) and refetch fresh data.
+    // The re-key on the sync revision (offlineLocalLibrarySyncRevision) is what
+    // actually drives the refetch after a sync added/renamed/pruned rows. These
+    // clears are complementary memory reclamation — they drop inflight promises
+    // and stale buffered chunks so they don't linger. Unlike the genre cache
+    // (keyed per serverId), the artist/album catalog caches have no serverId
+    // scope, so this clears every server's buffer; the only cost is a wasted
+    // refetch of identical data on another server's next render.
     invalidateGenreCatalogCache(payload.serverId);
     clearArtistBrowseCatalogCache();
     clearAlbumBrowseCatalogCache();
