@@ -11,6 +11,7 @@ import {
 } from '@/features/artist/utils/artistBrowseCreditMode';
 import { useOfflineBrowseContext, useOfflineBrowseReloadToken } from '@/features/offline';
 import { useOfflineLocalBrowseReloadKey } from '@/store/localPlaybackBrowseRevision';
+import { useOfflineLocalLibrarySyncRevision } from '@/store/offlineLocalLibrarySyncRevision';
 import {
   fetchOfflineLocalArtistCatalogChunk,
   fetchOfflineLocalStarredArtists,
@@ -28,6 +29,7 @@ import {
   artistBrowseCatalogCacheKey,
   artistBrowseCatalogInflight,
   artistBrowseInitialLoadKey,
+  artistBrowseOnlineCatalogKey,
   fetchArtistBrowseCatalogDeduped,
   readArtistBrowseCatalogCache,
   storeArtistBrowseCatalogCache,
@@ -66,6 +68,7 @@ export function useArtistsBrowseCatalog({
     serverId,
     offlineBrowseActive,
   );
+  const librarySyncRevision = useOfflineLocalLibrarySyncRevision(serverId ?? null);
   const [catalogArtists, setCatalogArtists] = useState<SubsonicArtist[]>([]);
   const [loading, setLoading] = useState(true);
   const [catalogHasMore, setCatalogHasMore] = useState(false);
@@ -87,9 +90,12 @@ export function useArtistsBrowseCatalog({
       starredOnly,
       offlineBrowseActive,
     );
-    if (!offlineBrowseActive) return base;
+    // Offline browse already re-keys via its own reload key (also sync-driven);
+    // online index browse re-keys on the library sync revision so a completed
+    // resync surfaces renamed/pruned artists without an app restart.
+    if (!offlineBrowseActive) return artistBrowseOnlineCatalogKey(base, librarySyncRevision);
     return `${base}\0${offlineLocalBrowseReloadKey}`;
-  }, [serverId, musicLibraryFilterVersion, libraryScopeKey, creditMode, letterFilter, starredOnly, offlineBrowseActive, offlineLocalBrowseReloadKey]);
+  }, [serverId, musicLibraryFilterVersion, libraryScopeKey, creditMode, letterFilter, starredOnly, offlineBrowseActive, offlineLocalBrowseReloadKey, librarySyncRevision]);
 
   useLayoutEffect(() => {
     const cached = readArtistBrowseCatalogCache(catalogLoadKey);

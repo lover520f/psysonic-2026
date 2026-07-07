@@ -26,6 +26,15 @@ export function clearArtistBrowseCatalogCache(): void {
   cache.clear();
 }
 
+/**
+ * Suffix the online catalog key with the library sync revision so a completed
+ * resync (renamed/pruned artists) forces a refetch. Shared by the browse hook
+ * and the filter-change prefetch so both address the same cache entry.
+ */
+export function artistBrowseOnlineCatalogKey(base: string, syncRevision: number): string {
+  return `${base}\0syncrev:${syncRevision}`;
+}
+
 const inflight = new Map<string, Promise<ArtistCatalogChunkResult | null>>();
 const cache = new Map<string, ArtistCatalogChunkResult>();
 

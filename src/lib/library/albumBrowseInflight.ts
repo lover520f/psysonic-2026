@@ -24,6 +24,21 @@ export function albumBrowseInitialLoadKey(
 const inflight = new Map<string, Promise<AlbumBrowsePageResult | null>>();
 const cache = new Map<string, AlbumBrowsePageResult>();
 
+/** Evict every buffered All Albums chunk (e.g. after a library sync changed rows). */
+export function clearAlbumBrowseCatalogCache(): void {
+  inflight.clear();
+  cache.clear();
+}
+
+/**
+ * Suffix the online catalog key with the library sync revision so a completed
+ * resync (renamed/pruned albums) forces a refetch. Shared by the browse hook
+ * and the filter-change prefetch so both address the same cache entry.
+ */
+export function albumBrowseOnlineCatalogKey(base: string, syncRevision: number): string {
+  return `${base}\0syncrev:${syncRevision}`;
+}
+
 export function readAlbumBrowseCatalogCache(
   key: string,
 ): AlbumBrowsePageResult | undefined {

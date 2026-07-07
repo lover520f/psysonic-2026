@@ -289,6 +289,20 @@ impl<'a> InitialSyncRunner<'a> {
                     checked_count: swept,
                 });
             }
+            // Re-run after the sweep so artists/albums whose only tracks were
+            // just soft-deleted here (servers that mint fresh track ids on
+            // rename) are pruned too — the in-pass prune (IS-4) ran before the
+            // sweep and could not see them yet.
+            let pruned =
+                crate::orphan_cleanup::prune_library_orphans_for_server(self.store, &self.server_id)
+                    .map_err(SyncError::Storage)?;
+            if pruned.artists > 0 || pruned.albums > 0 {
+                crate::app_eprintln!(
+                    "[library-sync] IS-7 pruned {} orphan artist(s), {} orphan album(s)",
+                    pruned.artists,
+                    pruned.albums
+                );
+            }
         }
         let local_count = crate::dto::count_local_tracks(self.store, &self.server_id)
             .map_err(SyncError::Storage)?;
@@ -1492,6 +1506,122 @@ mod tests {
             })
             .unwrap();
         assert_eq!(stale_deleted, 2);
+    }
+
+    #[tokio::test(flavor = "multi_thread")]
+    async fn full_resync_prunes_artist_orphaned_by_rename() {
+        let server = MockServer::start().await;
+        // Ingest one song credited to the *new* artist id (post-rename).
+        for page in 0u32..=1 {
+            let body = if page == 0 {
+                json!({
+                    "subsonic-response": {
+                        "status": "ok",
+                        "searchResult3": {
+                            "song": [{
+                                "id": "tr_1",
+                                "title": "Song",
+                                "duration": 200_i64,
+                                "artistId": "ar_new",
+                                "artist": "New Name"
+                            }]
+                        }
+                    }
+                })
+            } else {
+                json!({ "subsonic-response": { "status": "ok", "searchResult3": {} } })
+            };
+            Mock::given(wm_method("GET"))
+                .and(wm_path("/rest/search3.view"))
+                .and(query_param("songOffset", (page * 10).to_string()))
+                .respond_with(ResponseTemplate::new(200).set_body_json(body))
+                .mount(&server)
+                .await;
+        }
+        // getArtists returns only the new artist (the old name is gone server-side).
+        Mock::given(wm_method("GET"))
+            .and(wm_path("/rest/getArtists.view"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+                "subsonic-response": {
+                    "status": "ok",
+                    "artists": {
+                        "lastModified": 1_716_840_000_000_i64,
+                        "ignoredArticles": "",
+                        "index": [{
+                            "name": "N",
+                            "artist": [{ "id": "ar_new", "name": "New Name", "albumCount": 1 }]
+                        }]
+                    }
+                }
+            })))
+            .mount(&server)
+            .await;
+        Mock::given(wm_method("GET"))
+            .and(wm_path("/rest/getScanStatus.view"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+                "subsonic-response": {
+                    "status": "ok",
+                    "scanStatus": { "scanning": false, "count": 1, "lastScan": "2024-06-01T12:00:00Z" }
+                }
+            })))
+            .mount(&server)
+            .await;
+
+        let store = LibraryStore::open_in_memory();
+        let sync_state = SyncStateRepository::new(&store);
+        sync_state.ensure("s1", "").unwrap();
+        // Prior full sync → this run is a resync (arms the orphan sweep).
+        sync_state.set_last_full_sync_at("s1", "", 1).unwrap();
+        // Pre-existing ghost: old artist row + its (now stale) track.
+        store
+            .with_conn_mut("seed", |c| {
+                c.execute(
+                    "INSERT INTO artist (server_id, id, name, name_sort, synced_at) \
+                     VALUES ('s1', 'ar_old', 'Old Name', 'old name', 1)",
+                    [],
+                )?;
+                c.execute(
+                    "INSERT INTO track (server_id, id, title, artist_id, album, duration_sec, \
+                       deleted, synced_at, raw_json, resync_gen) \
+                     VALUES ('s1', 'tr_old', 'Old', 'ar_old', 'Al', 1, 0, 1, '{}', 0)",
+                    [],
+                )?;
+                Ok(())
+            })
+            .unwrap();
+
+        let subsonic = test_subsonic(&server.uri());
+        InitialSyncRunner::new(
+            &store,
+            &subsonic,
+            "s1",
+            "",
+            flags(CapabilityFlags::SUBSONIC_SEARCH3_BULK | CapabilityFlags::SCAN_STATUS_AVAILABLE),
+        )
+        .with_sleep_disabled()
+        .run()
+        .await
+        .unwrap();
+
+        // Stale track soft-deleted, ghost artist pruned, new artist kept.
+        let old_track_deleted: i64 = store
+            .with_conn("misc", |c| {
+                c.query_row("SELECT deleted FROM track WHERE id = 'tr_old'", [], |r| r.get(0))
+            })
+            .unwrap();
+        assert_eq!(old_track_deleted, 1);
+
+        let artist_ids: Vec<String> = store
+            .with_read_conn(|c| {
+                let mut stmt =
+                    c.prepare("SELECT id FROM artist WHERE server_id = 's1' ORDER BY id")?;
+                let rows = stmt
+                    .query_map([], |r| r.get::<_, String>(0))?
+                    .collect::<rusqlite::Result<Vec<_>>>()?;
+                Ok(rows)
+            })
+            .unwrap();
+        assert_eq!(artist_ids, vec!["ar_new"]);
     }
 
     // ── Per-batch progress is emitted during ingest ───────────────────

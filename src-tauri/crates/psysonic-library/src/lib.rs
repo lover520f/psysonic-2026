@@ -32,6 +32,7 @@ pub mod genre_tags_backfill;
 pub mod identity;
 pub mod mood_groups;
 pub mod live_search;
+pub mod orphan_cleanup;
 pub mod lossless_albums;
 pub mod lossless_formats;
 pub mod payload;

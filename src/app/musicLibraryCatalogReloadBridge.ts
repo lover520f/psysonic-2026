@@ -2,6 +2,7 @@ import { clearArtistBrowseCatalogCache } from '@/lib/library/artistBrowseInfligh
 import { prefetchAlbumBrowseCatalogAfterFilterChange } from '@/lib/library/albumBrowseCatalogPrefetch';
 import { prefetchArtistBrowseCatalogAfterFilterChange } from '@/lib/library/artistBrowseCatalogPrefetch';
 import { registerMusicLibraryCatalogReloadHandler } from '@/store/musicLibraryFilterNotify';
+import { offlineLocalLibrarySyncRevision } from '@/store/offlineLocalLibrarySyncRevision';
 
 /**
  * App-layer seam wiring the store's music-library filter/selection change to the
@@ -16,6 +17,7 @@ import { registerMusicLibraryCatalogReloadHandler } from '@/store/musicLibraryFi
  */
 registerMusicLibraryCatalogReloadHandler((serverId, indexEnabled, version) => {
   clearArtistBrowseCatalogCache();
-  prefetchAlbumBrowseCatalogAfterFilterChange(serverId, version, indexEnabled);
-  prefetchArtistBrowseCatalogAfterFilterChange(serverId, version, indexEnabled);
+  const syncRevision = offlineLocalLibrarySyncRevision(serverId);
+  prefetchAlbumBrowseCatalogAfterFilterChange(serverId, version, indexEnabled, syncRevision);
+  prefetchArtistBrowseCatalogAfterFilterChange(serverId, version, indexEnabled, syncRevision);
 });

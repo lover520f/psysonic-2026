@@ -8,6 +8,7 @@ import {
   albumBrowseCatalogCacheKey,
   albumBrowseCatalogInflight,
   albumBrowseInitialLoadKey,
+  albumBrowseOnlineCatalogKey,
   fetchAlbumBrowseCatalogDeduped,
   readAlbumBrowseCatalogCache,
 } from './albumBrowseInflight';
@@ -20,11 +21,16 @@ const DEFAULT_PREFETCH_QUERY: AlbumBrowseQuery = {
   compFilter: 'all',
 };
 
-/** Warm the first catalog chunk after the sidebar library filter changes. */
+/**
+ * Warm the first catalog chunk after the sidebar library filter changes.
+ * `librarySyncRevision` is supplied by the caller (app layer) so the warmed key
+ * matches the browse hook's online key without `src/lib` importing `src/store`.
+ */
 export function prefetchAlbumBrowseCatalogAfterFilterChange(
   serverId: string,
   libraryFilterVersion: number,
   indexEnabled: boolean,
+  librarySyncRevision: number,
 ): void {
   if (!serverId) return;
   if (!indexEnabled) return;
@@ -32,7 +38,10 @@ export function prefetchAlbumBrowseCatalogAfterFilterChange(
   const query = DEFAULT_PREFETCH_QUERY;
   if (!albumBrowseBootstrapEligible(query)) return;
 
-  const loadKey = albumBrowseInitialLoadKey(serverId, libraryFilterVersion, query, false);
+  const loadKey = albumBrowseOnlineCatalogKey(
+    albumBrowseInitialLoadKey(serverId, libraryFilterVersion, query, false),
+    librarySyncRevision,
+  );
   if (readAlbumBrowseCatalogCache(loadKey)) return;
 
   const bootKey = albumBrowseCatalogCacheKey(

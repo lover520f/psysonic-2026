@@ -23,6 +23,11 @@ pub(crate) const REPLAY_GAIN_PEAK_RECONCILE_ID: &str = "replay_gain_peak_reconci
 /// One-time backfill after migration 016 (`track.library_id` from `raw_json`).
 pub(crate) const LIBRARY_ID_BACKFILL_RECONCILE_ID: &str = "library_id_backfill_reconcile_v1";
 
+/// One-time cleanup of `artist`/`album` browse rows orphaned by pre-fix syncs
+/// (server-side renames left ghosts that opened to "not found"). Ongoing syncs
+/// prune these inline; this clears already-accumulated rows at first open.
+pub(crate) const ORPHAN_BROWSE_RECONCILE_ID: &str = "orphan_browse_rows_reconcile_v1";
+
 /// Lowest applied schema version the current code can advance from purely
 /// additively. If a DB carries a version below this, the breaking-bump hook
 /// fires (spec §5.7 / P22): the library is treated as incompatible, must be
@@ -646,6 +651,7 @@ fn prepare_write_connection_for_open(conn: &Connection) -> rusqlite::Result<()> 
     maybe_reconcile_artist_name_sort(conn)?;
     maybe_reconcile_replay_gain_peak(conn)?;
     maybe_reconcile_library_id_backfill(conn)?;
+    maybe_reconcile_orphan_browse_rows(conn)?;
     ensure_genre_tags_schema(conn)?;
     checkpoint_wal_conn(conn, "open")?;
     Ok(())
@@ -891,6 +897,40 @@ fn maybe_reconcile_library_id_backfill(conn: &Connection) -> rusqlite::Result<()
     }
     repair_library_id_from_raw_json(conn)?;
     mark_library_id_backfill_reconcile_completed(conn)?;
+    Ok(())
+}
+
+fn orphan_browse_reconcile_completed(conn: &Connection) -> rusqlite::Result<bool> {
+    let completed: Option<Option<i64>> = conn
+        .query_row(
+            "SELECT completed_at FROM library_data_migration WHERE id = ?1",
+            params![ORPHAN_BROWSE_RECONCILE_ID],
+            |row| row.get(0),
+        )
+        .optional()?;
+    Ok(completed.flatten().is_some())
+}
+
+fn mark_orphan_browse_reconcile_completed(conn: &Connection) -> rusqlite::Result<()> {
+    conn.execute(
+        "INSERT INTO library_data_migration (id, cursor_rowid, started_at, completed_at) \
+         VALUES (?1, 0, strftime('%s','now'), strftime('%s','now')) \
+         ON CONFLICT(id) DO UPDATE SET completed_at = excluded.completed_at",
+        params![ORPHAN_BROWSE_RECONCILE_ID],
+    )?;
+    Ok(())
+}
+
+/// One-time cleanup of orphaned `artist`/`album` browse rows for existing DBs —
+/// clears ghosts left by server-side renames before inline pruning landed. Runs
+/// once (guarded by `library_data_migration`); ongoing syncs prune inline.
+fn maybe_reconcile_orphan_browse_rows(conn: &Connection) -> rusqlite::Result<()> {
+    if orphan_browse_reconcile_completed(conn)? {
+        return Ok(());
+    }
+    crate::orphan_cleanup::prune_orphan_artists(conn, None)?;
+    crate::orphan_cleanup::prune_orphan_albums(conn, None)?;
+    mark_orphan_browse_reconcile_completed(conn)?;
     Ok(())
 }
 
@@ -1470,6 +1510,91 @@ mod tests {
             })
             .expect("t4 library_id");
         assert_eq!(unchanged, "already-set");
+    }
+
+    #[test]
+    fn orphan_browse_reconcile_prunes_ghosts_once() {
+        let store = LibraryStore::open_in_memory();
+        store
+            .with_conn_mut("test.seed", |conn| {
+                conn.execute(
+                    "DELETE FROM library_data_migration WHERE id = ?1",
+                    params![ORPHAN_BROWSE_RECONCILE_ID],
+                )?;
+                // Confirmed-this-pass artist with a live track → keep.
+                conn.execute(
+                    "INSERT INTO artist (server_id, id, name, name_sort, synced_at) \
+                     VALUES ('s1', 'ar_new', 'New', 'new', 100)",
+                    [],
+                )?;
+                conn.execute(
+                    "INSERT INTO track (server_id, id, title, artist_id, album, album_id, \
+                       duration_sec, deleted, synced_at, raw_json) \
+                     VALUES ('s1', 'tr_1', 'S', 'ar_new', 'Al', 'al_live', 1, 0, 1, '{}')",
+                    [],
+                )?;
+                // Renamed-away ghost: stale synced_at, no live track → prune.
+                conn.execute(
+                    "INSERT INTO artist (server_id, id, name, name_sort, synced_at) \
+                     VALUES ('s1', 'ar_old', 'Old', 'old', 1)",
+                    [],
+                )?;
+                // Live + orphan + starred albums.
+                conn.execute(
+                    "INSERT INTO album (server_id, id, name, starred_at, synced_at, raw_json) \
+                     VALUES ('s1', 'al_live', 'Live', NULL, 1, '{}')",
+                    [],
+                )?;
+                conn.execute(
+                    "INSERT INTO album (server_id, id, name, starred_at, synced_at, raw_json) \
+                     VALUES ('s1', 'al_orphan', 'Orphan', NULL, 1, '{}')",
+                    [],
+                )?;
+                conn.execute(
+                    "INSERT INTO album (server_id, id, name, starred_at, synced_at, raw_json) \
+                     VALUES ('s1', 'al_starred', 'Fav', 111, 1, '{}')",
+                    [],
+                )?;
+                Ok(())
+            })
+            .expect("seed");
+
+        store
+            .with_conn("test.reconcile", maybe_reconcile_orphan_browse_rows)
+            .expect("reconcile");
+
+        let artists: i64 = store
+            .with_read_conn(|c| {
+                c.query_row("SELECT COUNT(*) FROM artist WHERE server_id = 's1'", [], |r| r.get(0))
+            })
+            .unwrap();
+        assert_eq!(artists, 1, "ghost artist pruned, live kept");
+        let albums: i64 = store
+            .with_read_conn(|c| {
+                c.query_row("SELECT COUNT(*) FROM album WHERE server_id = 's1'", [], |r| r.get(0))
+            })
+            .unwrap();
+        assert_eq!(albums, 2, "orphan album pruned, live + starred kept");
+
+        // Re-running with the marker set is a no-op even if a new ghost appears.
+        store
+            .with_conn_mut("test.seed_more_ghosts", |conn| {
+                conn.execute(
+                    "INSERT INTO artist (server_id, id, name, name_sort, synced_at) \
+                     VALUES ('s1', 'ar_old2', 'Old2', 'old2', 1)",
+                    [],
+                )
+            })
+            .unwrap();
+        store
+            .with_conn("test.reconcile_again", maybe_reconcile_orphan_browse_rows)
+            .expect("reconcile again");
+        let artists_after: i64 = store
+            .with_read_conn(|c| {
+                c.query_row("SELECT COUNT(*) FROM artist WHERE server_id = 's1'", [], |r| r.get(0))
+            })
+            .unwrap();
+        assert_eq!(artists_after, 2, "guarded: does not re-run after completion");
     }
 
     #[test]

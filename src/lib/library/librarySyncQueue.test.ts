@@ -4,6 +4,14 @@ import {
   enqueueLibrarySync,
   resetLibrarySyncQueueForTests,
 } from './librarySyncQueue';
+import {
+  readArtistBrowseCatalogCache,
+  storeArtistBrowseCatalogCache,
+} from './artistBrowseInflight';
+import {
+  readAlbumBrowseCatalogCache,
+  storeAlbumBrowseCatalogCache,
+} from './albumBrowseInflight';
 
 function mockSyncStart() {
   const start = vi.fn(async (args: unknown) => {
@@ -72,6 +80,19 @@ describe('librarySyncQueue', () => {
     await expect(enqueueLibrarySync({ serverId: 's1', kind: 'full' })).rejects.toThrow(
       'boom',
     );
+  });
+
+  it('evicts buffered artist/album catalogs on a successful sync-idle', async () => {
+    storeArtistBrowseCatalogCache('artist-key', { artists: [], hasMore: false });
+    storeAlbumBrowseCatalogCache('album-key', { albums: [], hasMore: false });
+    expect(readArtistBrowseCatalogCache('artist-key')).toBeDefined();
+    expect(readAlbumBrowseCatalogCache('album-key')).toBeDefined();
+
+    mockSyncStart();
+    await enqueueLibrarySync({ serverId: 's1', kind: 'full' });
+
+    expect(readArtistBrowseCatalogCache('artist-key')).toBeUndefined();
+    expect(readAlbumBrowseCatalogCache('album-key')).toBeUndefined();
   });
 
   it('routes verify through library_sync_verify_integrity', async () => {

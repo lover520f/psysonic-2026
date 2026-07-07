@@ -40,6 +40,7 @@ import {
   useOfflineBrowseReloadToken,
 } from '@/features/offline';
 import { useOfflineLocalBrowseReloadKey } from '@/store/localPlaybackBrowseRevision';
+import { useOfflineLocalLibrarySyncRevision } from '@/store/offlineLocalLibrarySyncRevision';
 import {
   fetchAlbumBrowseCatalogChunk,
   mergeAlbumCatalogChunk,
@@ -57,6 +58,7 @@ import {
   albumBrowseCatalogCacheKey,
   albumBrowseCatalogInflight,
   albumBrowseInitialLoadKey,
+  albumBrowseOnlineCatalogKey,
   fetchAlbumBrowseCatalogDeduped,
   readAlbumBrowseCatalogCache,
   storeAlbumBrowseCatalogCache,
@@ -125,6 +127,7 @@ export function useAlbumBrowseData({
     serverId,
     offlineBrowseActive,
   );
+  const librarySyncRevision = useOfflineLocalLibrarySyncRevision(serverId ?? null);
   const [albums, setAlbums] = useState<SubsonicAlbum[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -169,10 +172,13 @@ export function useAlbumBrowseData({
         browseQuery,
         offlineBrowseActive,
       );
-      if (!offlineBrowseActive) return base;
+      // Online index browse re-keys on the library sync revision so a completed
+      // resync surfaces renamed/pruned albums without an app restart; offline
+      // browse already re-keys via its own (sync-driven) reload key.
+      if (!offlineBrowseActive) return albumBrowseOnlineCatalogKey(base, librarySyncRevision);
       return `${base}\0${offlineLocalBrowseReloadKey}`;
     },
-    [serverId, musicLibraryFilterVersion, browseQuery, offlineBrowseActive, offlineLocalBrowseReloadKey],
+    [serverId, musicLibraryFilterVersion, browseQuery, offlineBrowseActive, offlineLocalBrowseReloadKey, librarySyncRevision],
   );
 
   const compFilterActive = compFilter !== 'all';

@@ -9,6 +9,7 @@ import {
   artistBrowseCatalogCacheKey,
   artistBrowseCatalogInflight,
   artistBrowseInitialLoadKey,
+  artistBrowseOnlineCatalogKey,
   fetchArtistBrowseCatalogDeduped,
   readArtistBrowseCatalogCache,
 } from './artistBrowseInflight';
@@ -16,24 +17,32 @@ import {
 const DEFAULT_CREDIT_MODE: ArtistCreditMode = 'album';
 const DEFAULT_LETTER_FILTER = 'ALL';
 
-/** Warm the first artist catalog chunk after the sidebar library filter changes. */
+/**
+ * Warm the first artist catalog chunk after the sidebar library filter changes.
+ * `librarySyncRevision` is supplied by the caller (app layer) so the warmed key
+ * matches the browse hook's online key without `src/lib` importing `src/store`.
+ */
 export function prefetchArtistBrowseCatalogAfterFilterChange(
   serverId: string,
   libraryFilterVersion: number,
   indexEnabled: boolean,
+  librarySyncRevision: number,
 ): void {
   if (!serverId) return;
   if (!indexEnabled) return;
   if (!artistBrowseBootstrapEligible(DEFAULT_LETTER_FILTER, false)) return;
 
-  const loadKey = artistBrowseInitialLoadKey(
-    serverId,
-    libraryFilterVersion,
-    libraryScopeCacheKeyForServer(serverId),
-    DEFAULT_CREDIT_MODE,
-    DEFAULT_LETTER_FILTER,
-    false,
-    false,
+  const loadKey = artistBrowseOnlineCatalogKey(
+    artistBrowseInitialLoadKey(
+      serverId,
+      libraryFilterVersion,
+      libraryScopeCacheKeyForServer(serverId),
+      DEFAULT_CREDIT_MODE,
+      DEFAULT_LETTER_FILTER,
+      false,
+      false,
+    ),
+    librarySyncRevision,
   );
   if (readArtistBrowseCatalogCache(loadKey)) return;
 

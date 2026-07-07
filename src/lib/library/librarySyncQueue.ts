@@ -8,6 +8,8 @@ import {
 import type { UnlistenFn } from '@tauri-apps/api/event';
 import { libraryDevEnabled, logLibrarySync } from './libraryDevLog';
 import { invalidateGenreCatalogCache } from './genreCatalogCountsCache';
+import { clearArtistBrowseCatalogCache } from './artistBrowseInflight';
+import { clearAlbumBrowseCatalogCache } from './albumBrowseInflight';
 
 export type LibrarySyncQueueKind = 'full' | 'delta' | 'verify';
 
@@ -45,7 +47,14 @@ function ensureIdleListener(): Promise<UnlistenFn> {
 }
 
 function onSyncIdle(payload: LibrarySyncIdlePayload): void {
-  if (payload.ok) invalidateGenreCatalogCache(payload.serverId);
+  if (payload.ok) {
+    // A completed sync may have added/renamed/pruned rows, so drop the buffered
+    // browse catalogs; the artist/album pages re-key on the sync revision (see
+    // offlineLocalLibrarySyncRevision) and refetch fresh data.
+    invalidateGenreCatalogCache(payload.serverId);
+    clearArtistBrowseCatalogCache();
+    clearAlbumBrowseCatalogCache();
+  }
   if (!waitingForIdle || waitingForIdle.serverId !== payload.serverId) return;
   const waiter = waitingForIdle;
   waitingForIdle = null;
