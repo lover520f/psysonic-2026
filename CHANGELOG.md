@@ -321,6 +321,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * Connecting a scrobble service could fail with only "Network error — check your connection or URL", which covers everything from a DNS failure to a blocked host, an interrupted TLS handshake or a rejected request. The underlying error is now shown alongside it, so a failing connect can be told apart from a reachability problem on your machine or network.
 
+### Windows — oversized Discord banner icon
+
+**By [@Psychotoxical](https://github.com/Psychotoxical), PR [#1289](https://github.com/Psychotoxical/psysonic/pull/1289)**
+
+* The Discord community banner rendered its icon at an enormous size on Windows, pushing the message out of the bar. The icon now has a fixed size on every platform.
+
 
 ## [1.49.0] - 2026-06-29
 
