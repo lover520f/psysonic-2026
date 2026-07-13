@@ -16,6 +16,10 @@ import { codecLabel } from '@/lib/format/playlistDetailHelpers';
 import { formatLastSeen } from '@/lib/format/userMgmtHelpers';
 import { formatTrackTime } from '@/lib/format/formatDuration';
 import i18n from '@/lib/i18n';
+import { OptionalBrowseTrackRowCoverThumb } from '@/cover/TrackRowCoverThumb';
+import { COVER_ARTIST_TOP_TRACK_CSS_PX } from '@/cover/layoutSizes';
+import { useWarmTrackListAlbumCovers } from '@/cover/useWarmTrackListAlbumCovers';
+import { useTrackListCoverArtEnabled } from '@/cover/useTrackListCoverArtSettings';
 
 const PL_CENTERED = new Set(['favorite', 'rating', 'duration', 'playCount', 'bpm']);
 
@@ -56,12 +60,20 @@ export default function PlaylistSuggestions({
   const previewingId = usePreviewStore(s => s.previewingId);
   const previewAudioStarted = usePreviewStore(s => s.audioStarted);
   const showBitrate = useThemeStore(s => s.showBitrate);
+  const trackListCoversOn = useTrackListCoverArtEnabled('pages');
   const suggestionsVisible = usePlaylistLayoutStore(s =>
     s.items.find(i => i.id === 'suggestions')?.visible !== false);
 
-  if (!suggestionsVisible) return null;
+  const filteredSuggestions = React.useMemo(
+    () => suggestions.filter(s => !existingIds.has(s.id)),
+    [suggestions, existingIds],
+  );
 
-  const filteredSuggestions = suggestions.filter(s => !existingIds.has(s.id));
+  useWarmTrackListAlbumCovers(filteredSuggestions, COVER_ARTIST_TOP_TRACK_CSS_PX, {
+    enabled: trackListCoversOn && suggestionsVisible && filteredSuggestions.length > 0,
+  });
+
+  if (!suggestionsVisible) return null;
 
   return (
     <div className="playlist-suggestions tracklist" data-preview-loc="suggestions">
@@ -170,6 +182,7 @@ export default function PlaylistSuggestions({
                           ? <Square size={9} fill="currentColor" strokeWidth={0} className="playlist-suggestion-preview-icon" />
                           : <ChevronRight size={14} className="playlist-suggestion-preview-icon playlist-suggestion-preview-icon-play" />}
                       </button>
+                      <OptionalBrowseTrackRowCoverThumb song={song} size="dense" />
                       <span className="track-title">{song.title}</span>
                     </div>
                   );

@@ -17,6 +17,9 @@ import { appendServerQuery } from '@/lib/navigation/detailServerScope';
 import { APP_MAIN_SCROLL_VIEWPORT_ID } from '@/constants/appScroll';
 import { useElementClientHeightById } from '@/lib/hooks/useResizeClientHeight';
 import { SORTABLE_COLUMNS } from '@/features/favorites/hooks/useFavoritesSongFiltering';
+import { COVER_ARTIST_TOP_TRACK_CSS_PX } from '@/cover/layoutSizes';
+import { useWarmTrackListAlbumCovers } from '@/cover/useWarmTrackListAlbumCovers';
+import { useTrackListCoverArtEnabled } from '@/cover/useTrackListCoverArtSettings';
 
 interface Props {
   visibleSongs: SubsonicSong[];
@@ -35,6 +38,7 @@ interface Props {
   pickerRef: React.RefObject<HTMLDivElement | null>;
   tracklistRef: React.RefObject<HTMLDivElement | null>;
   startResize: (e: React.MouseEvent, colIndex: number, direction?: 1 | -1) => void;
+  startFlexColumnResize: (e: React.MouseEvent, colIndex: number, direction?: 1 | -1) => void;
   handleSortClick: (key: string) => void;
   getSortIndicator: (key: string) => React.ReactNode;
   ratings: Record<string, number>;
@@ -47,7 +51,7 @@ export default function FavoritesSongsTracklist({
   visibleSongs, selectedIds, selectedCount, inSelectMode, toggleSelect,
   allColumns, visibleCols, gridStyle, colVisible, toggleColumn, resetColumns,
   pickerOpen, setPickerOpen, pickerRef, tracklistRef,
-  startResize, handleSortClick, getSortIndicator,
+  startResize, startFlexColumnResize, handleSortClick, getSortIndicator,
   ratings, handleRate, removeSong, hasFilters,
 }: Props) {
   const { t } = useTranslation();
@@ -60,6 +64,7 @@ export default function FavoritesSongsTracklist({
   const previewingId = usePreviewStore(s => s.previewingId);
   const previewAudioStarted = usePreviewStore(s => s.audioStarted);
   const showBitrate = useThemeStore(s => s.showBitrate);
+  const trackListCoversOn = useTrackListCoverArtEnabled('pages');
   const psyDrag = useDragDrop();
   const { orbitActive, queueHint, addTrackToOrbit } = useOrbitSongRowBehavior();
 
@@ -177,6 +182,15 @@ export default function FavoritesSongsTracklist({
 
   const virtualItems = rowVirtualizer.getVirtualItems();
 
+  const warmVisibleSongs = useMemo(
+    () => virtualItems.map(vi => visibleSongs[vi.index]),
+    [virtualItems, visibleSongs],
+  );
+
+  useWarmTrackListAlbumCovers(warmVisibleSongs, COVER_ARTIST_TOP_TRACK_CSS_PX, {
+    enabled: trackListCoversOn,
+  });
+
   return (
     <>
       <TracklistColumnPicker
@@ -201,8 +215,10 @@ export default function FavoritesSongsTracklist({
             const label = colDef.i18nKey ? t(`albumDetail.${colDef.i18nKey}`) : '';
             if (key === 'num') {
               const allSelected = selectedCount === visibleSongs.length && visibleSongs.length > 0;
+              const titleColIndex = visibleCols.findIndex(c => c.key === 'title');
+              const titleCol = titleColIndex >= 0 ? visibleCols[titleColIndex] : undefined;
               return (
-                <div key="num" className="track-num">
+                <div key="num" className="track-num" style={{ position: 'relative' }}>
                   <span
                     className={`bulk-check${allSelected ? ' checked' : ''}${inSelectMode ? ' bulk-check-visible' : ''}`}
                     style={{ cursor: 'pointer' }}
@@ -216,6 +232,12 @@ export default function FavoritesSongsTracklist({
                     }}
                   />
                   <span className="track-num-number">#</span>
+                  {titleCol?.flex && (
+                    <div
+                      className="col-resize-handle"
+                      onMouseDown={e => startFlexColumnResize(e, titleColIndex, 1)}
+                    />
+                  )}
                 </div>
               );
             }
@@ -240,7 +262,12 @@ export default function FavoritesSongsTracklist({
                     <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{label}</span>
                     {canSort && getSortIndicator('title')}
                   </div>
-                  {hasNextCol && <div className="col-resize-handle" onMouseDown={e => startResize(e, colIndex + 1, -1)} />}
+                  {hasNextCol && (
+                    <div
+                      className="col-resize-handle"
+                      onMouseDown={e => startFlexColumnResize(e, colIndex, 1)}
+                    />
+                  )}
                 </div>
               );
             }
