@@ -1,4 +1,7 @@
 export const radio = {
+  source: 'Източник на радиото',
+  selectSource: 'Изберете сървър…',
+  sources: 'Radio sources',
   title: 'Интернет радио',
   empty: 'Няма конфигурирани радиостанции.',
   addStation: 'Добави станция',

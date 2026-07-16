@@ -32,6 +32,8 @@ import { offlineActionPolicy } from '@/features/offline';
 import { Info } from 'lucide-react';
 import PlaylistsFolderView from '@/features/playlist/components/PlaylistsFolderView';
 import { usePlaylistFolderStore } from '@/features/playlist/store/playlistFolderStore';
+import { libraryEntityKey } from '@/lib/library/libraryEntityKey';
+import { useReachableLibrarySources } from '@/store/useReachableLibrarySources';
 
 export default function Playlists() {
   const { t } = useTranslation();
@@ -40,20 +42,31 @@ export default function Playlists() {
   const touchPlaylist = usePlaylistStore((s) => s.touchPlaylist);
   const removeId = usePlaylistStore((s) => s.removeId);
   const playlists = usePlaylistStore((s) => s.playlists);
+  const reachableSources = useReachableLibrarySources();
+  const reachableIds = useMemo(() => new Set(reachableSources.map(source => source.serverId)), [reachableSources]);
   const playlistsSearchQuery = useScopedBrowseSearchQuery('playlists');
   const visiblePlaylists = useMemo(
-    () => filterPlaylistsByNameQuery(playlists, playlistsSearchQuery),
-    [playlists, playlistsSearchQuery],
+    () => filterPlaylistsByNameQuery(
+      playlists.filter(playlist => !playlist.serverId || reachableIds.has(playlist.serverId)),
+      playlistsSearchQuery,
+    ),
+    [playlists, playlistsSearchQuery, reachableIds],
   );
   const textSearchActive = playlistsSearchQuery.trim().length > 0;
   const fetchPlaylists = usePlaylistStore((s) => s.fetchPlaylists);
-  const activeUsername = useAuthStore(s => s.getActiveServer()?.username ?? '');
+  const refreshReachablePlaylists = useCallback(
+    () => fetchPlaylists(reachableSources.map(source => source.serverId)),
+    [fetchPlaylists, reachableSources],
+  );
   const activeServerId = useAuthStore(s => s.activeServerId);
-  const folderCount = usePlaylistFolderStore(
-    s => (activeServerId ? s.byServer[activeServerId]?.folders.length ?? 0 : 0),
+  const servers = useAuthStore(s => s.servers);
+  const foldersByServer = usePlaylistFolderStore(s => s.byServer);
+  const folderCount = reachableSources.reduce(
+    (count, source) => count + (foldersByServer[source.serverId]?.folders.length ?? 0),
+    0,
   );
   const folderGroupView = usePlaylistFolderStore(s => s.groupView);
-  const showFolderView = Boolean(activeServerId) && folderCount > 0 && folderGroupView;
+  const showFolderView = folderCount > 0 && folderGroupView;
   const subsonicIdentityByServer = useAuthStore(s => s.subsonicServerIdentityByServer);
   const musicLibraryFilterVersion = useAuthStore(s => s.musicLibraryFilterVersion);
   const offlineCtx = useOfflineBrowseContext();
@@ -84,7 +97,7 @@ export default function Playlists() {
     setSelectedIds,
     toggleSelect,
     clearSelection: resetSelection,
-  } = useRangeSelection(visiblePlaylists);
+  } = useRangeSelection(visiblePlaylists, libraryEntityKey);
   const isNavidromeServer = Boolean(
     activeServerId &&
     (subsonicIdentityByServer[activeServerId]?.type ?? '').toLowerCase() === 'navidrome',
@@ -94,7 +107,7 @@ export default function Playlists() {
   // (even for the render before the prune effect below runs).
   const visibleSelectedIds = useMemo(() => {
     if (selectedIds.size === 0) return selectedIds;
-    const visibleIds = new Set(visiblePlaylists.map(p => p.id));
+    const visibleIds = new Set(visiblePlaylists.map(libraryEntityKey));
     let changed = false;
     const next = new Set<string>();
     for (const id of selectedIds) {
@@ -120,19 +133,19 @@ export default function Playlists() {
     resetSelection();
   };
 
-  const selectedPlaylists = visiblePlaylists.filter(p => visibleSelectedIds.has(p.id));
+  const selectedPlaylists = visiblePlaylists.filter(p => visibleSelectedIds.has(libraryEntityKey(p)));
   const isPlaylistDeletable = useCallback((pl: SubsonicPlaylist) => {
     if (!pl.owner) return true;
-    if (!activeUsername) return false;
-    return pl.owner === activeUsername;
-  }, [activeUsername]);
+    const ownerUsername = servers.find(server => server.id === pl.serverId)?.username ?? '';
+    return Boolean(ownerUsername) && pl.owner === ownerUsername;
+  }, [servers]);
 
   useEffect(() => {
-    fetchPlaylists().finally(() => setLoading(false));
+    refreshReachablePlaylists().finally(() => setLoading(false));
     if (!offlineBrowseActive) {
       getGenres().then(setGenres).catch(() => {});
     }
-  }, [fetchPlaylists, offlineBrowseActive]);
+  }, [offlineBrowseActive, refreshReachablePlaylists]);
 
   useEffect(() => {
     if (creating) nameInputRef.current?.focus();
@@ -150,34 +163,63 @@ export default function Playlists() {
     const name = newName.trim() || t('playlists.unnamed');
     await createPlaylist(name);
     // Refresh playlists from API to get the new one
-    await fetchPlaylists();
+    await refreshReachablePlaylists();
     setCreating(false);
     setNewName('');
   };
 
-  const handleOpenSmartEditor = (pl: SubsonicPlaylist) => runPlaylistsOpenSmartEditor({
-    pl, isNavidromeServer, allGenres: genres, t,
-    setSmartFilters, setEditingSmartId, setGenreQuery,
-    setCreating, setCreatingSmart, setCreatingSmartBusy,
-  });
+  const handleOpenSmartEditor = (pl: SubsonicPlaylist) => {
+    const ownerServerId = pl.serverId ?? '';
+    const ownerServerName = servers.find(server => server.id === ownerServerId)?.name ?? ownerServerId;
+    const isOwnerNavidrome = Boolean(
+      ownerServerId && (subsonicIdentityByServer[ownerServerId]?.type ?? '').toLowerCase() === 'navidrome',
+    );
+    return runPlaylistsOpenSmartEditor({
+      pl,
+      ownerServerId,
+      activeServerId: activeServerId ?? '',
+      isOwnerNavidrome,
+      ownerServerName,
+      allGenres: genres,
+      t,
+      setSmartFilters,
+      setEditingSmartId,
+      setGenreQuery,
+      setCreating,
+      setCreatingSmart,
+      setCreatingSmartBusy,
+    });
+  };
 
   const handleCreateSmart = () => runPlaylistsSaveSmart({
-    isNavidromeServer, smartFilters, allGenres: genres.map(g => g.value), editingSmartId, playlists, fetchPlaylists, t,
-    setPendingSmart, setCreatingSmart, setEditingSmartId, setSmartFilters,
-    setGenreQuery, setCreatingSmartBusy,
+    ownerServerId: activeServerId ?? '',
+    isNavidromeServer,
+    smartFilters,
+    allGenres: genres.map(g => g.value),
+    editingSmartId,
+    playlists,
+    fetchPlaylists: refreshReachablePlaylists,
+    t,
+    setPendingSmart,
+    setCreatingSmart,
+    setEditingSmartId,
+    setSmartFilters,
+    setGenreQuery,
+    setCreatingSmartBusy,
   });
 
   // Smart playlist rules are processed asynchronously on server.
-  usePendingSmartPolling(pendingSmart, setPendingSmart, fetchPlaylists);
+  usePendingSmartPolling(pendingSmart, setPendingSmart, refreshReachablePlaylists);
 
   const handlePlay = async (e: React.MouseEvent, pl: SubsonicPlaylist) => {
     e.stopPropagation();
-    if (playingId === pl.id) return;
-    setPlayingId(pl.id);
+    const key = libraryEntityKey(pl);
+    if (playingId === key) return;
+    setPlayingId(key);
     try {
-      const tracks = await resolvePlaylistTracks(pl.id);
+      const tracks = await resolvePlaylistTracks(pl.id, pl.serverId);
       if (tracks.length > 0) {
-        touchPlaylist(pl.id);
+        touchPlaylist(pl.id, pl.serverId);
         playTrack(tracks[0], tracks);
       }
     } catch { /* ignore: best-effort */ }
@@ -304,6 +346,14 @@ export default function Playlists() {
         />
       )}
 
+      {reachableSources.length > 1 && (
+        <div className="source-group-list" aria-label={t('playlists.sources')}>
+          {reachableSources.map(source => (
+            <span key={source.serverId} className="source-group-label">{source.name}</span>
+          ))}
+        </div>
+      )}
+
       {/* ── Grid ── */}
       {playlists.length === 0 ? (
         <div className="empty-state">{t('playlists.empty')}</div>
@@ -316,18 +366,27 @@ export default function Playlists() {
               <Info size={13} /> {t('playlists.folders.localOnlyNotice')}
             </p>
           )}
-          {showFolderView && activeServerId ? (
-            <PlaylistsFolderView
-              serverId={activeServerId}
-              playlists={visiblePlaylists}
-              renderCard={renderCard}
-              disableVirtualization={perfFlags.disableMainstageVirtualLists}
-              hideEmptyFolders={textSearchActive}
-            />
+          {showFolderView ? (
+            reachableSources.map(source => {
+              const sourcePlaylists = visiblePlaylists.filter(playlist => playlist.serverId === source.serverId);
+              if (sourcePlaylists.length === 0 && textSearchActive) return null;
+              return (
+                <section key={source.serverId} className="source-group-section">
+                  {reachableSources.length > 1 && <h2 className="source-group-label">{source.name}</h2>}
+                  <PlaylistsFolderView
+                    serverId={source.serverId}
+                    playlists={sourcePlaylists}
+                    renderCard={renderCard}
+                    disableVirtualization={perfFlags.disableMainstageVirtualLists}
+                    hideEmptyFolders={textSearchActive}
+                  />
+                </section>
+              );
+            })
           ) : (
             <VirtualCardGrid
               items={visiblePlaylists}
-              itemKey={(pl, _i) => pl.id}
+              itemKey={(pl, _i) => libraryEntityKey(pl)}
               rowVariant="playlist"
               disableVirtualization={perfFlags.disableMainstageVirtualLists}
               layoutSignal={visiblePlaylists.length}

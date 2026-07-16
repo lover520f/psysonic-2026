@@ -3,13 +3,16 @@ import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/store/authStore';
 import { useLibraryIndexStore } from '@/store/libraryIndexStore';
 import { showToast } from '@/lib/dom/toast';
-import { resolveIndexKey, serverIndexKeyForProfile } from '@/lib/server/serverIndexKey';
+import {
+  resolveIndexKey,
+  serverIndexKeyForProfile,
+  serverIndexOwners,
+} from '@/lib/server/serverIndexKey';
 import {
   libraryGetStatus,
   librarySyncCancel,
   subscribeLibrarySyncIdle,
   subscribeLibrarySyncProgress,
-  type SyncStateDto,
 } from '@/lib/api/library';
 import {
   bootstrapAllIndexedServers,
@@ -19,16 +22,37 @@ import {
 import { enqueueLibrarySync } from '@/lib/library/librarySyncQueue';
 import { syncIngestDisplayCount } from '@/lib/library/libraryReady';
 
-export type LibraryServerConnection = 'online' | 'offline' | 'unknown';
-
 const STATUS_POLL_MS = 3000;
 const SYNC_POLL_MS = 2500;
 const OFFLINE_RETRY_MS = 60_000;
 
-export function useLibraryIndexSync() {
+function connectionUpdates(results: Record<string, BindServerResult>) {
+  return Object.fromEntries(Object.entries(results).map(([id, result]) => [
+    id,
+    result === 'offline' ? 'offline' : result === 'bound' ? 'online' : 'unknown',
+  ])) as Record<string, 'online' | 'offline' | 'unknown'>;
+}
+
+export function applyLibraryConnectionResults(
+  results: Record<string, BindServerResult>,
+  indexedKeys?: string[],
+): void {
+  const updates = connectionUpdates(results);
+  if (!indexedKeys) {
+    useLibraryIndexStore.getState().mergeConnections(updates);
+    return;
+  }
+  const connections = Object.fromEntries(indexedKeys.map(key => [key, 'unknown'])) as Record<
+    string,
+    'online' | 'offline' | 'unknown'
+  >;
+  useLibraryIndexStore.getState().replaceConnections({ ...connections, ...updates });
+}
+
+export function useLibraryIndexSync(enabled = true) {
   const { t } = useTranslation();
   const servers = useAuthStore(s => s.servers);
-  const activeServerId = useAuthStore(s => s.activeServerId);
+  const musicLibraryServerIds = useAuthStore(s => s.musicLibraryServerIds);
   const masterEnabled = useLibraryIndexStore(s => s.masterEnabled);
 
   const serverKeyById = useMemo(
@@ -40,23 +64,12 @@ export function useLibraryIndexSync() {
     [serverKeyById],
   );
   const indexedServers = useMemo(() => {
-    const primary = new Map<string, { key: string; server: typeof servers[number] }>();
-    for (const server of servers) {
-      const key = serverKeyById[server.id];
-      if (!primary.has(key)) primary.set(key, { key, server });
-    }
-    if (activeServerId) {
-      const active = servers.find(s => s.id === activeServerId);
-      if (active) {
-        const key = serverKeyById[active.id];
-        if (primary.has(key)) primary.set(key, { key, server: active });
-      }
-    }
-    return Array.from(primary.values());
-  }, [servers, serverKeyById, activeServerId]);
+    return serverIndexOwners({ servers, musicLibraryServerIds })
+      .map(server => ({ key: serverKeyById[server.id], server }));
+  }, [servers, musicLibraryServerIds, serverKeyById]);
 
-  const [statusByServer, setStatusByServer] = useState<Record<string, SyncStateDto | null>>({});
-  const [connectionByServer, setConnectionByServer] = useState<Record<string, LibraryServerConnection>>({});
+  const statusByServer = useLibraryIndexStore(s => s.statusByServer);
+  const connectionByServer = useLibraryIndexStore(s => s.connectionByServer);
   const [progressByServer, setProgressByServer] = useState<Record<string, string | null>>({});
   const [busyServerId, setBusyServerId] = useState<string | null>(null);
   const [bootstrapping, setBootstrapping] = useState(false);
@@ -66,14 +79,8 @@ export function useLibraryIndexSync() {
   const syncPhaseRef = useRef<Record<string, string | null>>({});
 
   const applyConnectionResults = useCallback((results: Record<string, BindServerResult>) => {
-    setConnectionByServer(prev => {
-      const next = { ...prev };
-      for (const [id, result] of Object.entries(results)) {
-        next[id] = result === 'offline' ? 'offline' : result === 'bound' ? 'online' : 'unknown';
-      }
-      return next;
-    });
-  }, []);
+    applyLibraryConnectionResults(results, indexedKeys);
+  }, [indexedKeys]);
 
   const refreshAllStatuses = useCallback(async () => {
     if (!masterEnabled || indexedServers.length === 0) return;
@@ -98,7 +105,7 @@ export function useLibraryIndexSync() {
         }
       }),
     );
-    setStatusByServer(Object.fromEntries(entries));
+    useLibraryIndexStore.getState().replaceStatuses(Object.fromEntries(entries));
   }, [masterEnabled, indexedServers, t]);
 
   const runBootstrap = useCallback(async () => {
@@ -121,19 +128,34 @@ export function useLibraryIndexSync() {
     for (const srv of offline) {
       results[srv.key] = await bootstrapIndexedServer(srv.server);
     }
-    applyConnectionResults(results);
+    applyLibraryConnectionResults(results);
     void refreshAllStatuses();
-  }, [masterEnabled, indexedServers, connectionByServer, applyConnectionResults, refreshAllStatuses]);
+  }, [masterEnabled, indexedServers, connectionByServer, refreshAllStatuses]);
 
   useEffect(() => {
-    if (!masterEnabled || indexedKeys.length === 0) return;
+    if (!enabled || !masterEnabled || indexedKeys.length === 0) return;
     // React Compiler set-state-in-effect rule: state set from a timer/animation callback.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     void runBootstrap();
-  }, [masterEnabled, indexedKeys.join(',')]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [enabled, masterEnabled, indexedKeys.join(',')]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    if (!masterEnabled) return;
+    if (!enabled || (masterEnabled && indexedKeys.length > 0)) return;
+    useLibraryIndexStore.getState().replaceStatuses({});
+    useLibraryIndexStore.getState().replaceConnections({});
+  }, [enabled, masterEnabled, indexedKeys.length]);
+
+  useEffect(() => {
+    if (!enabled || !masterEnabled) return;
+    const retryNow = () => {
+      void retryOfflineServers();
+    };
+    window.addEventListener('online', retryNow);
+    return () => window.removeEventListener('online', retryNow);
+  }, [enabled, masterEnabled, retryOfflineServers]);
+
+  useEffect(() => {
+    if (!enabled || !masterEnabled) return;
     const poll = () => {
       void refreshAllStatuses();
       const anyInitial = indexedKeys.some(
@@ -150,18 +172,18 @@ export function useLibraryIndexSync() {
     // keyed on the server set, not on the recomputed key array, to avoid
     // restarting the poll on every render.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [masterEnabled, indexedServers, refreshAllStatuses]);
+  }, [enabled, masterEnabled, indexedServers, refreshAllStatuses]);
 
   useEffect(() => {
-    if (!masterEnabled) return;
+    if (!enabled || !masterEnabled) return;
     const retryTimer = setInterval(() => {
       void retryOfflineServers();
     }, OFFLINE_RETRY_MS);
     return () => clearInterval(retryTimer);
-  }, [masterEnabled, retryOfflineServers]);
+  }, [enabled, masterEnabled, retryOfflineServers]);
 
   useEffect(() => {
-    if (!masterEnabled) return;
+    if (!enabled || !masterEnabled) return;
     const unsubs: Array<Promise<() => void>> = [
       subscribeLibrarySyncProgress(p => {
         const key = resolveIndexKey(p.serverId);
@@ -201,7 +223,7 @@ export function useLibraryIndexSync() {
     return () => {
       unsubs.forEach(u => void u.then(fn => fn()));
     };
-  }, [masterEnabled, indexedKeys, refreshAllStatuses, t]);
+  }, [enabled, masterEnabled, indexedKeys, refreshAllStatuses, t]);
 
   const runServerAction = useCallback(async (
     serverId: string,

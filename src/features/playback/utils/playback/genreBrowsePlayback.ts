@@ -1,7 +1,12 @@
 /**
  * Genre-detail bulk play/shuffle against the local library index.
  */
-import { libraryAdvancedSearch, libraryGetGenreAlbumCounts, type LibrarySortClause } from '@/lib/api/library';
+import {
+  libraryAdvancedSearch,
+  libraryGetGenreAlbumCounts,
+  type LibraryScopePair,
+  type LibrarySortClause,
+} from '@/lib/api/library';
 import { fetchAllSongsByGenre, getGenres } from '@/lib/api/subsonicGenres';
 import type { SubsonicGenre } from '@/lib/api/subsonicTypes';
 import {
@@ -38,7 +43,7 @@ export function filterGenresWithContent(genres: SubsonicGenre[]): SubsonicGenre[
 
 async function loadLocalGenreCatalogRows(
   serverId: string,
-  args: { libraryScope?: string; libraryScopes?: string[] } = {},
+  args: { libraryScope?: string; libraryScopes?: LibraryScopePair[] } = {},
 ): Promise<SubsonicGenre[]> {
   const rows = await libraryGetGenreAlbumCounts({
     serverId,
@@ -58,10 +63,14 @@ async function fetchLocalGenreCatalog(
   const selection = librarySelectionForServer(serverId);
   const genres =
     selection.length === 0
-      ? await loadLocalGenreCatalogRows(serverId)
+      ? await loadLocalGenreCatalogRows(serverId, {
+        libraryScopes: libraryScopePairsForServer(serverId),
+      })
       : selection.length === 1
         ? await loadLocalGenreCatalogRows(serverId, { libraryScope: selection[0] })
-        : await loadLocalGenreCatalogRows(serverId, { libraryScopes: selection });
+        : await loadLocalGenreCatalogRows(serverId, {
+          libraryScopes: selection.map(libraryId => ({ serverId, libraryId })),
+        });
   writeGenreCatalogCache(serverId, scopeKey, genres);
   return genres;
 }
@@ -159,10 +168,13 @@ export async function fetchGenreAlbumCount(
 export async function fetchGenreCatalog(
   serverId: string | null | undefined,
   indexEnabled: boolean,
+  scopePairs?: LibraryScopePair[],
+  localOnly = false,
+  scopeKeyOverride?: string,
 ): Promise<SubsonicGenre[]> {
   if (!serverId) return getGenres();
 
-  const scopeKey = libraryScopeCacheKeyForServer(serverId);
+  const scopeKey = scopeKeyOverride ?? libraryScopeCacheKeyForServer(serverId);
   const cacheKey = genreCatalogCacheKey(serverId, scopeKey);
   const offlineLocal = isOfflineBrowseActive() && offlineLocalBrowseEnabled(serverId);
 
@@ -183,11 +195,17 @@ export async function fetchGenreCatalog(
   const load = async (): Promise<SubsonicGenre[]> => {
     if (indexEnabled && (await libraryIsReady(serverId))) {
       try {
+        if (scopePairs !== undefined) {
+          const genres = await loadLocalGenreCatalogRows(serverId, { libraryScopes: scopePairs });
+          writeGenreCatalogCache(serverId, scopeKey, genres);
+          return genres;
+        }
         return await fetchLocalGenreCatalog(serverId, scopeKey);
       } catch {
-        /* network fallback */
+        if (localOnly) return [];
       }
     }
+    if (localOnly) return [];
     const genres = filterGenresWithContent(await getGenres());
     writeGenreCatalogCache(serverId, scopeKey, genres);
     return genres;

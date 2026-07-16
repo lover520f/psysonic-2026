@@ -8,6 +8,7 @@ import { CoverArtImage } from '@/cover/CoverArtImage';
 import { albumCoverRef } from '@/cover/ref';
 import { coverArtIdFromRadio } from '@/cover/ids';
 import { COVER_DENSE_GRID_MIN_CELL_CSS_PX } from '@/cover/layoutSizes';
+import { libraryEntityKey } from '@/lib/library/libraryEntityKey';
 
 interface RadioCardProps {
   s: InternetRadioStation;
@@ -18,6 +19,7 @@ interface RadioCardProps {
   isManual: boolean;
   /** Navidrome ≥ 0.62 only lets admins manage stations — hides edit/delete. */
   canManage: boolean;
+  sourceLabel?: string;
   dropIndicator: 'before' | 'after' | null;
   onPlay: (e: React.MouseEvent) => void;
   onDelete: (e: React.MouseEvent) => void;
@@ -30,7 +32,7 @@ interface RadioCardProps {
 }
 
 export default function RadioCard({
-  s, isActive, isPlaying, deleteConfirmId, isFavorite, isManual, canManage, dropIndicator,
+  s, isActive, isPlaying, deleteConfirmId, isFavorite, isManual, canManage, sourceLabel, dropIndicator,
   onPlay, onDelete, onEdit, onFavoriteToggle, onDragEnter, onDragLeave,
   onDropOnto, onCardMouseLeave,
 }: RadioCardProps) {
@@ -38,12 +40,13 @@ export default function RadioCard({
   const cardRef = useRef<HTMLDivElement>(null);
   const lastSideRef = useRef<'before' | 'after'>('after');
   const { isDragging, payload } = useDragDrop();
+  const stationKey = libraryEntityKey(s);
   const isBeingDragged = isDragging && !!payload && (() => {
-    try { return JSON.parse(payload.data).id === s.id; } catch { return false; }
+    try { return JSON.parse(payload.data).id === stationKey; } catch { return false; }
   })();
 
   const dragHandlers = useDragSource(() => ({
-    data: JSON.stringify({ type: 'radio', id: s.id }),
+    data: JSON.stringify({ type: 'radio', id: stationKey }),
     label: s.name,
   }));
 
@@ -61,11 +64,11 @@ export default function RadioCard({
     if (!el) return;
     const handler = (e: Event) => {
       const data = JSON.parse((e as CustomEvent).detail?.data ?? '{}');
-      if (data.type === 'radio' && data.id !== s.id) onDropOnto(data.id, lastSideRef.current);
+      if (data.type === 'radio' && data.id !== stationKey) onDropOnto(data.id, lastSideRef.current);
     };
     el.addEventListener('psy-drop', handler);
     return () => el.removeEventListener('psy-drop', handler);
-  }, [isManual, s.id, onDropOnto]);
+  }, [isManual, stationKey, onDropOnto]);
 
   return (
     <div
@@ -122,12 +125,12 @@ export default function RadioCard({
         {canManage && (
           <div className="playlist-card-actions">
             <button
-              className={`playlist-card-action playlist-card-action--delete ${deleteConfirmId === s.id ? 'playlist-card-action--delete-confirm' : ''}`}
+              className={`playlist-card-action playlist-card-action--delete ${deleteConfirmId === stationKey ? 'playlist-card-action--delete-confirm' : ''}`}
               onClick={onDelete}
-              data-tooltip={deleteConfirmId === s.id ? t('radio.confirmDelete') : t('radio.deleteStation')}
+              data-tooltip={deleteConfirmId === stationKey ? t('radio.confirmDelete') : t('radio.deleteStation')}
               data-tooltip-pos="bottom"
             >
-              {deleteConfirmId === s.id ? <Trash2 size={12} /> : <X size={12} />}
+              {deleteConfirmId === stationKey ? <Trash2 size={12} /> : <X size={12} />}
             </button>
           </div>
         )}
@@ -136,6 +139,7 @@ export default function RadioCard({
       {/* Info */}
       <div className="album-card-info">
         <div className="album-card-title">{s.name}</div>
+        {sourceLabel && <div className="radio-card-source">{sourceLabel}</div>}
         <div className="album-card-artist" style={{ display: 'flex', gap: '0.35rem', alignItems: 'center' }}>
           {canManage && (
             <button className="radio-card-chip" onClick={onEdit}>

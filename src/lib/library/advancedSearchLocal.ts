@@ -19,6 +19,7 @@ import {
   type LibraryEntityType,
   type LibraryFilterClause,
 } from '@/lib/api/library';
+import type { LibraryScopePair } from '@/lib/api/library';
 import type { SubsonicAlbum, SubsonicArtist, SubsonicSong } from '@/lib/api/subsonicTypes';
 import { search } from '@/lib/api/subsonicSearch';
 import { libraryScopeForServer, libraryScopePairsForServer } from '@/lib/api/subsonicClient';
@@ -135,14 +136,15 @@ function buildRequest(
   limit: number,
   offset: number,
   skipTotals = false,
+  libraryScopes?: LibraryScopePair[],
 ): LibraryAdvancedSearchRequest {
   const q = opts.query.trim();
   const libraryScope = libraryScopeForServer(serverId);
-  const libraryScopes = libraryScopePairsForServer(serverId);
+  const effectiveScopes = libraryScopes ?? libraryScopePairsForServer(serverId);
   return {
     serverId,
     libraryScope: libraryScope ?? undefined,
-    libraryScopes,
+    libraryScopes: effectiveScopes,
     query: q || undefined,
     entityTypes,
     filters: buildFilters(opts),
@@ -179,8 +181,10 @@ export function albumToAlbum(a: LibraryAlbumDto): SubsonicAlbum {
     genre: a.genre ?? undefined,
     coverArt: a.coverArtId ?? a.id,
     starred: a.starredAt != null ? new Date(a.starredAt).toISOString() : undefined,
+    serverId: a.serverId,
   };
   const merged = mergeAlbumRawJson(base, raw as Partial<SubsonicAlbum>);
+  merged.serverId = a.serverId;
   if (albumIsCompilation(merged)) merged.isCompilation = true;
   return merged;
 }
@@ -193,6 +197,7 @@ export function artistToArtist(ar: LibraryArtistDto): SubsonicArtist {
     nameSort: ar.nameSort ?? undefined,
     albumCount: ar.albumCount ?? undefined,
     coverArt: ar.id,
+    serverId: ar.serverId,
   };
   const merged = mergeArtistRawJson(base, raw as Partial<SubsonicArtist>);
   return merged;
@@ -257,6 +262,7 @@ export async function runLocalAdvancedSearch(
   skipReadyCheck = false,
   skipTotals = true,
   suppressLog = false,
+  libraryScopes?: LibraryScopePair[],
 ): Promise<LocalAdvancedSearchPage | null> {
   if (!serverId) return null;
   if (!skipReadyCheck && !(await libraryIsReady(serverId))) return null;
@@ -269,6 +275,7 @@ export async function runLocalAdvancedSearch(
       songsLimit,
       0,
       skipTotals,
+      libraryScopes,
     );
     const { result: resp, ms: invokeMs } = await timed(() => libraryAdvancedSearch(req));
     if (resp.source !== 'local') return null;
@@ -324,6 +331,7 @@ export async function runLocalSongBrowse(
   serverId: string | null | undefined,
   offset: number,
   pageSize: number,
+  libraryScopes?: LibraryScopePair[],
 ): Promise<SubsonicSong[] | null> {
   if (!serverId) return null;
   if (!(await libraryIsReady(serverId))) return null;
@@ -331,7 +339,7 @@ export async function runLocalSongBrowse(
     const resp = await libraryAdvancedSearch({
       serverId,
       libraryScope: libraryScopeForServer(serverId),
-      libraryScopes: libraryScopePairsForServer(serverId),
+      libraryScopes: libraryScopes ?? libraryScopePairsForServer(serverId),
       query: undefined,
       entityTypes: ['track'],
       limit: pageSize,
@@ -355,8 +363,9 @@ export async function loadMoreLocalSongs(
   opts: LocalSearchOpts,
   offset: number,
   pageSize: number,
+  libraryScopes?: LibraryScopePair[],
 ): Promise<SubsonicSong[]> {
-  const req = buildRequest(serverId, opts, ['track'], pageSize, offset, true);
+  const req = buildRequest(serverId, opts, ['track'], pageSize, offset, true, libraryScopes);
   const resp = await libraryAdvancedSearch(req);
   return resp.tracks.map(trackToSong);
 }
@@ -367,6 +376,7 @@ export async function tryRunLocalAdvancedSearch(
   opts: LocalSearchOpts,
   songsLimit: number,
   suppressLog = false,
+  libraryScopes?: LibraryScopePair[],
 ): Promise<LocalAdvancedSearchPage | null> {
   const readyPage = await runLocalAdvancedSearch(
     serverId,
@@ -375,9 +385,18 @@ export async function tryRunLocalAdvancedSearch(
     false,
     true,
     suppressLog,
+    libraryScopes,
   );
   if (readyPage) return readyPage;
-  return runLocalAdvancedSearch(serverId, opts, songsLimit, true, true, suppressLog);
+  return runLocalAdvancedSearch(
+    serverId,
+    opts,
+    songsLimit,
+    true,
+    true,
+    suppressLog,
+    libraryScopes,
+  );
 }
 
 function yearOnlyAlbumBrowseQuery(opts: LocalSearchOpts): AlbumBrowseQuery | null {

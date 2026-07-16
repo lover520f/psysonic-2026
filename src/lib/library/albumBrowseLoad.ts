@@ -22,7 +22,7 @@ import { albumBrowseHasServerFilters, countGenresFromAlbums, filterAlbumsByCompi
 import { runLocalAlbumBrowse } from './albumBrowseLocal';
 import { fetchAlbumBrowseNetwork } from './albumBrowseNetwork';
 import { fetchStarredAlbumBrowse } from './albumBrowseStarredFetch';
-import { librarySelectionForServer } from '@/lib/api/subsonicClient';
+import { libraryScopePairsForServer, librarySelectionForServer } from '@/lib/api/subsonicClient';
 import { libraryIsReady } from './libraryReady';
 import type {
   AlbumBrowseFetchCallbacks,
@@ -33,6 +33,7 @@ import type {
 import { GENRE_ALBUM_FETCH_LIMIT } from './albumBrowseTypes';
 import { albumBrowseTimed, emitAlbumBrowseDebug } from './albumBrowseDebug';
 import { fetchGenreAlbumCountsDeduped } from './albumBrowseGenreCountsCache';
+import type { LibraryScopePair } from '@/lib/api/library';
 
 /** Unfiltered browse: paint a small SQL page first, then grow the catalog buffer. */
 export function albumBrowseBootstrapEligible(query: AlbumBrowseQuery): boolean {
@@ -46,9 +47,19 @@ export async function fetchLocalAlbumCatalogChunk(
   query: AlbumBrowseQuery,
   offset: number,
   chunkSize: number,
+  scopePairs?: LibraryScopePair[],
 ): Promise<AlbumBrowsePageResult | null> {
   if (query.starredOnly) {
-    return fetchAlbumBrowsePage(serverId, indexEnabled, query, offset, chunkSize);
+    return fetchAlbumBrowsePage(
+      serverId,
+      indexEnabled,
+      query,
+      offset,
+      chunkSize,
+      undefined,
+      scopePairs,
+      scopePairs !== undefined,
+    );
   }
   const singleGenre = query.genres.length === 1;
   if (query.genres.length > 1 && offset > 0) {
@@ -59,7 +70,8 @@ export async function fetchLocalAlbumCatalogChunk(
     : query.genres.length > 0 && offset === 0
       ? GENRE_ALBUM_FETCH_LIMIT
       : chunkSize;
-  return runLocalAlbumBrowse(serverId, query, offset, limit);
+  if (scopePairs === undefined) return runLocalAlbumBrowse(serverId, query, offset, limit);
+  return runLocalAlbumBrowse(serverId, query, offset, limit, undefined, scopePairs);
 }
 
 /** Genres in albums matching all filters except genre (for combined-filter UI). */
@@ -67,9 +79,15 @@ export async function fetchAlbumBrowseGenreOptions(
   serverId: string,
   indexEnabled: boolean,
   query: AlbumBrowseQuery,
+  scopePairs?: LibraryScopePair[],
 ): Promise<GenreFilterOption[]> {
   const withoutGenre: AlbumBrowseQuery = { ...query, genres: [] };
   const selection = librarySelectionForServer(serverId);
+  const effectiveScopePairs = scopePairs ?? (
+    selection.length > 1
+      ? selection.map(libraryId => ({ serverId, libraryId }))
+      : libraryScopePairsForServer(serverId)
+  );
   const hasCombinedFilters =
     albumBrowseHasServerFilters(withoutGenre) || query.compFilter !== 'all';
 
@@ -80,10 +98,24 @@ export async function fetchAlbumBrowseGenreOptions(
   // but the genre set stays correct and each query is an indexed GROUP BY.
   if (indexEnabled && serverId && !hasCombinedFilters && (await libraryIsReady(serverId))) {
     try {
+      if (scopePairs !== undefined) {
+        const rows = await albumBrowseTimed(
+          'genre_album_counts',
+          () => fetchGenreAlbumCountsDeduped({
+            serverId,
+            libraryScopes: effectiveScopePairs,
+          }),
+          { libraryCount: effectiveScopePairs.length },
+        );
+        return rows.map(row => ({ genre: row.value, count: row.albumCount }));
+      }
       if (selection.length === 0) {
         const rows = await albumBrowseTimed(
           'genre_album_counts',
-          () => fetchGenreAlbumCountsDeduped({ serverId }),
+          () => fetchGenreAlbumCountsDeduped({
+            serverId,
+            libraryScopes: effectiveScopePairs,
+          }),
           { libraryCount: 0 },
         );
         return rows.map(row => ({ genre: row.value, count: row.albumCount }));
@@ -98,7 +130,10 @@ export async function fetchAlbumBrowseGenreOptions(
       }
       const rows = await albumBrowseTimed(
         'genre_album_counts_multi',
-        () => fetchGenreAlbumCountsDeduped({ serverId, libraryScopes: selection }),
+        () => fetchGenreAlbumCountsDeduped({
+          serverId,
+          libraryScopes: effectiveScopePairs,
+        }),
         { libraryCount: selection.length },
       );
       return rows.map(row => ({ genre: row.value, count: row.albumCount })).sort(
@@ -118,6 +153,8 @@ export async function fetchAlbumBrowseGenreOptions(
       withoutGenre,
       0,
       GENRE_ALBUM_FETCH_LIMIT,
+      undefined,
+      scopePairs,
     ),
     { limit: GENRE_ALBUM_FETCH_LIMIT },
   );
@@ -131,19 +168,23 @@ export async function fetchAlbumBrowsePage(
   offset: number,
   pageSize: number,
   callbacks?: AlbumBrowseFetchCallbacks,
+  scopePairs?: LibraryScopePair[],
+  localOnly = false,
 ): Promise<AlbumBrowsePageResult> {
   if (query.losslessOnly && (!indexEnabled || !serverId)) {
     return { albums: [], hasMore: false };
   }
 
-  if (query.starredOnly) {
+  if (query.starredOnly && !localOnly) {
     return fetchStarredAlbumBrowse(serverId, indexEnabled, query, offset, pageSize, callbacks);
   }
 
   if (indexEnabled && serverId) {
-    const local = await runLocalAlbumBrowse(serverId, query, offset, pageSize);
+    const local = await runLocalAlbumBrowse(serverId, query, offset, pageSize, undefined, scopePairs);
     if (local != null) return local;
   }
+
+  if (localOnly) return { albums: [], hasMore: false };
 
   return fetchAlbumBrowseNetwork(query, offset, pageSize);
 }

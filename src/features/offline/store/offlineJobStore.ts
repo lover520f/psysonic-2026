@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { cancelOfflineDownloads } from '@/lib/api/syncfs';
 
 export interface DownloadJob {
+  serverId?: string;
   trackId: string;
   albumId: string;
   albumName: string;
@@ -14,6 +15,7 @@ export interface DownloadJob {
 }
 
 export interface OfflinePinQueueEntry {
+  serverId?: string;
   albumId: string;
   albumName: string;
   pinKind: 'album' | 'playlist' | 'artist' | 'track';
@@ -26,8 +28,8 @@ interface OfflineJobState {
   /** Album / playlist / artist pins waiting for or undergoing download. */
   pinQueue: OfflinePinQueueEntry[];
   bulkProgress: Record<string, { done: number; total: number }>;
-  setPinQueueStatus: (albumId: string, status: OfflinePinQueueEntry['status']) => void;
-  removePinFromQueue: (albumId: string) => void;
+  setPinQueueStatus: (albumId: string, status: OfflinePinQueueEntry['status'], serverId?: string) => void;
+  removePinFromQueue: (albumId: string, serverId?: string) => void;
   bumpBulkProgressDone: (groupId: string) => void;
   cancelDownload: (albumId: string) => void;
   cancelAllDownloads: () => void;
@@ -49,15 +51,17 @@ export const useOfflineJobStore = create<OfflineJobState>()((set, get) => ({
   pinQueue: [],
   bulkProgress: {},
 
-  setPinQueueStatus: (albumId, status) => {
+  setPinQueueStatus: (albumId, status, serverId) => {
     set(state => ({
-      pinQueue: state.pinQueue.map(p => (p.albumId === albumId ? { ...p, status } : p)),
+      pinQueue: state.pinQueue.map(p => (
+        p.albumId === albumId && (!serverId || p.serverId === serverId) ? { ...p, status } : p
+      )),
     }));
   },
 
-  removePinFromQueue: (albumId) => {
+  removePinFromQueue: (albumId, serverId) => {
     set(state => ({
-      pinQueue: state.pinQueue.filter(p => p.albumId !== albumId),
+      pinQueue: state.pinQueue.filter(p => p.albumId !== albumId || (!!serverId && p.serverId !== serverId)),
     }));
   },
 

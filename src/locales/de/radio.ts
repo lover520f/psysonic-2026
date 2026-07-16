@@ -1,4 +1,7 @@
 export const radio = {
+  source: 'Radioquelle',
+  selectSource: 'Server auswählen…',
+  sources: 'Radio sources',
   title: 'Internetradio',
   empty: 'Keine Radiosender konfiguriert.',
   addStation: 'Sender hinzufügen',

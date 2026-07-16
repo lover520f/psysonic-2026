@@ -10,6 +10,7 @@ import {
 import { formatHumanHoursMinutes } from '@/lib/format/formatHumanDuration';
 import { useDragSource } from '@/lib/dnd/DragDropContext';
 import { PlaylistCardMainCover, PlaylistSmartCoverCell } from '@/features/playlist/components/PlaylistCoverImages';
+import { libraryEntityKey } from '@/lib/library/libraryEntityKey';
 
 interface Props {
   pl: SubsonicPlaylist;
@@ -44,20 +45,21 @@ export default function PlaylistCard({
   const navigate = useNavigate();
   const openContextMenu = usePlayerStore(s => s.openContextMenu);
   const dragHandlers = useDragSource(() => ({
-    data: JSON.stringify({ type: 'playlist', id: pl.id }),
+    data: JSON.stringify({ type: 'playlist', id: pl.id, serverId: pl.serverId }),
     label: displayPlaylistName(pl.name),
   }));
   const dragEnabled = Boolean(draggable) && !selectionMode;
+  const playlistKey = libraryEntityKey(pl);
 
   return (
     <div
-      className={`album-card${selectionMode && selectedIds.has(pl.id) ? ' album-card--selected' : ''}${dragEnabled ? ' album-card--draggable' : ''}`}
+      className={`album-card${selectionMode && selectedIds.has(playlistKey) ? ' album-card--selected' : ''}${dragEnabled ? ' album-card--draggable' : ''}`}
       {...(dragEnabled ? dragHandlers : {})}
       onClick={(e) => {
         if (selectionMode) {
-          toggleSelect(pl.id, { shiftKey: e.shiftKey });
+          toggleSelect(playlistKey, { shiftKey: e.shiftKey });
         } else {
-          navigate(`/playlists/${pl.id}`);
+          navigate(`/playlists/${pl.id}${pl.serverId ? `?server=${encodeURIComponent(pl.serverId)}` : ''}`);
         }
       }}
       onContextMenu={(e) => {
@@ -68,7 +70,7 @@ export default function PlaylistCard({
           openContextMenu(e.clientX, e.clientY, pl, 'playlist');
         }
       }}
-      onMouseLeave={() => { if (deleteConfirmId === pl.id) setDeleteConfirmId(null); }}
+      onMouseLeave={() => { if (deleteConfirmId === playlistKey) setDeleteConfirmId(null); }}
     >
       {!selectionMode && (
         <div className="playlist-card-actions">
@@ -81,7 +83,7 @@ export default function PlaylistCard({
                   void handleOpenSmartEditor(pl);
                   return;
                 }
-                navigate(`/playlists/${pl.id}`, { state: { openEditMeta: true } });
+                navigate(`/playlists/${pl.id}${pl.serverId ? `?server=${encodeURIComponent(pl.serverId)}` : ''}`, { state: { openEditMeta: true } });
               }}
               data-tooltip={t('playlists.editMeta')}
             >
@@ -90,9 +92,9 @@ export default function PlaylistCard({
           )}
           {isPlaylistDeletable(pl) && (
             <button
-              className={`playlist-card-action playlist-card-action--delete${deleteConfirmId === pl.id ? ' playlist-card-action--delete-confirm' : ''}`}
+              className={`playlist-card-action playlist-card-action--delete${deleteConfirmId === playlistKey ? ' playlist-card-action--delete-confirm' : ''}`}
               onClick={(e) => handleDelete(e, pl)}
-              data-tooltip={deleteConfirmId === pl.id ? t('playlists.confirmDelete') : t('common.delete')}
+              data-tooltip={deleteConfirmId === playlistKey ? t('playlists.confirmDelete') : t('common.delete')}
             >
               <Trash2 size={13} />
             </button>
@@ -100,31 +102,31 @@ export default function PlaylistCard({
         </div>
       )}
       {selectionMode && (
-        <div className={`album-card-select-check${selectedIds.has(pl.id) ? ' album-card-select-check--on' : ''}`}>
-          {selectedIds.has(pl.id) && <Check size={14} strokeWidth={3} />}
+        <div className={`album-card-select-check${selectedIds.has(playlistKey) ? ' album-card-select-check--on' : ''}`}>
+          {selectedIds.has(playlistKey) && <Check size={14} strokeWidth={3} />}
         </div>
       )}
       {/* Cover area — server collage or fallback icon */}
       <div className="album-card-cover">
-        {isSmartPlaylistName(pl.name) && (smartCoverIdsByPlaylist[pl.id]?.length ?? 0) > 0 ? (
+        {isSmartPlaylistName(pl.name) && (smartCoverIdsByPlaylist[playlistKey]?.length ?? 0) > 0 ? (
           <div className="playlist-cover-grid">
             {Array.from({ length: 4 }, (_, i) => {
-              const id = smartCoverIdsByPlaylist[pl.id][i % smartCoverIdsByPlaylist[pl.id].length];
+              const id = smartCoverIdsByPlaylist[playlistKey][i % smartCoverIdsByPlaylist[playlistKey].length];
               return id ? (
-                <PlaylistSmartCoverCell key={i} coverId={id} />
+                <PlaylistSmartCoverCell key={i} coverId={id} serverId={pl.serverId} />
               ) : (
                 <div key={i} className="playlist-cover-cell playlist-cover-cell--empty" />
               );
             })}
           </div>
         ) : pl.coverArt ? (
-          <PlaylistCardMainCover coverArt={pl.coverArt} alt={pl.name} />
+          <PlaylistCardMainCover coverArt={pl.coverArt} alt={pl.name} serverId={pl.serverId} />
         ) : (
           <div className="album-card-cover-placeholder playlist-card-icon">
             <ListMusic size={48} strokeWidth={1.2} />
           </div>
         )}
-        {pendingSmart.some(p => p.id === pl.id || p.name === pl.name) && (
+        {pendingSmart.some(p => p.serverId === pl.serverId && (p.id === pl.id || p.name === pl.name)) && (
           <div
             style={{
               position: 'absolute',
@@ -153,9 +155,9 @@ export default function PlaylistCard({
           <button
             className="album-card-details-btn"
             onClick={(e) => handlePlay(e, pl)}
-            disabled={playingId === pl.id}
+            disabled={playingId === playlistKey}
           >
-            {playingId === pl.id
+            {playingId === playlistKey
               ? <span className="spinner" style={{ width: 14, height: 14 }} />
               : <Play size={15} fill="currentColor" />
             }
@@ -170,9 +172,9 @@ export default function PlaylistCard({
           <span>{displayPlaylistName(pl.name)}</span>
         </div>
         <div className="album-card-artist">
-          {t('playlists.songs', { count: filteredSongCountByPlaylist[pl.id] ?? pl.songCount })}
-          {(filteredDurationByPlaylist[pl.id] ?? pl.duration) > 0 && (
-            <> · {formatHumanHoursMinutes(filteredDurationByPlaylist[pl.id] ?? pl.duration)}</>
+          {t('playlists.songs', { count: filteredSongCountByPlaylist[playlistKey] ?? pl.songCount })}
+          {(filteredDurationByPlaylist[playlistKey] ?? pl.duration) > 0 && (
+            <> · {formatHumanHoursMinutes(filteredDurationByPlaylist[playlistKey] ?? pl.duration)}</>
           )}
         </div>
       </div>

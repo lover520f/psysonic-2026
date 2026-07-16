@@ -1,4 +1,5 @@
 export const playlists = {
+  sources: 'Playlist sources',
   sortTooltip: 'Nummers sorteren',
   sortDateAddedNewest: 'Datum toegevoegd (nieuwste)',
   sortDateAddedOldest: 'Datum toegevoegd (oudste)',
@@ -13,6 +14,7 @@ export const playlists = {
   emptyPlaylist: 'Deze playlist is leeg.',
   addFirstSong: 'Voeg je eerste nummer toe',
   notFound: 'Playlist niet gevonden.',
+  smartMembershipReadOnly: 'Deze slimme afspeellijst wordt gegenereerd door {{server}}. Toevoegen, verwijderen, herschikken en CSV-import zijn hier uitgeschakeld zodat de serverregels niet worden vervangen.',
   songs_one: '{{count}} nummer',
   songs_other: '{{count}} nummers',
   playAll: 'Alles afspelen',
