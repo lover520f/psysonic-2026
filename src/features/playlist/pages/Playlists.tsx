@@ -1,12 +1,14 @@
 import { resolvePlaylistTracks } from '@/features/playlist/utils/resolvePlaylistTracks';
 import { getGenres } from '@/lib/api/subsonicGenres';
 import type { SubsonicPlaylist, SubsonicGenre } from '@/lib/api/subsonicTypes';
-import React, { useEffect, useState, useRef, useCallback } from 'react';
+import React, { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { usePlayerStore } from '@/features/playback/store/playerStore';
 import { usePlaylistStore } from '@/features/playlist/store/playlistStore';
 import { useAuthStore } from '@/store/authStore';
 import { useTranslation } from 'react-i18next';
 import { useRangeSelection } from '@/lib/hooks/useRangeSelection';
+import { useScopedBrowseSearchQuery } from '@/store/liveSearchScopeStore';
+import { filterPlaylistsByNameQuery } from '@/features/playlist/utils/playlistsBrowseSearch';
 
 import {
   defaultSmartFilters,
@@ -38,6 +40,12 @@ export default function Playlists() {
   const touchPlaylist = usePlaylistStore((s) => s.touchPlaylist);
   const removeId = usePlaylistStore((s) => s.removeId);
   const playlists = usePlaylistStore((s) => s.playlists);
+  const playlistsSearchQuery = useScopedBrowseSearchQuery('playlists');
+  const visiblePlaylists = useMemo(
+    () => filterPlaylistsByNameQuery(playlists, playlistsSearchQuery),
+    [playlists, playlistsSearchQuery],
+  );
+  const textSearchActive = playlistsSearchQuery.trim().length > 0;
   const fetchPlaylists = usePlaylistStore((s) => s.fetchPlaylists);
   const activeUsername = useAuthStore(s => s.getActiveServer()?.username ?? '');
   const activeServerId = useAuthStore(s => s.activeServerId);
@@ -71,11 +79,36 @@ export default function Playlists() {
 
   // ── Multi-selection ──────────────────────────────────────────────────────
   const [selectionMode, setSelectionMode] = useState(false);
-  const { selectedIds, toggleSelect, clearSelection: resetSelection } = useRangeSelection(playlists);
+  const {
+    selectedIds,
+    setSelectedIds,
+    toggleSelect,
+    clearSelection: resetSelection,
+  } = useRangeSelection(visiblePlaylists);
   const isNavidromeServer = Boolean(
     activeServerId &&
     (subsonicIdentityByServer[activeServerId]?.type ?? '').toLowerCase() === 'navidrome',
   );
+
+  // Intersect with the visible list so header/bulk actions never count hidden ids
+  // (even for the render before the prune effect below runs).
+  const visibleSelectedIds = useMemo(() => {
+    if (selectedIds.size === 0) return selectedIds;
+    const visibleIds = new Set(visiblePlaylists.map(p => p.id));
+    let changed = false;
+    const next = new Set<string>();
+    for (const id of selectedIds) {
+      if (visibleIds.has(id)) next.add(id);
+      else changed = true;
+    }
+    return changed ? next : selectedIds;
+  }, [selectedIds, visiblePlaylists]);
+
+  // Drop ids that the scoped search hid so range-select state stays coherent.
+  useEffect(() => {
+    if (visibleSelectedIds === selectedIds) return;
+    setSelectedIds(visibleSelectedIds);
+  }, [visibleSelectedIds, selectedIds, setSelectedIds]);
 
   const toggleSelectionMode = () => {
     setSelectionMode(v => !v);
@@ -87,7 +120,7 @@ export default function Playlists() {
     resetSelection();
   };
 
-  const selectedPlaylists = playlists.filter(p => selectedIds.has(p.id));
+  const selectedPlaylists = visiblePlaylists.filter(p => visibleSelectedIds.has(p.id));
   const isPlaylistDeletable = useCallback((pl: SubsonicPlaylist) => {
     if (!pl.owner) return true;
     if (!activeUsername) return false;
@@ -156,7 +189,7 @@ export default function Playlists() {
   });
 
   const handleDeleteSelected = () => runPlaylistDeleteSelected({
-    selectedPlaylists, selectedIds, isPlaylistDeletable, removeId, clearSelection, t,
+    selectedPlaylists, isPlaylistDeletable, removeId, clearSelection, t,
   });
 
   const renderCard = (pl: SubsonicPlaylist) => (
@@ -164,7 +197,7 @@ export default function Playlists() {
       pl={pl}
       selectionMode={selectionMode}
       draggable={showFolderView}
-      selectedIds={selectedIds}
+      selectedIds={visibleSelectedIds}
       selectedPlaylists={selectedPlaylists}
       toggleSelect={toggleSelect}
       isPlaylistDeletable={isPlaylistDeletable}
@@ -237,7 +270,7 @@ export default function Playlists() {
 
       <PlaylistsHeader
         selectionMode={selectionMode}
-        selectedIds={selectedIds}
+        selectedIds={visibleSelectedIds}
         selectedPlaylists={selectedPlaylists}
         isPlaylistDeletable={isPlaylistDeletable}
         toggleSelectionMode={toggleSelectionMode}
@@ -274,6 +307,8 @@ export default function Playlists() {
       {/* ── Grid ── */}
       {playlists.length === 0 ? (
         <div className="empty-state">{t('playlists.empty')}</div>
+      ) : visiblePlaylists.length === 0 && textSearchActive ? (
+        <div className="empty-state">{t('playlists.noMatchingSearch')}</div>
       ) : (
         <>
           {showFolderView && (
@@ -284,17 +319,18 @@ export default function Playlists() {
           {showFolderView && activeServerId ? (
             <PlaylistsFolderView
               serverId={activeServerId}
-              playlists={playlists}
+              playlists={visiblePlaylists}
               renderCard={renderCard}
               disableVirtualization={perfFlags.disableMainstageVirtualLists}
+              hideEmptyFolders={textSearchActive}
             />
           ) : (
             <VirtualCardGrid
-              items={playlists}
+              items={visiblePlaylists}
               itemKey={(pl, _i) => pl.id}
               rowVariant="playlist"
               disableVirtualization={perfFlags.disableMainstageVirtualLists}
-              layoutSignal={playlists.length}
+              layoutSignal={visiblePlaylists.length}
               renderItem={renderCard}
             />
           )}
